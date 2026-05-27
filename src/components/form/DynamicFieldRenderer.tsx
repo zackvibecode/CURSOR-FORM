@@ -1,0 +1,152 @@
+"use client";
+
+import type { FormField } from "@/lib/form-schema";
+import { Input } from "@/components/ui/Input";
+import { Textarea } from "@/components/ui/Textarea";
+import { Label } from "@/components/ui/Label";
+import { cn } from "@/lib/utils";
+
+interface DynamicFieldRendererProps {
+  fields: FormField[];
+  values: Record<string, string>;
+  onChange: (fieldId: string, value: string) => void;
+  errors?: Record<string, string>;
+  preview?: boolean;
+}
+
+export function DynamicFieldRenderer({
+  fields,
+  values,
+  onChange,
+  errors = {},
+  preview = false,
+}: DynamicFieldRendererProps) {
+  return (
+    <div className="space-y-5">
+      {fields.map((field) => {
+        if (field.type === "title") {
+          return (
+            <div key={field.id} className="pt-2">
+              <h2 className="text-xl font-bold text-gray-900">{field.label}</h2>
+              {field.settings?.subtitle && (
+                <p className="mt-1 text-sm text-gray-600">{field.settings.subtitle}</p>
+              )}
+            </div>
+          );
+        }
+
+        const error = errors[field.id];
+        const value = values[field.id] ?? "";
+
+        return (
+          <div key={field.id}>
+            <Label>
+              {field.label}
+              {field.required && <span className="text-brand-red"> *</span>}
+            </Label>
+
+            {field.type === "textarea" ? (
+              <Textarea
+                value={value}
+                onChange={(e) => onChange(field.id, e.target.value)}
+                placeholder={field.placeholder}
+                disabled={preview}
+              />
+            ) : field.type === "dropdown" ? (
+              <select
+                value={value}
+                onChange={(e) => onChange(field.id, e.target.value)}
+                disabled={preview}
+                className={cn(
+                  "w-full rounded-xl border border-gray-200 bg-white px-4 py-3 outline-none focus:border-whatsapp focus:ring-2 focus:ring-whatsapp/20",
+                  error && "border-brand-red"
+                )}
+              >
+                <option value="">Select an option</option>
+                {(field.options ?? []).map((opt) => (
+                  <option key={opt} value={opt}>
+                    {opt}
+                  </option>
+                ))}
+              </select>
+            ) : field.type === "multiple_choice" ? (
+              <div className="space-y-2">
+                {(field.options ?? []).map((opt) => (
+                  <label
+                    key={opt}
+                    className={cn(
+                      "flex cursor-pointer items-center gap-3 rounded-xl border border-gray-200 px-4 py-3 transition-colors hover:border-whatsapp",
+                      value === opt && "border-whatsapp bg-whatsapp/5"
+                    )}
+                  >
+                    <input
+                      type="radio"
+                      name={field.id}
+                      value={opt}
+                      checked={value === opt}
+                      onChange={(e) => onChange(field.id, e.target.value)}
+                      disabled={preview}
+                      className="accent-whatsapp"
+                    />
+                    {opt}
+                  </label>
+                ))}
+              </div>
+            ) : field.type === "checkbox" ? (
+              <div className="space-y-2">
+                {(field.options ?? []).map((opt) => {
+                  const selected = value ? value.split(", ") : [];
+                  const checked = selected.includes(opt);
+                  return (
+                    <label
+                      key={opt}
+                      className={cn(
+                        "flex cursor-pointer items-center gap-3 rounded-xl border border-gray-200 px-4 py-3 transition-colors hover:border-whatsapp",
+                        checked && "border-whatsapp bg-whatsapp/5"
+                      )}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={checked}
+                        onChange={(e) => {
+                          const next = e.target.checked
+                            ? [...selected, opt]
+                            : selected.filter((s) => s !== opt);
+                          onChange(field.id, next.join(", "));
+                        }}
+                        disabled={preview}
+                        className="accent-whatsapp"
+                      />
+                      {opt}
+                    </label>
+                  );
+                })}
+              </div>
+            ) : (
+              <Input
+                type={
+                  field.type === "email"
+                    ? "email"
+                    : field.type === "phone"
+                      ? "tel"
+                      : field.type === "number"
+                        ? "number"
+                        : field.type === "date"
+                          ? "date"
+                          : "text"
+                }
+                value={value}
+                onChange={(e) => onChange(field.id, e.target.value)}
+                placeholder={field.placeholder}
+                disabled={preview}
+                className={error ? "border-brand-red" : ""}
+              />
+            )}
+
+            {error && <p className="mt-1 text-sm text-brand-red">{error}</p>}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
