@@ -2,12 +2,45 @@
 
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { Suspense, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { BrandLogo } from "@/components/ui/BrandLogo";
 import { Mail } from "lucide-react";
+
+const EMAIL_COOLDOWN_SECONDS = 60;
+const EMAIL_COOLDOWN_STORAGE_KEY = "zaqone-auth-email-cooldown-until";
+
+function isEmailRateLimitError(message: string) {
+  const normalized = message.toLowerCase();
+  return (
+    normalized.includes("rate limit") ||
+    normalized.includes("over_email_send_rate_limit") ||
+    normalized.includes("email rate limit exceeded")
+  );
+}
+
+function getRemainingCooldownSeconds() {
+  if (typeof window === "undefined") return 0;
+
+  const stored = sessionStorage.getItem(EMAIL_COOLDOWN_STORAGE_KEY);
+  if (!stored) return 0;
+
+  const remainingMs = Number(stored) - Date.now();
+  if (Number.isNaN(remainingMs) || remainingMs <= 0) {
+    sessionStorage.removeItem(EMAIL_COOLDOWN_STORAGE_KEY);
+    return 0;
+  }
+
+  return Math.ceil(remainingMs / 1000);
+}
+
+function startEmailCooldown() {
+  const until = Date.now() + EMAIL_COOLDOWN_SECONDS * 1000;
+  sessionStorage.setItem(EMAIL_COOLDOWN_STORAGE_KEY, String(until));
+  return EMAIL_COOLDOWN_SECONDS;
+}
 
 function AuthForm({ mode }: { mode: "login" | "signup" }) {
   const searchParams = useSearchParams();
@@ -15,12 +48,27 @@ function AuthForm({ mode }: { mode: "login" | "signup" }) {
   const template = searchParams.get("template");
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
+  const [cooldownSeconds, setCooldownSeconds] = useState(0);
   const [error, setError] = useState(
     searchParams.get("error") === "auth"
       ? "Login link expired or invalid. Please request a new one."
       : ""
   );
   const [success, setSuccess] = useState("");
+
+  useEffect(() => {
+    const initial = getRemainingCooldownSeconds();
+    if (initial > 0) {
+      setCooldownSeconds(initial);
+    }
+
+    const timer = window.setInterval(() => {
+      const remaining = getRemainingCooldownSeconds();
+      setCooldownSeconds(remaining);
+    }, 1000);
+
+    return () => window.clearInterval(timer);
+  }, []);
 
   const buildRedirectUrl = () => {
     const redirectTo = new URL("/auth/confirm", window.location.origin);
@@ -42,6 +90,16 @@ function AuthForm({ mode }: { mode: "login" | "signup" }) {
     setError("");
     setSuccess("");
 
+    if (cooldownSeconds > 0) {
+      setError(
+        `Too many login emails. Please wait ${cooldownSeconds} second${
+          cooldownSeconds === 1 ? "" : "s"
+        } before trying again.`
+      );
+      setLoading(false);
+      return;
+    }
+
     if (!email.trim()) {
       setError("Please enter your email address.");
       setLoading(false);
@@ -57,12 +115,24 @@ function AuthForm({ mode }: { mode: "login" | "signup" }) {
     });
 
     if (authError) {
-      setError(authError.message);
+      if (isEmailRateLimitError(authError.message)) {
+        const remaining = startEmailCooldown();
+        setCooldownSeconds(remaining);
+        setError(
+          `Email rate limit reached. Please wait ${remaining} seconds, then try again.`
+        );
+      } else {
+        setError(authError.message);
+      }
       setLoading(false);
       return;
     }
 
-    setSuccess("Check your email! We sent you a login link.");
+    const remaining = startEmailCooldown();
+    setCooldownSeconds(remaining);
+    setSuccess(
+      "Check your email! We sent you a login link. You can request another in 1 minute."
+    );
     setLoading(false);
   };
 
@@ -129,11 +199,25 @@ function AuthForm({ mode }: { mode: "login" | "signup" }) {
               required
             />
           </div>
-          <Button type="submit" className="w-full" disabled={loading}>
+          <Button
+            type="submit"
+            className="w-full"
+            disabled={loading || cooldownSeconds > 0}
+          >
             <Mail className="h-5 w-5" />
-            {loading ? "Sending..." : "Send login link to email"}
+            {loading
+              ? "Sending..."
+              : cooldownSeconds > 0
+                ? `Try again in ${cooldownSeconds}s`
+                : "Send login link to email"}
           </Button>
         </form>
+
+        {cooldownSeconds > 0 && !error && !success && (
+          <p className="mt-3 text-center text-xs text-gray-500">
+            Login email cooldown: wait {cooldownSeconds}s before sending another link.
+          </p>
+        )}
 
         <div className="my-6 flex items-center gap-3">
           <div className="h-px flex-1 bg-gray-200" />
