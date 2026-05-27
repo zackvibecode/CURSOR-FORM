@@ -1,16 +1,16 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { requestPasswordReset } from "@/lib/auth/actions";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { BrandLogo } from "@/components/ui/BrandLogo";
-import { LogIn, UserPlus } from "lucide-react";
+import { LogIn, Mail, UserPlus } from "lucide-react";
 
 function AuthForm({ mode }: { mode: "login" | "signup" }) {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const redirect = searchParams.get("redirect") || "/dashboard";
   const template = searchParams.get("template");
@@ -19,28 +19,30 @@ function AuthForm({ mode }: { mode: "login" | "signup" }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(
     searchParams.get("error") === "auth"
-      ? "Login failed. Please try again."
+      ? "Login link expired or invalid. Please try again."
       : ""
   );
   const [success, setSuccess] = useState("");
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
 
   const getDashboardUrl = () => {
     if (template) return `/dashboard?template=${template}`;
     return redirect.startsWith("/") ? redirect : "/dashboard";
   };
 
-  const buildOAuthRedirectUrl = () => {
+  const buildCallbackUrl = () => {
     const redirectTo = new URL("/auth/callback", window.location.origin);
-    redirectTo.searchParams.set("next", redirect);
+    redirectTo.searchParams.set("next", getDashboardUrl());
     if (template) redirectTo.searchParams.set("template", template);
     return redirectTo.toString();
   };
 
-  const handleEmailAuth = async (e: React.FormEvent) => {
+  const handlePasswordAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError("");
     setSuccess("");
+    setShowForgotPassword(false);
 
     if (!email.trim()) {
       setError("Please enter your email address.");
@@ -54,28 +56,46 @@ function AuthForm({ mode }: { mode: "login" | "signup" }) {
       return;
     }
 
-    const supabase = createClient();
-
-    if (mode === "login") {
-      const { error: authError } = await supabase.auth.signInWithPassword({
-        email: email.trim(),
-        password,
+    try {
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: email.trim(), password }),
       });
 
-      if (authError) {
-        setError(authError.message);
+      const data = await res.json();
+
+      if (!res.ok) {
+        setError(data.error ?? "Login failed.");
         setLoading(false);
         return;
       }
 
-      router.push(getDashboardUrl());
-      router.refresh();
+      window.location.href = getDashboardUrl();
+    } catch {
+      setError("Network error. Please try again.");
+      setLoading(false);
+    }
+  };
+
+  const handleMagicLink = async () => {
+    setLoading(true);
+    setError("");
+    setSuccess("");
+
+    if (!email.trim()) {
+      setError("Please enter your email address.");
+      setLoading(false);
       return;
     }
 
-    const { data, error: authError } = await supabase.auth.signUp({
+    const supabase = createClient();
+    const { error: authError } = await supabase.auth.signInWithOtp({
       email: email.trim(),
-      password,
+      options: {
+        emailRedirectTo: buildCallbackUrl(),
+        shouldCreateUser: mode === "signup",
+      },
     });
 
     if (authError) {
@@ -84,13 +104,29 @@ function AuthForm({ mode }: { mode: "login" | "signup" }) {
       return;
     }
 
-    if (data.session) {
-      router.push(getDashboardUrl());
-      router.refresh();
+    setSuccess("Check your email! Click the login link to enter the dashboard.");
+    setLoading(false);
+  };
+
+  const handleForgotPassword = async () => {
+    setLoading(true);
+    setError("");
+    setSuccess("");
+
+    if (!email.trim()) {
+      setError("Enter your email address first.");
+      setLoading(false);
       return;
     }
 
-    setSuccess("Account created! You can log in now.");
+    const result = await requestPasswordReset(email);
+    if (result?.error) {
+      setError(result.error);
+    } else if (result?.success) {
+      setSuccess(result.success);
+      setShowForgotPassword(false);
+    }
+
     setLoading(false);
   };
 
@@ -103,7 +139,7 @@ function AuthForm({ mode }: { mode: "login" | "signup" }) {
     const { error: authError } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: buildOAuthRedirectUrl(),
+        redirectTo: buildCallbackUrl(),
       },
     });
 
@@ -142,7 +178,7 @@ function AuthForm({ mode }: { mode: "login" | "signup" }) {
           </div>
         )}
 
-        <form onSubmit={handleEmailAuth} className="space-y-4">
+        <form onSubmit={handlePasswordAuth} className="space-y-4">
           <div>
             <label htmlFor="email" className="mb-2 block text-sm font-semibold">
               Email address
@@ -157,36 +193,86 @@ function AuthForm({ mode }: { mode: "login" | "signup" }) {
               required
             />
           </div>
-          <div>
-            <label htmlFor="password" className="mb-2 block text-sm font-semibold">
-              Password
-            </label>
-            <Input
-              id="password"
-              type="password"
-              placeholder="At least 6 characters"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              disabled={loading}
-              required
-              minLength={6}
-            />
-          </div>
-          <Button type="submit" className="w-full" disabled={loading}>
-            {mode === "login" ? (
-              <LogIn className="h-5 w-5" />
-            ) : (
-              <UserPlus className="h-5 w-5" />
-            )}
-            {loading
-              ? mode === "login"
-                ? "Signing in..."
-                : "Creating account..."
-              : mode === "login"
-                ? "Log in"
-                : "Create account"}
-          </Button>
+
+          {!showForgotPassword && (
+            <div>
+              <div className="mb-2 flex items-center justify-between">
+                <label htmlFor="password" className="block text-sm font-semibold">
+                  Password
+                </label>
+                {mode === "login" && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowForgotPassword(true);
+                      setError("");
+                      setSuccess("");
+                    }}
+                    className="text-xs font-semibold text-whatsapp hover:underline"
+                  >
+                    Forgot password?
+                  </button>
+                )}
+              </div>
+              <Input
+                id="password"
+                type="password"
+                placeholder="At least 6 characters"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                disabled={loading}
+                required={!showForgotPassword}
+                minLength={6}
+              />
+            </div>
+          )}
+
+          {showForgotPassword ? (
+            <div className="space-y-3">
+              <p className="text-sm text-gray-500">
+                We will email you a link to set a new password.
+              </p>
+              <Button type="button" className="w-full" disabled={loading} onClick={handleForgotPassword}>
+                {loading ? "Sending..." : "Send reset link"}
+              </Button>
+              <button
+                type="button"
+                onClick={() => setShowForgotPassword(false)}
+                className="w-full text-center text-sm text-gray-500 hover:text-brand-text"
+              >
+                Back to login
+              </button>
+            </div>
+          ) : (
+            <Button type="submit" className="w-full" disabled={loading}>
+              {mode === "login" ? (
+                <LogIn className="h-5 w-5" />
+              ) : (
+                <UserPlus className="h-5 w-5" />
+              )}
+              {loading
+                ? mode === "login"
+                  ? "Signing in..."
+                  : "Creating account..."
+                : mode === "login"
+                  ? "Log in with password"
+                  : "Create account"}
+            </Button>
+          )}
         </form>
+
+        {mode === "login" && !showForgotPassword && (
+          <Button
+            type="button"
+            variant="outline"
+            className="mt-3 w-full"
+            disabled={loading}
+            onClick={handleMagicLink}
+          >
+            <Mail className="h-5 w-5" />
+            {loading ? "Sending..." : "Send login link to email"}
+          </Button>
+        )}
 
         <div className="my-6 flex items-center gap-3">
           <div className="h-px flex-1 bg-gray-200" />
@@ -220,6 +306,12 @@ function AuthForm({ mode }: { mode: "login" | "signup" }) {
           </svg>
           Continue with Google
         </Button>
+
+        {mode === "login" && (
+          <p className="mt-4 text-center text-xs text-gray-500">
+            Account lama? Guna &quot;Send login link to email&quot; atau Google.
+          </p>
+        )}
 
         <p className="mt-6 text-center text-sm text-gray-500">
           {mode === "login" ? (

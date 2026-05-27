@@ -35,7 +35,8 @@ export async function updateSession(request: NextRequest) {
   const isDashboard = request.nextUrl.pathname.startsWith("/dashboard");
   const isAuthCallback =
     request.nextUrl.pathname.startsWith("/auth/callback") ||
-    request.nextUrl.pathname.startsWith("/auth/confirm");
+    request.nextUrl.pathname.startsWith("/auth/confirm") ||
+    request.nextUrl.pathname.startsWith("/auth/update-password");
 
   if (isAuthCallback) {
     return supabaseResponse;
