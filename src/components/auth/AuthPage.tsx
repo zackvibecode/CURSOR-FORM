@@ -1,80 +1,32 @@
 "use client";
 
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
-import { Suspense, useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { BrandLogo } from "@/components/ui/BrandLogo";
-import { Mail } from "lucide-react";
-
-const EMAIL_COOLDOWN_SECONDS = 60;
-const EMAIL_COOLDOWN_STORAGE_KEY = "zaqone-auth-email-cooldown-until";
-
-function isEmailRateLimitError(message: string) {
-  const normalized = message.toLowerCase();
-  return (
-    normalized.includes("rate limit") ||
-    normalized.includes("over_email_send_rate_limit") ||
-    normalized.includes("email rate limit exceeded")
-  );
-}
-
-function getRemainingCooldownSeconds() {
-  if (typeof window === "undefined") return 0;
-
-  const stored = sessionStorage.getItem(EMAIL_COOLDOWN_STORAGE_KEY);
-  if (!stored) return 0;
-
-  const remainingMs = Number(stored) - Date.now();
-  if (Number.isNaN(remainingMs) || remainingMs <= 0) {
-    sessionStorage.removeItem(EMAIL_COOLDOWN_STORAGE_KEY);
-    return 0;
-  }
-
-  return Math.ceil(remainingMs / 1000);
-}
-
-function startEmailCooldown() {
-  const until = Date.now() + EMAIL_COOLDOWN_SECONDS * 1000;
-  sessionStorage.setItem(EMAIL_COOLDOWN_STORAGE_KEY, String(until));
-  return EMAIL_COOLDOWN_SECONDS;
-}
+import { LogIn, UserPlus } from "lucide-react";
 
 function AuthForm({ mode }: { mode: "login" | "signup" }) {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const redirect = searchParams.get("redirect") || "/dashboard";
   const template = searchParams.get("template");
   const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [cooldownSeconds, setCooldownSeconds] = useState(0);
   const [error, setError] = useState(
     searchParams.get("error") === "auth"
-      ? "Login link expired or invalid. Please request a new one."
+      ? "Login failed. Please try again."
       : ""
   );
   const [success, setSuccess] = useState("");
 
-  useEffect(() => {
-    const initial = getRemainingCooldownSeconds();
-    if (initial > 0) {
-      setCooldownSeconds(initial);
-    }
-
-    const timer = window.setInterval(() => {
-      const remaining = getRemainingCooldownSeconds();
-      setCooldownSeconds(remaining);
-    }, 1000);
-
-    return () => window.clearInterval(timer);
-  }, []);
-
-  const buildRedirectUrl = () => {
-    const redirectTo = new URL("/auth/confirm", window.location.origin);
-    redirectTo.searchParams.set("next", redirect);
-    if (template) redirectTo.searchParams.set("template", template);
-    return redirectTo.toString();
+  const getDashboardUrl = () => {
+    if (template) return `/dashboard?template=${template}`;
+    return redirect.startsWith("/") ? redirect : "/dashboard";
   };
 
   const buildOAuthRedirectUrl = () => {
@@ -84,21 +36,11 @@ function AuthForm({ mode }: { mode: "login" | "signup" }) {
     return redirectTo.toString();
   };
 
-  const handleEmailLogin = async (e: React.FormEvent) => {
+  const handleEmailAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError("");
     setSuccess("");
-
-    if (cooldownSeconds > 0) {
-      setError(
-        `Too many login emails. Please wait ${cooldownSeconds} second${
-          cooldownSeconds === 1 ? "" : "s"
-        } before trying again.`
-      );
-      setLoading(false);
-      return;
-    }
 
     if (!email.trim()) {
       setError("Please enter your email address.");
@@ -106,33 +48,49 @@ function AuthForm({ mode }: { mode: "login" | "signup" }) {
       return;
     }
 
-    const supabase = createClient();
-    const { error: authError } = await supabase.auth.signInWithOtp({
-      email: email.trim(),
-      options: {
-        emailRedirectTo: buildRedirectUrl(),
-      },
-    });
-
-    if (authError) {
-      if (isEmailRateLimitError(authError.message)) {
-        const remaining = startEmailCooldown();
-        setCooldownSeconds(remaining);
-        setError(
-          `Email rate limit reached. Please wait ${remaining} seconds, then try again.`
-        );
-      } else {
-        setError(authError.message);
-      }
+    if (password.length < 6) {
+      setError("Password must be at least 6 characters.");
       setLoading(false);
       return;
     }
 
-    const remaining = startEmailCooldown();
-    setCooldownSeconds(remaining);
-    setSuccess(
-      "Check your email! We sent you a login link. You can request another in 1 minute."
-    );
+    const supabase = createClient();
+
+    if (mode === "login") {
+      const { error: authError } = await supabase.auth.signInWithPassword({
+        email: email.trim(),
+        password,
+      });
+
+      if (authError) {
+        setError(authError.message);
+        setLoading(false);
+        return;
+      }
+
+      router.push(getDashboardUrl());
+      router.refresh();
+      return;
+    }
+
+    const { data, error: authError } = await supabase.auth.signUp({
+      email: email.trim(),
+      password,
+    });
+
+    if (authError) {
+      setError(authError.message);
+      setLoading(false);
+      return;
+    }
+
+    if (data.session) {
+      router.push(getDashboardUrl());
+      router.refresh();
+      return;
+    }
+
+    setSuccess("Account created! You can log in now.");
     setLoading(false);
   };
 
@@ -184,7 +142,7 @@ function AuthForm({ mode }: { mode: "login" | "signup" }) {
           </div>
         )}
 
-        <form onSubmit={handleEmailLogin} className="space-y-4">
+        <form onSubmit={handleEmailAuth} className="space-y-4">
           <div>
             <label htmlFor="email" className="mb-2 block text-sm font-semibold">
               Email address
@@ -199,25 +157,36 @@ function AuthForm({ mode }: { mode: "login" | "signup" }) {
               required
             />
           </div>
-          <Button
-            type="submit"
-            className="w-full"
-            disabled={loading || cooldownSeconds > 0}
-          >
-            <Mail className="h-5 w-5" />
+          <div>
+            <label htmlFor="password" className="mb-2 block text-sm font-semibold">
+              Password
+            </label>
+            <Input
+              id="password"
+              type="password"
+              placeholder="At least 6 characters"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              disabled={loading}
+              required
+              minLength={6}
+            />
+          </div>
+          <Button type="submit" className="w-full" disabled={loading}>
+            {mode === "login" ? (
+              <LogIn className="h-5 w-5" />
+            ) : (
+              <UserPlus className="h-5 w-5" />
+            )}
             {loading
-              ? "Sending..."
-              : cooldownSeconds > 0
-                ? `Try again in ${cooldownSeconds}s`
-                : "Send login link to email"}
+              ? mode === "login"
+                ? "Signing in..."
+                : "Creating account..."
+              : mode === "login"
+                ? "Log in"
+                : "Create account"}
           </Button>
         </form>
-
-        {cooldownSeconds > 0 && !error && !success && (
-          <p className="mt-3 text-center text-xs text-gray-500">
-            Login email cooldown: wait {cooldownSeconds}s before sending another link.
-          </p>
-        )}
 
         <div className="my-6 flex items-center gap-3">
           <div className="h-px flex-1 bg-gray-200" />
@@ -251,10 +220,6 @@ function AuthForm({ mode }: { mode: "login" | "signup" }) {
           </svg>
           Continue with Google
         </Button>
-
-        <p className="mt-4 text-center text-xs text-gray-500">
-          Email login is easiest — no Google setup needed.
-        </p>
 
         <p className="mt-6 text-center text-sm text-gray-500">
           {mode === "login" ? (
