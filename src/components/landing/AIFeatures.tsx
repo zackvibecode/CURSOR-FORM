@@ -53,7 +53,7 @@ export function AIFeatures() {
                   <span>AI Form Builder</span>
                 </div>
                 <p className="mt-2 text-sm text-gray-700">
-                  "I run a cake shop and want to collect orders with pastry type, delivery address, and phone number."
+                  &ldquo;I run a cake shop and want to collect orders with pastry type, delivery address, and phone number.&rdquo;
                 </p>
               </div>
 
