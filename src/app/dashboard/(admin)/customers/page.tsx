@@ -12,27 +12,35 @@ export default async function CustomersPage() {
     data: { user },
   } = await supabase.auth.getUser();
 
+  if (!user) return null;
+
   const { data: forms } = await supabase
     .from("forms")
     .select("id, title")
-    .eq("user_id", user!.id);
+    .eq("user_id", user.id);
 
   const formIds = (forms ?? []).map((f) => f.id);
   let customers: ReturnType<typeof extractCustomers> = [];
 
   if (formIds.length > 0) {
-    const { data: rawSubmissions } = await supabase
-      .from("submissions")
-      .select("*, forms(title)")
-      .in("form_id", formIds)
-      .order("submitted_at", { ascending: false });
+    // Parallel queries for speed
+    const [submissionsResult, fieldsResult] = await Promise.all([
+      supabase
+        .from("submissions")
+        .select("*, forms(title)")
+        .in("form_id", formIds)
+        .order("submitted_at", { ascending: false }),
+      supabase
+        .from("form_fields")
+        .select("id, label, type, form_id")
+        .in("form_id", formIds),
+    ]);
 
-    const { data: fields } = await supabase
-      .from("form_fields")
-      .select("id, label, type, form_id")
-      .in("form_id", formIds);
-
-    const submissions = mapSubmissionsToRows(rawSubmissions ?? [], forms ?? [], fields ?? []);
+    const submissions = mapSubmissionsToRows(
+      submissionsResult.data ?? [],
+      forms ?? [],
+      fieldsResult.data ?? []
+    );
     customers = extractCustomers(submissions);
   }
 

@@ -10,32 +10,43 @@ export const dynamic = "force-dynamic";
 
 export default async function DashboardOverviewPage() {
   const supabase = await createClient();
+
+  // Auth already handled by layout — just get user ID efficiently
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
+  if (!user) return null;
+
+  // Fetch forms first
   const { data: forms } = await supabase
     .from("forms")
     .select("id, title")
-    .eq("user_id", user!.id);
+    .eq("user_id", user.id);
 
   const formIds = (forms ?? []).map((f) => f.id);
   let submissions: ReturnType<typeof mapSubmissionsToRows> = [];
 
   if (formIds.length > 0) {
-    const { data: rawSubmissions } = await supabase
-      .from("submissions")
-      .select("*, forms(title)")
-      .in("form_id", formIds)
-      .order("submitted_at", { ascending: false })
-      .limit(50);
+    // Fetch submissions and fields in parallel using Promise.all
+    const [submissionsResult, fieldsResult] = await Promise.all([
+      supabase
+        .from("submissions")
+        .select("*, forms(title)")
+        .in("form_id", formIds)
+        .order("submitted_at", { ascending: false })
+        .limit(50),
+      supabase
+        .from("form_fields")
+        .select("id, label, type, form_id")
+        .in("form_id", formIds),
+    ]);
 
-    const { data: fields } = await supabase
-      .from("form_fields")
-      .select("id, label, type, form_id")
-      .in("form_id", formIds);
-
-    submissions = mapSubmissionsToRows(rawSubmissions ?? [], forms ?? [], fields ?? []);
+    submissions = mapSubmissionsToRows(
+      submissionsResult.data ?? [],
+      forms ?? [],
+      fieldsResult.data ?? []
+    );
   }
 
   const stats = computeDashboardStats(forms ?? [], submissions.map((s) => ({

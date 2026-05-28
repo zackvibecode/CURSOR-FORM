@@ -12,10 +12,12 @@ export default async function AnalyticsPage() {
     data: { user },
   } = await supabase.auth.getUser();
 
+  if (!user) return null;
+
   const { data: forms } = await supabase
     .from("forms")
     .select("id")
-    .eq("user_id", user!.id);
+    .eq("user_id", user.id);
 
   const formIds = (forms ?? []).map((f) => f.id);
   let submissions: { submitted_at: string }[] = [];
