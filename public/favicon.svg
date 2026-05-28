@@ -1,4 +1,7 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
-  <rect width="32" height="32" rx="8" fill="#25D366"/>
-  <text x="16" y="23" font-family="system-ui, sans-serif" font-size="18" font-weight="700" fill="white" text-anchor="middle">Z</text>
+<svg viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <path d="M460 44C416 0 352 24 256 24C112 24 24 120 24 256C24 340 60 404 120 444L96 512L172 484C204 500 228 508 256 508C400 508 488 400 488 256C488 184 460 120 460 44Z" fill="#25D366"/>
+  <path d="M380 180H140C131.2 180 124 172.8 124 164C124 155.2 131.2 148 140 148H380C388.8 148 396 155.2 396 164C396 172.8 388.8 180 380 180Z" fill="#ffffff"/>
+  <path d="M380 276H140C131.2 276 124 268.8 124 260C124 251.2 131.2 244 140 244H380C388.8 244 396 251.2 396 260C396 268.8 388.8 276 380 276Z" fill="#ffffff"/>
+  <path d="M380 372H240C231.2 372 224 364.8 224 356C224 347.2 231.2 340 240 340H380C388.8 340 396 347.2 396 356C396 364.8 388.8 372 380 372Z" fill="#ffffff"/>
+  <path d="M340 340L380 380C386.6 386.6 386.6 397.4 380 404C373.4 410.6 362.6 410.6 356 404L316 364" stroke="#25D366" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"/>
 </svg>

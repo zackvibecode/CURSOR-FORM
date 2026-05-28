@@ -66,7 +66,7 @@ export function PublicFormClient({ slug }: { slug: string }) {
             This form may have been removed or is not published yet.
           </p>
           <Link href="/" className="font-semibold text-whatsapp-deep hover:underline">
-            Create your own ZAQONE.FORM
+            Create your own OneForm
           </Link>
         </div>
       </div>

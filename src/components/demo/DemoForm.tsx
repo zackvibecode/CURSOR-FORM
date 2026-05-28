@@ -207,7 +207,7 @@ export function DemoForm() {
             </Button>
 
             <p className="mt-4 text-center text-xs text-brand-muted">
-              Powered by ZAQONE.FORM · Zaq1.com
+              Powered by OneForm · oneform.app
             </p>
           </form>
         </motion.div>

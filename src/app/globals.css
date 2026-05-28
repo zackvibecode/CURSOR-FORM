@@ -5,6 +5,7 @@
 @layer base {
   html {
     scroll-behavior: smooth;
+    scroll-padding-top: 96px;
   }
 
   body {
@@ -15,5 +16,39 @@
 @layer utilities {
   .text-balance {
     text-wrap: balance;
+  }
+
+  /* OneForm gradient backgrounds */
+  .bg-gradient-hero {
+    background: linear-gradient(135deg, #f0fdf4 0%, #ffffff 50%, #f7f9fb 100%);
+  }
+
+  .bg-gradient-mint {
+    background: linear-gradient(180deg, #ffffff 0%, #f2f9f5 100%);
+  }
+
+  .bg-gradient-warm {
+    background: linear-gradient(135deg, #fef9f3 0%, #ffffff 50%, #f3f9ff 100%);
+  }
+
+  /* Subtle dot pattern overlay */
+  .pattern-dots {
+    background-image: radial-gradient(circle, #25d36615 1px, transparent 1px);
+    background-size: 24px 24px;
+  }
+
+  /* Floating animation for phone mockups */
+  @keyframes float-gentle {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-8px); }
+  }
+
+  .animate-float-gentle {
+    animation: float-gentle 5s ease-in-out infinite;
+  }
+
+  .animate-float-gentle-delay {
+    animation: float-gentle 5s ease-in-out infinite;
+    animation-delay: 0.5s;
   }
 }

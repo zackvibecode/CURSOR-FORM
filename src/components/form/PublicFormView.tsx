@@ -116,7 +116,7 @@ export function PublicFormView({
 
       {!preview && (
         <p className="text-center text-xs text-brand-muted">
-          Powered by ZAQONE.FORM · Zaq1.com
+          Powered by OneForm · oneform.app
         </p>
       )}
     </form>

@@ -10,18 +10,19 @@ const jakarta = Plus_Jakarta_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "ZAQONE.FORM — Smart WhatsApp Form Builder",
+  title: "OneForm — Smart WhatsApp Form Builder",
   description:
-    "ZAQONE.FORM helps businesses collect enquiries, bookings, customer details, and sales leads through beautiful online forms connected directly to WhatsApp.",
+    "OneForm helps businesses collect enquiries, bookings, customer details, and sales leads through beautiful online forms connected directly to WhatsApp.",
   keywords: [
     "WhatsApp form",
     "form builder",
     "lead capture",
-    "ZAQONE.FORM",
-    "Zaq1.com",
+    "OneForm",
+    "oneform.app",
   ],
   icons: {
-    icon: "/favicon.svg",
+    icon: [{ url: "/favicon.svg", type: "image/svg+xml" }],
+    apple: [{ url: "/favicon.svg" }],
   },
 };
 

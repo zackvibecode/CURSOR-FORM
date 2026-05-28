@@ -1,59 +1,77 @@
-import { Share2, PenLine, Inbox } from "lucide-react";
-import { ScrollReveal } from "@/components/ui/ScrollReveal";
+"use client";
+
+import { motion } from "framer-motion";
+import { PenLine, Share2, MessageCircle } from "lucide-react";
 
 const steps = [
   {
     number: "01",
     icon: PenLine,
-    title: "Create your form",
+    title: "You create the form & share it with customers",
     description:
-      "Use the drag-and-drop builder to add fields, customize labels, and set your WhatsApp number.",
+      "Use our drag-and-drop builder to design your form, add your WhatsApp number, and get a shareable link instantly.",
   },
   {
     number: "02",
     icon: Share2,
-    title: "Share your form link",
+    title: "Customer fills in the data and clicks on Submit",
     description:
-      "Publish and share your unique form URL on your website, social media, or QR code.",
+      "Customers visit your form on any device, fill in their details, and submit with one tap.",
   },
   {
     number: "03",
-    icon: Inbox,
-    title: "Receive submissions via WhatsApp",
+    icon: MessageCircle,
+    title: "You get the data in WhatsApp from customer's number",
     description:
-      "Get instant WhatsApp messages with customer details and track everything in your dashboard.",
+      "Receive a pre-filled WhatsApp message with all customer details — ready for you to reply instantly.",
   },
 ];
 
 export function HowItWorks() {
   return (
-    <section id="how-it-works" className="bg-brand-bg py-20 sm:py-28">
-      <div className="mx-auto max-w-5xl px-4 sm:px-6">
-        <ScrollReveal className="mb-16 text-center">
-          <h2 className="mb-4 text-3xl font-bold tracking-tight text-brand-text sm:text-4xl">
-            How ZAQONE.FORM works
+    <section id="how-it-works" className="bg-white py-20 sm:py-28">
+      <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+        <motion.div
+          className="mb-16 text-center"
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-100px" }}
+          transition={{ duration: 0.5 }}
+        >
+          <h2 className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
+            How OneForm works
           </h2>
-          <p className="mx-auto max-w-2xl text-sm text-brand-muted">
-            Three simple steps to start collecting leads on WhatsApp
-          </p>
-        </ScrollReveal>
+        </motion.div>
 
-        <div className="mx-auto flex flex-col items-center justify-center gap-8 sm:flex-row sm:items-stretch">
+        <div className="grid gap-8 md:grid-cols-3">
           {steps.map((step, index) => (
-            <ScrollReveal key={step.number} delay={index * 0.1}>
-              <div className="mx-auto flex h-full w-full flex-col max-w-[320px] rounded-2xl border border-brand-border bg-white p-7 shadow-card transition-all duration-300 hover:-translate-y-1 hover:shadow-card-lg sm:w-72">
-                <span className="block text-2xl font-bold text-whatsapp/20">
+            <motion.div
+              key={step.number}
+              className="relative"
+              initial={{ opacity: 0, y: 24 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-80px" }}
+              transition={{ duration: 0.5, delay: index * 0.12 }}
+            >
+              {/* Connector line */}
+              {index < steps.length - 1 && (
+                <div className="absolute top-12 left-full hidden h-0.5 w-full -translate-x-1/2 bg-gray-200 md:block" />
+              )}
+              <div className="flex flex-col items-center text-center">
+                <div className="mb-6 flex h-24 w-24 items-center justify-center rounded-2xl bg-gradient-to-br from-whatsapp/10 to-green-50 text-whatsapp shadow-sm">
+                  <step.icon className="h-10 w-10" strokeWidth={1.5} />
+                </div>
+                <span className="mb-3 block text-3xl font-extrabold text-gray-200">
                   {step.number}
                 </span>
-                <div className="mb-4 mt-3 flex h-10 w-10 items-center justify-center rounded-xl bg-whatsapp/10 text-whatsapp">
-                  <step.icon className="h-4.5 w-4.5" strokeWidth={1.75} />
-                </div>
-                <h3 className="mb-2 text-[17px] font-semibold text-brand-text">
+                <h3 className="mb-3 text-lg font-semibold text-gray-900">
                   {step.title}
                 </h3>
-                <p className="text-sm leading-relaxed text-brand-muted">{step.description}</p>
+                <p className="max-w-xs text-sm leading-relaxed text-gray-500">
+                  {step.description}
+                </p>
               </div>
-            </ScrollReveal>
+            </motion.div>
           ))}
         </div>
       </div>

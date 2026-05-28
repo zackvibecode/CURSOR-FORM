@@ -160,7 +160,7 @@ function AuthForm({ mode }: { mode: "login" | "signup" }) {
         </h1>
         <p className="text-brand-muted">
           {mode === "login"
-            ? "Sign in to manage your ZAQONE.FORM dashboard"
+            ? "Sign in to manage your OneForm dashboard"
             : "Start collecting WhatsApp leads in minutes"}
         </p>
       </div>
