@@ -21,14 +21,15 @@ const SERVICES = [
 
 function buildDemoMessage(data: Record<string, string>) {
   return [
-    "Hi, I would like to submit my details:",
-    `Name: ${data.name}`,
-    `Phone: ${data.phone}`,
-    `Email: ${data.email}`,
-    `Service: ${data.service}`,
-    `Quantity: ${data.quantity}`,
-    `Preferred Date: ${data.date}`,
-    `Message: ${data.message}`,
+    "*New Lead — Demo Form*",
+    "",
+    `*Your name:* ${data.name}`,
+    `*Phone number:* ${data.phone}`,
+    `*Email address:* ${data.email}`,
+    `*Service:* ${data.service}`,
+    `*Quantity:* ${data.quantity}`,
+    `*Preferred Date:* ${data.date}`,
+    `*Message:* ${data.message}`,
   ].join("\n");
 }
 
