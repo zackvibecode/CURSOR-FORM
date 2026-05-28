@@ -19,7 +19,7 @@ const steps = [
   {
     number: "03",
     icon: Inbox,
-    title: "Receive submissions directly through WhatsApp and dashboard",
+    title: "Receive submissions via WhatsApp",
     description:
       "Get instant WhatsApp messages with customer details and track everything in your dashboard.",
   },
@@ -38,10 +38,10 @@ export function HowItWorks() {
           </p>
         </ScrollReveal>
 
-        <div className="mx-auto flex flex-col items-center justify-center gap-8 sm:flex-row sm:items-start">
+        <div className="mx-auto flex flex-col items-center justify-center gap-8 sm:flex-row sm:items-stretch">
           {steps.map((step, index) => (
             <ScrollReveal key={step.number} delay={index * 0.1}>
-              <div className="mx-auto w-full max-w-[320px] rounded-2xl border border-brand-border bg-white p-7 shadow-card transition-all duration-300 hover:-translate-y-1 hover:shadow-card-lg sm:w-72">
+              <div className="mx-auto flex h-full w-full flex-col max-w-[320px] rounded-2xl border border-brand-border bg-white p-7 shadow-card transition-all duration-300 hover:-translate-y-1 hover:shadow-card-lg sm:w-72">
                 <span className="block text-2xl font-bold text-whatsapp/20">
                   {step.number}
                 </span>
