@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
-import { SettingsContent } from "@/components/dashboard/SettingsForm";
+import { SettingsForm } from "@/components/dashboard/SettingsForm";
 
 export const dynamic = "force-dynamic";
 
@@ -23,10 +23,10 @@ export default async function SettingsPage() {
       <div>
         <h2 className="text-2xl font-bold text-brand-text">Settings</h2>
         <p className="text-brand-muted">
-          View your account info and learn where to configure form settings
+          Configure your business profile, WhatsApp integration, and notifications
         </p>
       </div>
-      <SettingsContent profile={profile} />
+      <SettingsForm profileEmail={profile?.email ?? user.email ?? ""} />
     </div>
   );
 }
