@@ -75,8 +75,8 @@ export function PublicFormView({
 
       const url = buildWhatsAppUrl(whatsappNumber, title, fields, values);
       window.location.href = url;
-    } catch {
-      setErrors({ _form: "Something went wrong. Please try again." });
+    } catch (err) {
+      setErrors({ _form: "Submission failed. Please try again." });
       setSubmitting(false);
     }
   };

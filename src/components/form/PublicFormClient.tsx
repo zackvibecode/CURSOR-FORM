@@ -38,11 +38,15 @@ export function PublicFormClient({ slug }: { slug: string }) {
 
   const handleSubmit = async (answers: Record<string, string>) => {
     if (!form) return;
-    await fetch(`/api/forms/${form.id}/submit`, {
+    const res = await fetch(`/api/forms/${form.id}/submit`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ data: answers }),
+      body: JSON.stringify(answers),
     });
+
+    if (!res.ok) {
+      throw new Error("Submission failed");
+    }
   };
 
   if (loading) {
