@@ -14,6 +14,7 @@ import { Textarea } from "@/components/ui/Textarea";
 import { getFormPublicUrl } from "@/lib/forms";
 import { slugify } from "@/lib/utils";
 import { toast } from "@/components/ui/Toast";
+import { TeamSettings } from "./TeamSettings";
 import {
   ArrowLeft,
   Eye,
@@ -24,6 +25,10 @@ import {
   Settings,
   Layout,
   AlertTriangle,
+  Bell,
+  Search,
+  Users,
+  Puzzle,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -41,7 +46,7 @@ interface FormBuilderProps {
 }
 
 export function FormBuilder({ formId, initialData }: FormBuilderProps) {
-  const [tab, setTab] = useState<"build" | "settings">("build");
+  const [tab, setTab] = useState<"build" | "general" | "team" | "notifications" | "seo" | "integrations">("build");
   const [title, setTitle] = useState(initialData.title);
   const [slug, setSlug] = useState(initialData.slug);
   const [whatsappNumber, setWhatsappNumber] = useState(initialData.whatsapp_number);
@@ -201,9 +206,9 @@ export function FormBuilder({ formId, initialData }: FormBuilderProps) {
           Build
         </button>
         <button
-          onClick={() => setTab("settings")}
+          onClick={() => setTab("general")}
           className={`flex items-center gap-2 border-b-2 px-4 py-3 text-sm font-semibold transition-colors ${
-            tab === "settings"
+            tab !== "build"
               ? "border-whatsapp text-whatsapp-deep"
               : "border-transparent text-brand-muted hover:text-brand-text"
           }`}
@@ -236,78 +241,104 @@ export function FormBuilder({ formId, initialData }: FormBuilderProps) {
           />
         </div>
       ) : (
-        <div className="flex-1 overflow-auto p-6">
-          <div className="mx-auto max-w-lg space-y-6">
-            <div>
-              <Label>WhatsApp Number *</Label>
-              <Input
-                value={whatsappNumber}
-                onChange={(e) => setWhatsappNumber(e.target.value)}
-                placeholder="+60123456789"
-              />
-              <p className="mt-1 text-xs text-brand-muted">
-                Include country code. Leads will be sent to this number.
-              </p>
-            </div>
+        <div className="flex flex-1 overflow-hidden">
+          {/* Settings Sidebar — Tally-style */}
+          <nav className="w-56 shrink-0 overflow-y-auto border-r border-brand-border bg-white p-3">
+            {[
+              { key: "general", label: "General", icon: Settings },
+              { key: "team", label: "Team", icon: Users },
+              { key: "notifications", label: "Notifications", icon: Bell },
+              { key: "seo", label: "SEO", icon: Search },
+              { key: "integrations", label: "Integrations", icon: Puzzle },
+            ].map((item) => (
+              <button
+                key={item.key}
+                onClick={() => setTab(item.key as typeof tab)}
+                className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
+                  tab === item.key
+                    ? "bg-whatsapp/10 text-whatsapp-deep"
+                    : "text-brand-muted hover:bg-gray-50 hover:text-brand-text"
+                }`}
+              >
+                <item.icon className="h-4 w-4" />
+                {item.label}
+              </button>
+            ))}
+          </nav>
 
-            <div>
-              <Label>Default WhatsApp Message Template</Label>
-              <Textarea
-                value={whatsappTemplate}
-                onChange={(e) => setWhatsappTemplate(e.target.value)}
-                className="min-h-[140px] font-mono text-sm"
-              />
-            </div>
-
-            <div>
-              <Label>Form URL Slug</Label>
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-gray-500">/f/</span>
-                <Input
-                  value={slug}
-                  onChange={(e) => setSlug(slugify(e.target.value))}
-                  placeholder="my-contact-form"
-                />
-              </div>
-            </div>
-
-            <div>
-              <Label>CTA Button Text</Label>
-              <Input
-                value={ctaText}
-                onChange={(e) => setCtaText(e.target.value)}
-                placeholder="Submit on WhatsApp"
-              />
-            </div>
-
-            <div>
-              <Label>Form Description</Label>
-              <Textarea
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder="Brief description shown on the public form"
-              />
-            </div>
-
-            {status === "published" && (
-              <div className="rounded-xl border border-whatsapp/20 bg-whatsapp/5 p-4">
-                <Label>Share Link</Label>
-                <div className="mt-2 flex gap-2">
-                  <Input
-                    readOnly
-                    value={getFormPublicUrl(slug)}
-                    className="text-sm"
-                  />
-                  <Button variant="outline" size="sm" onClick={handleCopyLink}>
-                    {copied ? (
-                      <Check className="h-4 w-4 text-whatsapp" />
-                    ) : (
-                      <Copy className="h-4 w-4" />
-                    )}
-                  </Button>
+          {/* Settings Content */}
+          <div className="flex-1 overflow-auto bg-brand-bg/50 p-6">
+            <div className="mx-auto max-w-2xl">
+              {tab === "general" && (
+                <div className="space-y-6">
+                  <div>
+                    <h3 className="text-lg font-semibold text-brand-text">General Settings</h3>
+                    <p className="mt-1 text-sm text-brand-muted">Configure your form{"'"}s basic settings.</p>
+                  </div>
+                  <div>
+                    <Label>WhatsApp Number *</Label>
+                    <Input
+                      value={whatsappNumber}
+                      onChange={(e) => setWhatsappNumber(e.target.value)}
+                      placeholder="+60123456789"
+                    />
+                    <p className="mt-1 text-xs text-brand-muted">Include country code. Leads will be sent to this number.</p>
+                  </div>
+                  <div>
+                    <Label>Form URL Slug</Label>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm text-gray-500">/f/</span>
+                      <Input
+                        value={slug}
+                        onChange={(e) => setSlug(slugify(e.target.value))}
+                        placeholder="my-contact-form"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <Label>CTA Button Text</Label>
+                    <Input
+                      value={ctaText}
+                      onChange={(e) => setCtaText(e.target.value)}
+                      placeholder="Submit on WhatsApp"
+                    />
+                  </div>
+                  <div>
+                    <Label>Form Description</Label>
+                    <Textarea
+                      value={description}
+                      onChange={(e) => setDescription(e.target.value)}
+                      placeholder="Brief description shown on the public form"
+                    />
+                  </div>
+                  <div className="flex justify-end">
+                    <Button variant="whatsapp" size="sm" onClick={() => handleSave(false)}>
+                      Save
+                    </Button>
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
+
+              {tab === "team" && <TeamSettings formId={formId} />}
+
+              {tab === "notifications" && (
+                <div className="flex items-center justify-center py-24">
+                  <p className="text-sm text-brand-muted">Coming soon</p>
+                </div>
+              )}
+
+              {tab === "seo" && (
+                <div className="flex items-center justify-center py-24">
+                  <p className="text-sm text-brand-muted">Coming soon</p>
+                </div>
+              )}
+
+              {tab === "integrations" && (
+                <div className="flex items-center justify-center py-24">
+                  <p className="text-sm text-brand-muted">Coming soon</p>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}
