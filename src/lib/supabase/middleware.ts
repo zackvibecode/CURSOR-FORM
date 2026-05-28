@@ -2,7 +2,21 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
 export async function updateSession(request: NextRequest) {
-  let supabaseResponse = NextResponse.next({ request });
+  const isDashboard = request.nextUrl.pathname.startsWith("/dashboard");
+  const isAuthCallback =
+    request.nextUrl.pathname.startsWith("/auth/callback") ||
+    request.nextUrl.pathname.startsWith("/auth/confirm") ||
+    request.nextUrl.pathname.startsWith("/auth/update-password");
+  const isAuthRoute =
+    request.nextUrl.pathname.startsWith("/login") ||
+    request.nextUrl.pathname.startsWith("/signup");
+
+  // Pure public pages — no auth needed at all
+  if (!isDashboard && !isAuthCallback && !isAuthRoute) {
+    return NextResponse.next();
+  }
+
+  const supabaseResponse = NextResponse.next({ request });
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -13,13 +27,14 @@ export async function updateSession(request: NextRequest) {
           return request.cookies.getAll();
         },
         setAll(cookiesToSet: { name: string; value: string; options?: Record<string, unknown> }[]) {
-          cookiesToSet.forEach(({ name, value }) =>
-            request.cookies.set(name, value)
-          );
-          supabaseResponse = NextResponse.next({ request });
-          cookiesToSet.forEach(({ name, value, options }) =>
-            supabaseResponse.cookies.set(name, value, options)
-          );
+          cookiesToSet.forEach(({ name, value, options }) => {
+            request.cookies.set(name, value);
+            supabaseResponse.cookies.set(name, value, {
+              domain: options?.domain as string | undefined,
+              path: options?.path as string | undefined,
+              maxAge: options?.maxAge as number | undefined,
+            });
+          });
         },
       },
     }
@@ -28,15 +43,6 @@ export async function updateSession(request: NextRequest) {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-
-  const isAuthRoute =
-    request.nextUrl.pathname.startsWith("/login") ||
-    request.nextUrl.pathname.startsWith("/signup");
-  const isDashboard = request.nextUrl.pathname.startsWith("/dashboard");
-  const isAuthCallback =
-    request.nextUrl.pathname.startsWith("/auth/callback") ||
-    request.nextUrl.pathname.startsWith("/auth/confirm") ||
-    request.nextUrl.pathname.startsWith("/auth/update-password");
 
   if (isAuthCallback) {
     return supabaseResponse;
