@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
 import { Label } from "@/components/ui/Label";
 import { cn } from "@/lib/utils";
+import { ChevronDown } from "lucide-react";
 
 interface DynamicFieldRendererProps {
   fields: FormField[];
@@ -52,45 +53,25 @@ export function DynamicFieldRenderer({
                 placeholder={field.placeholder}
                 disabled={preview}
               />
-            ) : field.type === "dropdown" ? (
-              <select
-                value={value}
-                onChange={(e) => onChange(field.id, e.target.value)}
-                disabled={preview}
-                className={cn(
-                  "w-full rounded-xl border border-gray-200 bg-white px-4 py-3 outline-none focus:border-whatsapp focus:ring-2 focus:ring-whatsapp/20",
-                  error && "border-brand-red"
-                )}
-              >
-                <option value="">Select an option</option>
-                {(field.options ?? []).map((opt) => (
-                  <option key={opt} value={opt}>
-                    {opt}
-                  </option>
-                ))}
-              </select>
-            ) : field.type === "multiple_choice" ? (
-              <div className="space-y-2">
-                {(field.options ?? []).map((opt) => (
-                  <label
-                    key={opt}
-                    className={cn(
-                      "flex cursor-pointer items-center gap-3 rounded-xl border border-gray-200 px-4 py-3 transition-colors hover:border-whatsapp",
-                      value === opt && "border-whatsapp bg-whatsapp/5"
-                    )}
-                  >
-                    <input
-                      type="radio"
-                      name={field.id}
-                      value={opt}
-                      checked={value === opt}
-                      onChange={(e) => onChange(field.id, e.target.value)}
-                      disabled={preview}
-                      className="accent-whatsapp"
-                    />
-                    {opt}
-                  </label>
-                ))}
+            ) : field.type === "dropdown" || field.type === "multiple_choice" ? (
+              <div className="relative">
+                <select
+                  value={value}
+                  onChange={(e) => onChange(field.id, e.target.value)}
+                  disabled={preview}
+                  className={cn(
+                    "w-full appearance-none rounded-xl border border-gray-200 bg-white px-4 py-3 pr-10 outline-none focus:border-whatsapp focus:ring-2 focus:ring-whatsapp/20",
+                    error && "border-brand-red"
+                  )}
+                >
+                  <option value="">Select an option</option>
+                  {(field.options ?? []).map((opt) => (
+                    <option key={opt} value={opt}>
+                      {opt}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
               </div>
             ) : field.type === "checkbox" ? (
               <div className="space-y-2">
