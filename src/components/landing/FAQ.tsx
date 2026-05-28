@@ -16,10 +16,10 @@ const faqs = [
   },
   {
     q: "How to Get Started",
-    a: "Simply signup using a Google account and create your form from any template. It's easier than you imagine.",
+    a: "Simply signup using a Google account and create OneForm from any template. It's easier than you imagine.",
   },
   {
-    q: "Is OneForm run by WhatsApp or Meta?",
+    q: "Is OneForm run by WhatsApp or Facebook team?",
     a: "No, OneForm is not affiliated with WhatsApp or Meta Inc. in any way. We are an independent product that operates using WhatsApp as a platform.",
   },
 ];

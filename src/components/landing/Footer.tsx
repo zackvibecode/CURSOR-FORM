@@ -27,7 +27,7 @@ export function Footer() {
             </p>
             <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
               <Link href="/signup">
-                <button className="inline-flex items-center gap-2 rounded-xl bg-whatsapp px-8 py-4 text-base font-bold text-white shadow-md transition-all hover:bg-[#20bd5a] hover:shadow-lg active:scale-[0.98]">
+                <button className="inline-flex items-center gap-2 rounded-xl bg-whatsapp px-8 py-4 text-base font-bold text-white shadow-md transition-all hover:bg-[#0DB849] hover:shadow-lg active:scale-[0.98]">
                   <WhatsAppIcon className="h-5 w-5" />
                   Create a free form
                 </button>

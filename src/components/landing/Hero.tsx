@@ -46,7 +46,7 @@ export function Hero() {
               <span className="relative inline-block">
                 effortlessly
                 <svg className="absolute -bottom-1 left-0 w-full" viewBox="0 0 200 8" fill="none">
-                  <path d="M0 4C50 0 100 8 200 4" stroke="#25D366" strokeWidth="3" strokeLinecap="round" opacity="0.4" />
+                  <path d="M0 4C50 0 100 8 200 4" stroke="#10D050" strokeWidth="3" strokeLinecap="round" opacity="0.4" />
                 </svg>
               </span>
             </h1>
@@ -70,7 +70,7 @@ export function Hero() {
                 />
               </div>
               <Link href="/signup" className="sm:w-auto">
-                <button className="flex w-full items-center justify-center gap-2 rounded-xl bg-whatsapp px-6 py-3.5 text-sm font-bold text-white shadow-md transition-all duration-200 hover:bg-[#20bd5a] hover:shadow-lg active:scale-[0.98] sm:w-auto">
+                <button className="flex w-full items-center justify-center gap-2 rounded-xl bg-whatsapp px-6 py-3.5 text-sm font-bold text-white shadow-md transition-all duration-200 hover:bg-[#0DB849] hover:shadow-lg active:scale-[0.98] sm:w-auto">
                   <WhatsAppIcon className="h-5 w-5" />
                   Create a Free Form
                 </button>
@@ -118,7 +118,7 @@ export function Hero() {
                   className="mt-8 w-56 shrink-0 rounded-2xl border border-gray-100 bg-white p-5 shadow-xl sm:w-60"
                 >
                   <div className="mb-4 border-b border-gray-100 pb-3 text-center">
-                    <span className="text-sm font-bold text-gray-800">WhatsApp Form</span>
+                    <span className="text-sm font-bold text-gray-800">OneForm</span>
                   </div>
                   <div className="space-y-3">
                     {[

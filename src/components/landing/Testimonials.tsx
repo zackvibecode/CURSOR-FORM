@@ -80,7 +80,7 @@ export function Testimonials() {
               transition={{ duration: 0.4, delay: index * 0.08 }}
             >
               <p className="mb-6 text-sm leading-relaxed text-gray-600">
-                &ldquo;{item.quote}&rdquo;
+                "{item.quote}"
               </p>
               <div className="flex items-center gap-3">
                 <div

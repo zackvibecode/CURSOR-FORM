@@ -10,10 +10,15 @@ const config: Config = {
     extend: {
       colors: {
         whatsapp: {
-          DEFAULT: "#25D366",
-          deep: "#075E54",
-          dark: "#128C7E",
-          light: "#DCF8C6",
+          DEFAULT: "#10D050",
+          deep: "#0B8A3D",
+          dark: "#0A7A36",
+          light: "#DCFCE7",
+        },
+        oneform: {
+          DEFAULT: "#10D050",
+          dark: "#0B8A3D",
+          light: "#E8FBEF",
         },
         brand: {
           text: "#111827",
@@ -33,7 +38,7 @@ const config: Config = {
       boxShadow: {
         card: "0 1px 3px rgba(0, 0, 0, 0.04), 0 8px 24px rgba(0, 0, 0, 0.06)",
         "card-lg": "0 4px 12px rgba(0, 0, 0, 0.05), 0 16px 48px rgba(0, 0, 0, 0.08)",
-        soft: "0 2px 8px rgba(37, 211, 102, 0.12)",
+        soft: "0 2px 8px rgba(16, 208, 80, 0.12)",
       },
       animation: {
         "fade-in": "fadeIn 0.6s ease-out forwards",
@@ -50,8 +55,8 @@ const config: Config = {
           "50%": { transform: "translateY(-10px)" },
         },
         pulseSoft: {
-          "0%, 100%": { boxShadow: "0 4px 16px rgba(37, 211, 102, 0.25)" },
-          "50%": { boxShadow: "0 4px 24px rgba(37, 211, 102, 0.45)" },
+          "0%, 100%": { boxShadow: "0 4px 16px rgba(16, 208, 80, 0.25)" },
+          "50%": { boxShadow: "0 4px 24px rgba(16, 208, 80, 0.45)" },
         },
       },
     },

@@ -1,10 +1,10 @@
 "use client";
 
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/Button";
-import { MessageCircle, LogOut, Plus, Loader2 } from "lucide-react";
+import { BrandLogo } from "@/components/ui/BrandLogo";
+import { LogOut, Plus, Loader2 } from "lucide-react";
 import { useState } from "react";
 
 interface DashboardHeaderProps {
@@ -24,12 +24,7 @@ export function DashboardHeader({ userName }: DashboardHeaderProps) {
   return (
     <header className="border-b border-gray-100 bg-white">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
-        <Link href="/dashboard" className="flex items-center gap-2 font-bold text-xl">
-          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-whatsapp text-white">
-            <MessageCircle className="h-5 w-5" />
-          </span>
-          WhatsLead
-        </Link>
+        <BrandLogo size="md" />
 
         <div className="flex items-center gap-4">
           {userName && (

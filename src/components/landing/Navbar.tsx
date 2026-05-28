@@ -82,7 +82,7 @@ export function Navbar() {
               Login
             </Link>
             <Link href="/signup">
-              <button className="ml-2 inline-flex items-center gap-1.5 rounded-xl bg-whatsapp px-4 py-2 text-sm font-semibold text-white shadow-sm transition-all hover:bg-[#20bd5a] hover:shadow-md">
+              <button className="ml-2 inline-flex items-center gap-1.5 rounded-xl bg-whatsapp px-4 py-2 text-sm font-semibold text-white shadow-sm transition-all hover:bg-[#0DB849] hover:shadow-md">
                 Create a free form
               </button>
             </Link>

@@ -14,7 +14,7 @@ function buildPath(data: number[], width: number, height: number, max: number) {
 function TrendChart({
   title,
   data,
-  color = "#25D366",
+  color = "#10D050",
 }: {
   title: string;
   data: number[];

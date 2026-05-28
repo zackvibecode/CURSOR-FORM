@@ -26,7 +26,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         className={cn(
           "inline-flex items-center justify-center gap-2 rounded-xl font-semibold transition-all duration-150 disabled:cursor-not-allowed disabled:opacity-50",
           {
-            "bg-whatsapp text-white shadow-md hover:bg-[#20bd5a] hover:shadow-lg":
+            "bg-whatsapp text-white shadow-md hover:bg-[#0DB849] hover:shadow-lg":
               variant === "primary" || variant === "whatsapp",
             "bg-white text-brand-text shadow-sm hover:bg-gray-50":
               variant === "secondary",

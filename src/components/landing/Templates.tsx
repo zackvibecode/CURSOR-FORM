@@ -97,7 +97,7 @@ export function Templates() {
               </p>
               <div className="flex gap-2">
                 <Link href={`/signup?template=${template.id}`} className="flex-1">
-                  <button className="w-full rounded-xl bg-whatsapp py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-[#20bd5a] active:scale-[0.98]">
+                  <button className="w-full rounded-xl bg-whatsapp py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-[#0DB849] active:scale-[0.98]">
                     Create {template.title.split(" ")[0]} Form
                   </button>
                 </Link>

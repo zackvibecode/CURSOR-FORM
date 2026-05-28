@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { Sparkles, Globe, Repeat, ArrowRight } from "lucide-react";
@@ -53,7 +54,7 @@ export function AIFeatures() {
                   <span>AI Form Builder</span>
                 </div>
                 <p className="mt-2 text-sm text-gray-700">
-                  &ldquo;I run a cake shop and want to collect orders with pastry type, delivery address, and phone number.&rdquo;
+                  "I run a cake shop and want to collect orders with pastry type, delivery address, and phone number."
                 </p>
               </div>
 
@@ -67,9 +68,7 @@ export function AIFeatures() {
               {/* Generated form preview */}
               <div className="rounded-xl border border-whatsapp/20 bg-white p-4 shadow-sm">
                 <div className="mb-3 flex items-center gap-2 text-sm font-medium text-whatsapp-deep">
-                  <div className="flex h-5 w-5 items-center justify-center rounded-full bg-whatsapp/10 text-xs font-bold text-whatsapp">
-                    Z
-                  </div>
+                  <Image src="/oneform-icon.svg" alt="" width={20} height={20} className="h-5 w-5" />
                   Generated Form
                 </div>
                 <div className="space-y-2.5">
@@ -86,7 +85,7 @@ export function AIFeatures() {
 
               <div className="mt-6 text-center">
                 <Link href="/signup">
-                  <button className="inline-flex items-center gap-2 rounded-xl bg-whatsapp px-6 py-3 text-sm font-semibold text-white shadow-md transition-all hover:bg-[#20bd5a] hover:shadow-lg active:scale-[0.98]">
+                  <button className="inline-flex items-center gap-2 rounded-xl bg-whatsapp px-6 py-3 text-sm font-semibold text-white shadow-md transition-all hover:bg-[#0DB849] hover:shadow-lg active:scale-[0.98]">
                     <Sparkles className="h-4 w-4" />
                     Generate Form
                   </button>

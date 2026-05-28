@@ -24,7 +24,7 @@ const DEFAULT_SETTINGS: UserSettings = {
   whatsapp_number: "",
   default_message:
     "Hi, I would like to submit my details:\nName:\nPhone:\nEmail:\nService:\nQuantity:\nPreferred Date:\nMessage:",
-  theme_color: "#25D366",
+  theme_color: "#10D050",
   redirect_after_submit: "",
   email_notifications: true,
   whatsapp_notifications: true,
@@ -151,7 +151,7 @@ export function SettingsForm({ profileEmail }: { profileEmail: string }) {
               <input
                 id="themeColor"
                 type="color"
-                value={settings.theme_color ?? "#25D366"}
+                value={settings.theme_color ?? "#10D050"}
                 onChange={(e) =>
                   setSettings((s) => ({ ...s, theme_color: e.target.value }))
                 }
