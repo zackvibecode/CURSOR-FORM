@@ -90,7 +90,6 @@ export function DashboardSidebar({ open, onClose }: DashboardSidebarProps) {
 
         <div className="border-t border-brand-border p-4">
           <p className="text-xs text-brand-muted">OneForm</p>
-          <p className="text-xs font-medium text-whatsapp-deep">oneform.app</p>
         </div>
       </aside>
     </>

@@ -4,12 +4,10 @@ import { cn } from "@/lib/utils";
 
 export function BrandLogo({
   className,
-  showDomain = false,
   iconOnly = false,
   size = "md",
 }: {
   className?: string;
-  showDomain?: boolean;
   iconOnly?: boolean;
   size?: "sm" | "md" | "lg";
 }) {
@@ -20,30 +18,25 @@ export function BrandLogo({
   };
 
   return (
-    <Link href="/" className={cn("group inline-flex flex-col items-start gap-0.5", className)}>
-      <span className="inline-flex items-center">
-        {iconOnly ? (
-          <Image
-            src="/favicon.png"
-            alt="OneForm"
-            width={36}
-            height={36}
-            className={cn("w-auto", heights[size])}
-            priority
-          />
-        ) : (
-          <Image
-            src="/oneform-logo.png"
-            alt="OneForm"
-            width={220}
-            height={56}
-            className={cn("w-auto", heights[size])}
-            priority
-          />
-        )}
-      </span>
-      {showDomain && (
-        <span className="pl-0.5 text-[11px] font-medium text-brand-muted">oneform.app</span>
+    <Link href="/" className={cn("group inline-flex items-center", className)}>
+      {iconOnly ? (
+        <Image
+          src="/favicon.png"
+          alt="OneForm"
+          width={36}
+          height={36}
+          className={cn("w-auto", heights[size])}
+          priority
+        />
+      ) : (
+        <Image
+          src="/oneform-logo.png"
+          alt="OneForm"
+          width={220}
+          height={56}
+          className={cn("w-auto", heights[size])}
+          priority
+        />
       )}
     </Link>
   );

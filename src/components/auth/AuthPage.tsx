@@ -153,7 +153,7 @@ function AuthForm({ mode }: { mode: "login" | "signup" }) {
     <div className="w-full max-w-md">
       <div className="mb-8 text-center">
         <div className="mb-6 flex justify-center">
-          <BrandLogo showDomain />
+          <BrandLogo />
         </div>
         <h1 className="mb-2 text-2xl font-bold text-brand-text">
           {mode === "login" ? "Welcome back" : "Create your account"}

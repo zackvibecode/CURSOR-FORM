@@ -41,7 +41,7 @@ export function Footer() {
       <footer className="border-t border-gray-200 bg-white py-12">
         <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col items-start justify-between gap-8 sm:flex-row sm:items-center">
-            <BrandLogo showDomain />
+            <BrandLogo />
             <nav className="flex flex-wrap gap-6 text-sm text-gray-500">
               <Link href="/demo" className="transition-colors hover:text-whatsapp-deep">
                 Demo

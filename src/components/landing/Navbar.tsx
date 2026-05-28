@@ -18,7 +18,7 @@ export function Navbar() {
     <header className="fixed top-4 left-4 right-4 z-50 lg:left-6 lg:right-6">
       <div className="mx-auto max-w-7xl">
         <div className="flex h-[64px] items-center justify-between rounded-2xl border border-gray-200/80 bg-white/80 px-4 shadow-sm backdrop-blur-xl sm:px-6">
-          <BrandLogo showDomain />
+          <BrandLogo />
 
           <nav className="hidden items-center gap-1 md:flex">
             <a

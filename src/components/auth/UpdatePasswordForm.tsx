@@ -38,7 +38,7 @@ export function UpdatePasswordForm() {
     <div className="w-full max-w-md">
       <div className="mb-8 text-center">
         <div className="mb-6 flex justify-center">
-          <BrandLogo showDomain />
+          <BrandLogo />
         </div>
         <h1 className="mb-2 text-2xl font-bold text-brand-text">Set your password</h1>
         <p className="text-brand-muted">Choose a password to finish setting up your account.</p>
