@@ -4,7 +4,7 @@ import { StatCard } from "@/components/ui/StatCard";
 import { SubmissionsTable } from "@/components/dashboard/SubmissionsTable";
 import { CreateFormButton } from "@/components/dashboard/DashboardHeader";
 import { computeDashboardStats, mapSubmissionsToRows } from "@/lib/dashboard-stats";
-import { FileText, Inbox, MousePointerClick, TrendingUp } from "lucide-react";
+import { FileText, Inbox } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -38,16 +38,13 @@ export default async function DashboardOverviewPage() {
     submissions = mapSubmissionsToRows(rawSubmissions ?? [], forms ?? [], fields ?? []);
   }
 
-  const stats = computeDashboardStats(
-    forms ?? [],
-    submissions.map((s) => ({
-      id: s.id,
-      form_id: "",
-      data: {},
-      submitted_at: s.date,
-      ip_hash: null,
-    }))
-  );
+  const stats = computeDashboardStats(forms ?? [], submissions.map((s) => ({
+    id: s.id,
+    form_id: "",
+    data: {},
+    submitted_at: s.date,
+    ip_hash: null,
+  })));
 
   return (
     <div className="mx-auto max-w-7xl space-y-8">
@@ -62,13 +59,6 @@ export default async function DashboardOverviewPage() {
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard title="Total Forms" value={stats.totalForms} icon={FileText} />
         <StatCard title="Total Submissions" value={stats.totalSubmissions} icon={Inbox} />
-        <StatCard title="WhatsApp Clicks" value={stats.whatsappClicks} icon={MousePointerClick} />
-        <StatCard
-          title="Conversion Rate"
-          value={stats.conversionRate}
-          icon={TrendingUp}
-          change="Based on form submissions"
-        />
       </div>
 
       <div>

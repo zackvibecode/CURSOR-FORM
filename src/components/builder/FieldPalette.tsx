@@ -8,7 +8,10 @@ import {
   Phone,
   ChevronDown,
   Calendar,
-  MousePointerClick,
+  Hash,
+  CheckSquare,
+  ListChecks,
+  Heading,
   type LucideIcon,
 } from "lucide-react";
 
@@ -16,9 +19,13 @@ const BUILDER_FIELDS: { type: FieldType; label: string; icon: LucideIcon }[] = [
   { type: "text", label: "Text Input", icon: Type },
   { type: "phone", label: "Phone Input", icon: Phone },
   { type: "email", label: "Email Input", icon: Mail },
+  { type: "number", label: "Number Input", icon: Hash },
   { type: "dropdown", label: "Dropdown", icon: ChevronDown },
-  { type: "date", label: "Date Picker", icon: Calendar },
+  { type: "multiple_choice", label: "Multiple Choice", icon: ListChecks },
+  { type: "checkbox", label: "Checkbox", icon: CheckSquare },
   { type: "textarea", label: "Textarea", icon: AlignLeft },
+  { type: "date", label: "Date Picker", icon: Calendar },
+  { type: "title", label: "Title / Heading", icon: Heading },
 ];
 
 interface FieldPaletteProps {
@@ -42,14 +49,6 @@ export function FieldPalette({ onAddField }: FieldPaletteProps) {
             {label}
           </button>
         ))}
-
-        <button
-          onClick={() => onAddField("text")}
-          className="mt-4 flex w-full items-center gap-3 rounded-xl border border-dashed border-whatsapp/40 bg-whatsapp/5 px-3 py-2.5 text-left text-sm font-medium text-whatsapp-deep transition-all hover:bg-whatsapp/10"
-        >
-          <MousePointerClick className="h-4 w-4" strokeWidth={1.75} />
-          Submit Button
-        </button>
       </div>
     </aside>
   );

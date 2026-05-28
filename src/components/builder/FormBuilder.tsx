@@ -79,33 +79,39 @@ export function FormBuilder({ formId, initialData }: FormBuilderProps) {
       setSaving(true);
       setMessage("");
 
-      const res = await fetch(`/api/forms/${formId}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          title,
-          slug: slugify(slug) || slug,
-          whatsapp_number: whatsappNumber,
-          cta_text: ctaText,
-          description,
-          status: publish ? "published" : status,
-          fields,
-        }),
-      });
+      try {
+        const res = await fetch(`/api/forms/${formId}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            title,
+            slug: slugify(slug) || slug,
+            whatsapp_number: whatsappNumber,
+            cta_text: ctaText,
+            description,
+            status: publish ? "published" : status,
+            fields,
+          }),
+        });
 
-      const data = await res.json();
+        const data = await res.json();
 
-      if (!res.ok) {
-        setMessage(data.error ?? "Failed to save");
-        toast(data.error ?? "Failed to save", "error");
+        if (!res.ok) {
+          setMessage(data.error ?? "Failed to save");
+          toast(data.error ?? "Failed to save", "error");
+          setSaving(false);
+          return;
+        }
+
+        if (publish) setStatus("published");
+        toast(publish ? "Form published!" : "Saved successfully", "success");
         setSaving(false);
-        return;
+        setTimeout(() => setMessage(""), 3000);
+      } catch {
+        setMessage("Network error. Please check your connection and try again.");
+        toast("Network error. Please try again.", "error");
+        setSaving(false);
       }
-
-      if (publish) setStatus("published");
-      toast(publish ? "Form published!" : "Saved successfully", "success");
-      setSaving(false);
-      setTimeout(() => setMessage(""), 3000);
     },
     [formId, title, slug, whatsappNumber, ctaText, description, status, fields]
   );

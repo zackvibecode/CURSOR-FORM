@@ -1,11 +1,5 @@
 import type { DbForm, DbSubmission } from "@/lib/database.types";
-import type { SubmissionRow, SubmissionStatus } from "@/components/dashboard/SubmissionsTable";
-
-const STATUS_CYCLE: SubmissionStatus[] = ["new", "contacted", "converted", "pending"];
-
-function pickStatus(index: number): SubmissionStatus {
-  return STATUS_CYCLE[index % STATUS_CYCLE.length];
-}
+import type { SubmissionRow } from "@/components/dashboard/SubmissionsTable";
 
 // Map form_fields to look up human-readable labels by field ID
 function buildFieldMap(fields: { id: string; label: string; type: string }[]) {
@@ -26,17 +20,6 @@ function extractByLabel(
     const matches = keywords.some((kw) => label.toLowerCase().includes(kw.toLowerCase()));
     if (matches && fieldId in data) {
       const val = data[fieldId];
-      if (typeof val === "string" && val.trim()) return val.trim();
-    }
-  }
-  return "—";
-}
-
-// Fallback: try to find any field whose key contains the keyword
-function extractByFallback(data: Record<string, unknown>, keywords: string[]): string {
-  for (const key of Object.keys(data)) {
-    if (keywords.some((kw) => key.toLowerCase().includes(kw))) {
-      const val = data[key];
       if (typeof val === "string" && val.trim()) return val.trim();
     }
   }
@@ -69,7 +52,7 @@ export function mapSubmissionsToRows(
     formFields.get(f.form_id)!.set(f.id, { label: f.label, type: f.type });
   }
 
-  return submissions.map((sub, index) => {
+  return submissions.map((sub) => {
     const data = (sub.data ?? {}) as Record<string, unknown>;
     const fieldMap = formFields.get(sub.form_id);
 
@@ -84,7 +67,6 @@ export function mapSubmissionsToRows(
         debugInfo = getAvailableKeys(data);
       }
     } else {
-      // No fields found — show available keys for debugging
       name = "—";
       phone = "—";
       debugInfo = getAvailableKeys(data);
@@ -95,7 +77,7 @@ export function mapSubmissionsToRows(
       name,
       phone,
       formName: sub.forms?.title ?? formMap.get(sub.form_id) ?? "Unknown Form",
-      status: pickStatus(index),
+      status: "new" as const,
       date: sub.submitted_at,
       debugInfo,
     };
@@ -108,17 +90,10 @@ export function computeDashboardStats(
 ) {
   const totalForms = forms.length;
   const totalSubmissions = submissions.length;
-  const whatsappClicks = Math.round(totalSubmissions * 1.35);
-  const conversionRate =
-    totalSubmissions > 0
-      ? `${Math.min(98, Math.round((totalSubmissions / Math.max(whatsappClicks, 1)) * 100))}%`
-      : "0%";
 
   return {
     totalForms,
     totalSubmissions,
-    whatsappClicks,
-    conversionRate,
   };
 }
 

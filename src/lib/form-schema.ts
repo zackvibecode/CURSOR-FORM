@@ -13,6 +13,7 @@ export const FIELD_TYPES = [
   "date",
 ] as const;
 
+export const FORM_FIELD_TYPES = FIELD_TYPES;
 export type FieldType = (typeof FIELD_TYPES)[number];
 
 export const formFieldSchema = z.object({
@@ -108,6 +109,14 @@ export function buildAnswersSchema(fields: FormField[]) {
       schema = z.string().regex(/^\d+(\.\d+)?$/, "Enter a valid number");
     } else if (field.type === "checkbox") {
       schema = z.string().optional();
+    } else if (field.type === "dropdown" && field.options && field.options.length > 0) {
+      schema = z.enum(field.options as [string, ...string[]], {
+        errorMap: () => ({ message: `Please select a valid option` }),
+      });
+    } else if (field.type === "multiple_choice" && field.options && field.options.length > 0) {
+      schema = z.string().refine((val) => field.options!.includes(val), {
+        message: `Please select a valid option`,
+      });
     }
 
     if (!field.required) {

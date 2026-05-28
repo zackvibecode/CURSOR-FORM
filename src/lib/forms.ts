@@ -1,15 +1,24 @@
 import type { DbForm, DbFormField } from "./database.types";
-import type { FormField } from "./form-schema";
+import type { FormField, FieldType } from "./form-schema";
+import { FIELD_TYPES } from "./form-schema";
+
+const VALID_FIELD_TYPES = new Set(FIELD_TYPES);
 
 export function mapDbFieldToFormField(row: DbFormField): FormField {
+  const validatedType: FieldType = VALID_FIELD_TYPES.has(row.type as FieldType)
+    ? (row.type as FieldType)
+    : "text";
+
   return {
     id: row.id,
-    type: row.type as FormField["type"],
+    type: validatedType,
     label: row.label,
     placeholder: row.placeholder ?? undefined,
     required: row.required,
     options: Array.isArray(row.options) ? (row.options as string[]) : [],
-    settings: (row.settings as FormField["settings"]) ?? undefined,
+    settings: typeof row.settings === "object" && row.settings !== null && !Array.isArray(row.settings)
+      ? (row.settings as FormField["settings"])
+      : undefined,
   };
 }
 

@@ -1,8 +1,5 @@
 "use client";
 
-const submissionTrend = [12, 18, 15, 24, 20, 32, 28, 35, 30, 42, 38, 45];
-const clickTrend = [28, 35, 32, 40, 38, 52, 48, 55, 50, 62, 58, 68];
-
 function buildPath(data: number[], width: number, height: number, max: number) {
   const step = width / (data.length - 1);
   return data
@@ -23,6 +20,17 @@ function TrendChart({
   data: number[];
   color?: string;
 }) {
+  if (data.length === 0) {
+    return (
+      <div className="rounded-2xl border border-brand-border bg-white p-6 shadow-card">
+        <h3 className="mb-6 text-sm font-semibold text-brand-text">{title}</h3>
+        <div className="flex h-32 items-center justify-center text-sm text-brand-muted">
+          Not enough data to display trends.
+        </div>
+      </div>
+    );
+  }
+
   const width = 400;
   const height = 120;
   const max = Math.max(...data) * 1.1;
@@ -44,20 +52,18 @@ function TrendChart({
         />
         <path d={path} fill="none" stroke={color} strokeWidth="2.5" strokeLinecap="round" />
       </svg>
-      <div className="mt-4 flex justify-between text-xs text-brand-muted">
-        <span>Jan</span>
-        <span>Jun</span>
-        <span>Dec</span>
-      </div>
     </div>
   );
 }
 
-export function AnalyticsCharts() {
+export function AnalyticsCharts({
+  submissionsPerDay,
+}: {
+  submissionsPerDay: number[];
+}) {
   return (
     <div className="grid gap-6 lg:grid-cols-2">
-      <TrendChart title="Submission Trend" data={submissionTrend} />
-      <TrendChart title="WhatsApp Click Trend" data={clickTrend} color="#075E54" />
+      <TrendChart title="Submission Trend" data={submissionsPerDay} />
     </div>
   );
 }

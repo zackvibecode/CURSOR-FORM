@@ -21,33 +21,19 @@ export async function findUserIdByEmail(email: string) {
   if (!admin) return null;
 
   const normalizedEmail = email.trim().toLowerCase();
-  let page = 1;
+  const { data, error } = await admin.auth.admin.listUsers({
+    page: 1,
+    perPage: 200,
+  });
 
-  while (page <= 10) {
-    const { data, error } = await admin.auth.admin.listUsers({
-      page,
-      perPage: 200,
-    });
-
-    if (error || !data.users.length) {
-      return null;
-    }
-
-    const match = data.users.find(
-      (user) => user.email?.toLowerCase() === normalizedEmail
-    );
-    if (match) {
-      return match.id;
-    }
-
-    if (data.users.length < 200) {
-      return null;
-    }
-
-    page += 1;
+  if (error || !data.users.length) {
+    return null;
   }
 
-  return null;
+  const match = data.users.find(
+    (user) => user.email?.toLowerCase() === normalizedEmail
+  );
+  return match?.id ?? null;
 }
 
 export async function setUserPassword(userId: string, password: string) {

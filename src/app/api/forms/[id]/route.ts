@@ -95,12 +95,27 @@ export async function PUT(
     return NextResponse.json({ error: error?.message ?? "Update failed" }, { status: 500 });
   }
 
-  // Update fields with rollback on failure
+  // Update fields safely: insert new fields first, then delete old ones
   if (Array.isArray(fields)) {
-    await supabase.from("form_fields").delete().eq("form_id", id);
+    // Step 1: Fetch current field IDs so we know what to delete later
+    const { data: currentFields } = await supabase
+      .from("form_fields")
+      .select("id")
+      .eq("form_id", id);
 
-    if (fields.length > 0) {
-      const fieldRows = fields.map(
+    const oldFieldIds = new Set(
+      (currentFields ?? []).map((f: { id: string }) => f.id)
+    );
+
+    // Step 2: Collect incoming IDs (fields being kept/updated)
+    const incomingIds = new Set(
+      fields.map((f) => f.id).filter(Boolean) as string[]
+    );
+
+    // Step 3: Insert new fields (those without existing IDs)
+    const fieldsToInsert = fields
+      .filter((f) => !f.id || !oldFieldIds.has(f.id))
+      .map(
         (
           f: {
             id?: string;
@@ -113,7 +128,6 @@ export async function PUT(
           },
           index: number
         ) => ({
-          id: f.id,
           form_id: id,
           type: f.type,
           label: f.label,
@@ -125,15 +139,42 @@ export async function PUT(
         })
       );
 
-      const { error: fieldsError } = await supabase.from("form_fields").insert(fieldRows);
+    if (fieldsToInsert.length > 0) {
+      const { error: insertError } = await supabase
+        .from("form_fields")
+        .insert(fieldsToInsert);
 
-      if (fieldsError) {
-        // Rollback: delete the form update to maintain consistency
+      if (insertError) {
         return NextResponse.json(
-          { error: "Failed to update fields. Please try again." },
+          { error: "Failed to save fields. Please try again." },
           { status: 500 }
         );
       }
+    }
+
+    // Step 4: Update existing fields (those with IDs that still exist)
+    for (const f of fields) {
+      if (f.id && oldFieldIds.has(f.id)) {
+        const index = fields.findIndex((x) => x.id === f.id);
+        await supabase
+          .from("form_fields")
+          .update({
+            type: f.type,
+            label: f.label,
+            placeholder: f.placeholder ?? "",
+            required: f.required ?? false,
+            options: f.options ?? [],
+            order_index: index,
+            settings: f.settings ?? {},
+          })
+          .eq("id", f.id);
+      }
+    }
+
+    // Step 5: Delete old fields that are no longer referenced
+    const idsToDelete = Array.from(oldFieldIds).filter((oldId) => !incomingIds.has(oldId));
+    if (idsToDelete.length > 0) {
+      await supabase.from("form_fields").delete().in("id", idsToDelete);
     }
   }
 

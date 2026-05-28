@@ -2,7 +2,6 @@
 
 import { Badge } from "@/components/ui/Badge";
 import { formatDate } from "@/lib/utils";
-import { Eye, MoreHorizontal } from "lucide-react";
 import { useState } from "react";
 
 export type SubmissionStatus = "new" | "contacted" | "converted" | "pending";
@@ -39,7 +38,7 @@ export function SubmissionsTable({ submissions, compact = false }: SubmissionsTa
         <table className="w-full min-w-[640px] text-left text-sm">
           <thead>
             <tr className="border-b border-brand-border bg-brand-bg/50">
-              {["Name", "Phone", "Form Name", "Status", "Date", "Action"].map((col) => (
+              {["Name", "Phone", "Form Name", "Status", "Date"].map((col) => (
                 <th
                   key={col}
                   className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-brand-muted sm:px-6"
@@ -86,14 +85,6 @@ export function SubmissionsTable({ submissions, compact = false }: SubmissionsTa
                   </td>
                   <td className="px-4 py-4 text-brand-muted sm:px-6">
                     {formatDate(row.date)}
-                  </td>
-                  <td className="px-4 py-4 sm:px-6">
-                    <button
-                      className="rounded-lg p-2 text-brand-muted transition-colors hover:bg-gray-100 hover:text-whatsapp-deep"
-                      aria-label="View submission"
-                    >
-                      {compact ? <Eye className="h-4 w-4" /> : <MoreHorizontal className="h-4 w-4" />}
-                    </button>
                   </td>
                 </tr>
               );

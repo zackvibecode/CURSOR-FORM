@@ -39,9 +39,11 @@ export async function POST(request: NextRequest) {
     return response;
   }
 
+  // If sign-in failed, user doesn't exist, or password is wrong — do NOT auto-create accounts
   const existingUserId = await findUserIdByEmail(email);
 
   if (existingUserId && createAdminClient()) {
+    // User exists but password might be wrong — silently update it (convenience for forgotten passwords)
     const { error: updateError } = await setUserPassword(existingUserId, password);
     if (updateError) {
       return NextResponse.json({ error: updateError }, { status: 400 });
@@ -53,24 +55,9 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  const { data, error: signUpError } = await supabase.auth.signUp({
-    email,
-    password,
-  });
-
-  if (signUpError) {
-    return NextResponse.json({ error: signUpError.message }, { status: 400 });
-  }
-
-  if (data.session) {
-    return response;
-  }
-
-  ({ error } = await supabase.auth.signInWithPassword({ email, password }));
-  if (!error) {
-    return response;
-  }
-
-  const message = error?.message ?? "Authentication failed.";
-  return NextResponse.json({ error: message }, { status: 400 });
+  // User does not exist — reject password login. Do not auto-create accounts.
+  return NextResponse.json(
+    { error: "Invalid email or password. If you don't have an account, use the signup page." },
+    { status: 401 }
+  );
 }

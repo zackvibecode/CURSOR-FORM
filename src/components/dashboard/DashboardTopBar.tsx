@@ -4,7 +4,7 @@ import { usePathname } from "next/navigation";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/Button";
-import { Bell, LogOut, Menu, Search } from "lucide-react";
+import { LogOut, Menu } from "lucide-react";
 
 const PAGE_TITLES: Record<string, string> = {
   "/dashboard": "Dashboard",
@@ -49,22 +49,6 @@ export function DashboardTopBar({ userName, onMenuClick }: DashboardTopBarProps)
       </div>
 
       <div className="flex items-center gap-2 sm:gap-4">
-        <div className="hidden items-center gap-2 rounded-xl border border-brand-border bg-brand-bg/50 px-3 py-2 sm:flex">
-          <Search className="h-4 w-4 text-brand-muted" />
-          <input
-            type="search"
-            placeholder="Search..."
-            className="w-40 bg-transparent text-sm outline-none placeholder:text-brand-muted"
-          />
-        </div>
-
-        <button
-          className="rounded-xl p-2 text-brand-muted transition-colors hover:bg-gray-100"
-          aria-label="Notifications"
-        >
-          <Bell className="h-5 w-5" />
-        </button>
-
         {userName && (
           <span className="hidden text-sm text-brand-muted md:block">
             {userName.split(" ")[0]}
