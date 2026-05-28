@@ -102,6 +102,7 @@ export function buildAnswersSchema(fields: FormField[]) {
     if (field.type === "title") return;
 
     let schema: z.ZodTypeAny = z.string();
+    let isOptionsField = false;
 
     if (field.type === "email") {
       schema = z.string().email("Enter a valid email");
@@ -110,10 +111,12 @@ export function buildAnswersSchema(fields: FormField[]) {
     } else if (field.type === "checkbox") {
       schema = z.string().optional();
     } else if (field.type === "dropdown" && field.options && field.options.length > 0) {
+      isOptionsField = true;
       schema = z.enum(field.options as [string, ...string[]], {
         errorMap: () => ({ message: `Please select a valid option` }),
       });
     } else if (field.type === "multiple_choice" && field.options && field.options.length > 0) {
+      isOptionsField = true;
       schema = z.string().refine((val) => field.options!.includes(val), {
         message: `Please select a valid option`,
       });
@@ -122,7 +125,13 @@ export function buildAnswersSchema(fields: FormField[]) {
     if (!field.required) {
       schema = schema.optional();
     } else if (field.type !== "checkbox") {
-      schema = (schema as z.ZodString).min(1, `${field.label} is required`);
+      if (isOptionsField) {
+        schema = schema.refine((val) => val && val.trim().length > 0, {
+          message: `${field.label} is required`,
+        });
+      } else {
+        schema = (schema as z.ZodString).min(1, `${field.label} is required`);
+      }
     }
 
     shape[field.id] = schema;
