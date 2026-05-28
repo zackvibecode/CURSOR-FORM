@@ -24,7 +24,7 @@ export function BrandLogo({
       <span className="inline-flex items-center">
         {iconOnly ? (
           <Image
-            src="/oneform-icon.svg"
+            src="/favicon.png"
             alt="OneForm"
             width={36}
             height={36}

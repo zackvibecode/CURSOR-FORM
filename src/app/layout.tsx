@@ -21,8 +21,12 @@ export const metadata: Metadata = {
     "oneform.app",
   ],
   icons: {
-    icon: [{ url: "/favicon.svg", type: "image/svg+xml" }],
-    apple: [{ url: "/favicon.svg" }],
+    icon: [
+      { url: "/favicon.png", type: "image/png", sizes: "512x512" },
+      { url: "/favicon.png", type: "image/png", sizes: "32x32" },
+    ],
+    apple: [{ url: "/apple-touch-icon.png", type: "image/png", sizes: "180x180" }],
+    shortcut: ["/favicon.png"],
   },
 };
 
