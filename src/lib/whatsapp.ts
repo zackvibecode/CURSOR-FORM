@@ -15,7 +15,7 @@ export function buildWhatsAppMessage(
     if (field.type === "title") return;
     const answer = answers[field.id];
     if (answer && answer.trim()) {
-      lines.push(`${field.label}: ${answer.trim()}`);
+      lines.push(`*${field.label}:* ${answer.trim()}`);
     }
   });
 
