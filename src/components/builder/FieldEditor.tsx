@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
 import { Label } from "@/components/ui/Label";
 import { Toggle } from "@/components/ui/Toggle";
+import { OptionsFieldEditor } from "./OptionsFieldEditor";
 
 interface FieldEditorProps {
   field: FormField | null;
@@ -52,82 +53,76 @@ export function FieldEditor({
   const hasOptions = ["dropdown", "multiple_choice", "checkbox"].includes(field.type);
 
   return (
-    <aside className="w-72 shrink-0 overflow-auto border-l border-brand-border bg-white p-5">
+    <aside className="w-80 shrink-0 overflow-auto border-l border-brand-border bg-white p-5">
       <h3 className="mb-4 text-xs font-bold uppercase tracking-wider text-brand-muted">
-        Field Settings
+        Edit {field.type === "multiple_choice"
+          ? "Multiple Choice"
+          : field.type === "dropdown"
+            ? "Dropdown"
+            : field.type === "checkbox"
+              ? "Checkbox"
+              : "Field"}
       </h3>
 
-      <div className="space-y-4">
-        <div>
-          <Label>Label</Label>
-          <Input
-            value={field.label}
-            onChange={(e) => onUpdate({ ...field, label: e.target.value })}
-          />
-        </div>
+      {hasOptions ? (
+        <OptionsFieldEditor field={field} onUpdate={onUpdate} />
+      ) : (
+        <div className="space-y-4">
+          <div>
+            <Label>Label</Label>
+            <Input
+              value={field.label}
+              onChange={(e) => onUpdate({ ...field, label: e.target.value })}
+            />
+          </div>
 
-        {field.type !== "title" && (
-          <>
+          {field.type !== "title" && (
+            <>
+              <div>
+                <Label>Placeholder</Label>
+                <Input
+                  value={field.placeholder ?? ""}
+                  onChange={(e) => onUpdate({ ...field, placeholder: e.target.value })}
+                />
+              </div>
+
+              <Toggle
+                id={`required-${field.id}`}
+                label="Required field"
+                checked={field.required}
+                onChange={(checked) => onUpdate({ ...field, required: checked })}
+              />
+            </>
+          )}
+
+          {field.type === "title" && (
             <div>
-              <Label>Placeholder</Label>
-              <Input
-                value={field.placeholder ?? ""}
-                onChange={(e) => onUpdate({ ...field, placeholder: e.target.value })}
+              <Label>Subtitle (optional)</Label>
+              <Textarea
+                value={field.settings?.subtitle ?? ""}
+                onChange={(e) =>
+                  onUpdate({
+                    ...field,
+                    settings: { ...field.settings, subtitle: e.target.value },
+                  })
+                }
+                className="min-h-[80px]"
               />
             </div>
+          )}
+        </div>
+      )}
 
-            <Toggle
-              id={`required-${field.id}`}
-              label="Required field"
-              checked={field.required}
-              onChange={(checked) => onUpdate({ ...field, required: checked })}
-            />
-          </>
-        )}
-
-        {field.type === "title" && (
-          <div>
-            <Label>Subtitle (optional)</Label>
-            <Textarea
-              value={field.settings?.subtitle ?? ""}
-              onChange={(e) =>
-                onUpdate({
-                  ...field,
-                  settings: { ...field.settings, subtitle: e.target.value },
-                })
-              }
-              className="min-h-[80px]"
-            />
-          </div>
-        )}
-
-        {hasOptions && (
-          <div>
-            <Label>Options (one per line)</Label>
-            <Textarea
-              value={(field.options ?? []).join("\n")}
-              onChange={(e) =>
-                onUpdate({
-                  ...field,
-                  options: e.target.value.split("\n").filter(Boolean),
-                })
-              }
-              className="min-h-[120px] font-mono text-sm"
-            />
-          </div>
-        )}
-
-        {onWhatsappTemplateChange && (
-          <div className="border-t border-brand-border pt-4">
-            <Label>WhatsApp Message Template</Label>
-            <Textarea
-              value={whatsappTemplate ?? ""}
-              onChange={(e) => onWhatsappTemplateChange(e.target.value)}
-              className="min-h-[120px] font-mono text-xs"
-            />
-          </div>
-        )}
-      </div>
+      {onWhatsappTemplateChange && (
+        <div className="mt-6 border-t border-brand-border pt-4">
+          <Label>WhatsApp Message Template</Label>
+          <Textarea
+            value={whatsappTemplate ?? ""}
+            onChange={(e) => onWhatsappTemplateChange(e.target.value)}
+            className="min-h-[120px] font-mono text-xs"
+          />
+        </div>
+      )}
     </aside>
   );
 }

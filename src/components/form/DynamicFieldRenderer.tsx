@@ -53,7 +53,33 @@ export function DynamicFieldRenderer({
                 placeholder={field.placeholder}
                 disabled={preview}
               />
-            ) : field.type === "dropdown" || field.type === "multiple_choice" ? (
+            ) : field.type === "multiple_choice" ? (
+              <div className="space-y-1.5 pt-1">
+                {(field.options ?? []).map((opt) => {
+                  const selected = value === opt;
+                  return (
+                    <label
+                      key={opt}
+                      className={cn(
+                        "flex cursor-pointer items-center gap-3 rounded-xl border border-gray-200 px-4 py-2.5 transition-colors hover:border-whatsapp",
+                        selected && "border-whatsapp bg-whatsapp/5"
+                      )}
+                    >
+                      <input
+                        type="radio"
+                        name={field.id}
+                        value={opt}
+                        checked={selected}
+                        onChange={() => onChange(field.id, opt)}
+                        disabled={preview}
+                        className="accent-whatsapp"
+                      />
+                      <span className="text-sm text-brand-text">{opt}</span>
+                    </label>
+                  );
+                })}
+              </div>
+            ) : field.type === "dropdown" ? (
               <div className="relative">
                 <select
                   value={value}
