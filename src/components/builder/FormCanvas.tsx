@@ -28,6 +28,8 @@ interface FormCanvasProps {
   onSelect: (id: string) => void;
   onReorder: (fields: FormField[]) => void;
   onDelete: (id: string) => void;
+  formTitle: string;
+  formDescription: string;
 }
 
 function SortableField({
@@ -99,6 +101,8 @@ export function FormCanvas({
   onSelect,
   onReorder,
   onDelete,
+  formTitle,
+  formDescription,
 }: FormCanvasProps) {
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -122,6 +126,14 @@ export function FormCanvas({
         </span>
       </div>
       <div className="mx-auto max-w-xl rounded-3xl border border-brand-border bg-white p-6 shadow-card-lg sm:p-8">
+        {/* Form Title & Description — Tally-style header */}
+        <div className="mb-6 pb-6 border-b border-gray-100">
+          <h2 className="text-2xl font-bold text-gray-900">{formTitle || "Untitled Form"}</h2>
+          {formDescription && (
+            <p className="mt-2 text-sm text-gray-500">{formDescription}</p>
+          )}
+        </div>
+
         {fields.length === 0 ? (
           <div className="rounded-2xl border-2 border-dashed border-brand-border bg-brand-bg/30 p-12 text-center">
             <p className="text-brand-muted">

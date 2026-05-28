@@ -225,6 +225,8 @@ export function FormBuilder({ formId, initialData }: FormBuilderProps) {
               setFields((prev) => prev.filter((f) => f.id !== id));
               if (selectedId === id) setSelectedId(null);
             }}
+            formTitle={title}
+            formDescription={description}
           />
           <FieldEditor
             field={selectedField}

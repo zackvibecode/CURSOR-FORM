@@ -1,11 +1,23 @@
 "use client";
 
 import type { FormField } from "@/lib/form-schema";
-import { Input } from "@/components/ui/Input";
-import { Textarea } from "@/components/ui/Textarea";
 import { Label } from "@/components/ui/Label";
-import { Toggle } from "@/components/ui/Toggle";
-import { OptionsFieldEditor } from "./OptionsFieldEditor";
+import { Textarea } from "@/components/ui/Textarea";
+import { OptionsFieldEditor, StandardFieldEditor } from "./OptionsFieldEditor";
+
+const FIELD_LABELS: Record<string, string> = {
+  text: "Text Input",
+  email: "Email",
+  phone: "Phone",
+  number: "Number",
+  date: "Date",
+  textarea: "Long Answer",
+  dropdown: "Dropdown",
+  multiple_choice: "Multiple Choice",
+  checkbox: "Checkbox",
+  title: "Title",
+  image: "Image",
+};
 
 interface FieldEditorProps {
   field: FormField | null;
@@ -22,7 +34,7 @@ export function FieldEditor({
 }: FieldEditorProps) {
   if (!field) {
     return (
-      <aside className="w-72 shrink-0 overflow-auto border-l border-brand-border bg-white p-5">
+      <aside className="w-80 shrink-0 overflow-auto border-l border-brand-border bg-white p-5">
         <h3 className="mb-2 text-xs font-bold uppercase tracking-wider text-brand-muted">
           Field Settings
         </h3>
@@ -51,66 +63,18 @@ export function FieldEditor({
   }
 
   const hasOptions = ["dropdown", "multiple_choice", "checkbox"].includes(field.type);
+  const fieldLabel = FIELD_LABELS[field.type] ?? "Field";
 
   return (
     <aside className="w-80 shrink-0 overflow-auto border-l border-brand-border bg-white p-5">
       <h3 className="mb-4 text-xs font-bold uppercase tracking-wider text-brand-muted">
-        Edit {field.type === "multiple_choice"
-          ? "Multiple Choice"
-          : field.type === "dropdown"
-            ? "Dropdown"
-            : field.type === "checkbox"
-              ? "Checkbox"
-              : "Field"}
+        Edit {fieldLabel}
       </h3>
 
       {hasOptions ? (
         <OptionsFieldEditor field={field} onUpdate={onUpdate} />
       ) : (
-        <div className="space-y-4">
-          <div>
-            <Label>Label</Label>
-            <Input
-              value={field.label}
-              onChange={(e) => onUpdate({ ...field, label: e.target.value })}
-            />
-          </div>
-
-          {field.type !== "title" && (
-            <>
-              <div>
-                <Label>Placeholder</Label>
-                <Input
-                  value={field.placeholder ?? ""}
-                  onChange={(e) => onUpdate({ ...field, placeholder: e.target.value })}
-                />
-              </div>
-
-              <Toggle
-                id={`required-${field.id}`}
-                label="Required field"
-                checked={field.required}
-                onChange={(checked) => onUpdate({ ...field, required: checked })}
-              />
-            </>
-          )}
-
-          {field.type === "title" && (
-            <div>
-              <Label>Subtitle (optional)</Label>
-              <Textarea
-                value={field.settings?.subtitle ?? ""}
-                onChange={(e) =>
-                  onUpdate({
-                    ...field,
-                    settings: { ...field.settings, subtitle: e.target.value },
-                  })
-                }
-                className="min-h-[80px]"
-              />
-            </div>
-          )}
-        </div>
+        <StandardFieldEditor field={field} onUpdate={onUpdate} />
       )}
 
       {onWhatsappTemplateChange && (
