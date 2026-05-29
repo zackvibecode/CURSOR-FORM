@@ -1,33 +1,9 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { createAdminClient } from "@/lib/supabase/admin";
 import { mapDbFieldToFormField } from "@/lib/forms";
 import { buildAnswersSchema } from "@/lib/form-schema";
-import { resolveWhatsAppNumber, type TeamSettingsRow } from "@/lib/team-distribution";
+import { type TeamSettingsRow } from "@/lib/team-distribution";
 import { headers } from "next/headers";
-
-// Per-form rate limiting via Supabase DB to work across serverless instances.
-// Falls back to allowing the request if the check itself fails.
-const MAX_SUBMISSIONS_PER_MINUTE = 10;
-
-async function checkRateLimit(admin: ReturnType<typeof createAdminClient>, formId: string): Promise<boolean> {
-  if (!admin) return true;
-
-  const windowStart = new Date(Date.now() - 60_000).toISOString();
-
-  const { count, error } = await admin
-    .from("submissions")
-    .select("id", { count: "exact", head: true })
-    .eq("form_id", formId)
-    .gte("created_at", windowStart);
-
-  if (error) {
-    console.error("[rate-limit] Failed to check rate limit:", error.message);
-    return true;
-  }
-
-  return (count ?? 0) < MAX_SUBMISSIONS_PER_MINUTE;
-}
 
 function getIpHash(): string | null {
   const headersList = headers();
@@ -43,30 +19,6 @@ function getIpHash(): string | null {
   return hash.toString(36);
 }
 
-/**
- * Atomically claim the next round-robin slot using a Supabase RPC.
- * Returns the claimed index, or null if team settings don't exist / aren't in distribute mode.
- */
-async function claimNextRotationIndex(
-  admin: ReturnType<typeof createAdminClient>,
-  formId: string,
-  memberCount: number
-): Promise<number | null> {
-  if (!admin || memberCount <= 0) return null;
-
-  const { data, error } = await admin.rpc("claim_next_rotation_index", {
-    p_form_id: formId,
-    p_member_count: memberCount,
-  });
-
-  if (error) {
-    console.error("[team-rotator] RPC claim_next_rotation_index failed:", error.message);
-    return null;
-  }
-
-  return data as number;
-}
-
 export async function POST(
   request: Request,
   { params }: { params: { id: string } }
@@ -76,7 +28,7 @@ export async function POST(
 
   const { data: form } = await supabase
     .from("forms")
-    .select("id, status, whatsapp_number")
+    .select("id, status, whatsapp_number, user_id")
     .eq("id", id)
     .single();
 
@@ -88,47 +40,53 @@ export async function POST(
     return NextResponse.json({ error: "Form is not accepting submissions" }, { status: 403 });
   }
 
-  const admin = createAdminClient();
-  if (!admin) {
-    console.warn("[team-rotator] Admin client unavailable — SUPABASE_SERVICE_ROLE_KEY may be missing. Team distribution will be skipped.");
-  }
-
+  // Fetch team settings to determine WhatsApp number and rotation
   let teamSettings: TeamSettingsRow | null = null;
 
-  if (admin) {
-    const { data, error } = await admin
-      .from("form_team_settings")
-      .select("distribution_mode, team_members, last_assigned_index")
-      .eq("form_id", id)
-      .maybeSingle();
+  const { data: tsData } = await supabase
+    .from("form_team_settings")
+    .select("distribution_mode, team_members, last_assigned_index")
+    .eq("form_id", id)
+    .maybeSingle();
 
-    if (error) {
-      console.error("[team-rotator] Failed to fetch team settings:", error.message);
-    } else if (data) {
-      teamSettings = {
-        distribution_mode: data.distribution_mode,
-        team_members: data.team_members ?? [],
-        last_assigned_index: data.last_assigned_index ?? 0,
-      };
-    }
+  if (tsData) {
+    teamSettings = {
+      distribution_mode: tsData.distribution_mode,
+      team_members: tsData.team_members ?? [],
+      last_assigned_index: tsData.last_assigned_index ?? 0,
+    };
   }
 
-  let assignedPhone: string;
+  let assignedPhone: string = form.whatsapp_number?.trim() ?? "";
 
-  if (teamSettings?.distribution_mode === "distribute" && teamSettings.team_members.length > 0 && admin) {
+  // Handle round-robin distribution via RPC
+  if (teamSettings?.distribution_mode === "distribute" && teamSettings.team_members.length > 0) {
     const members = teamSettings.team_members.filter((m) => m.phone?.trim());
-    const claimedIndex = await claimNextRotationIndex(admin, id, members.length);
 
-    if (claimedIndex !== null) {
-      assignedPhone = members[claimedIndex].phone.trim();
-    } else {
-      console.warn("[team-rotator] Atomic claim failed, falling back to non-atomic resolution");
-      const fallback = resolveWhatsAppNumber(form.whatsapp_number ?? "", teamSettings);
-      assignedPhone = fallback.phone;
+    if (members.length > 0) {
+      const { data: claimedIndex, error: rpcError } = await supabase.rpc(
+        "claim_next_rotation_index",
+        { p_form_id: id, p_member_count: members.length }
+      );
+
+      if (rpcError) {
+        console.error("[team-rotator] RPC failed:", rpcError.message);
+        // Fallback: use non-atomic computation
+        const idx = ((teamSettings.last_assigned_index % members.length) + members.length) % members.length;
+        assignedPhone = members[idx].phone.trim();
+
+        // Best-effort update
+        const nextIdx = (idx + 1) % members.length;
+        await supabase.rpc("claim_next_rotation_index", { p_form_id: id, p_member_count: members.length });
+      } else if (claimedIndex !== null && claimedIndex !== undefined) {
+        assignedPhone = members[claimedIndex].phone.trim();
+      } else {
+        // Fallback: just get first member
+        assignedPhone = members[0].phone.trim();
+      }
     }
-  } else {
-    const resolved = resolveWhatsAppNumber(form.whatsapp_number ?? "", teamSettings);
-    assignedPhone = resolved.phone;
+  } else if (teamSettings?.distribution_mode === "single" && teamSettings.team_members.length === 1) {
+    assignedPhone = teamSettings.team_members[0].phone?.trim() || assignedPhone;
   }
 
   if (!assignedPhone) {
@@ -138,13 +96,7 @@ export async function POST(
     );
   }
 
-  if (!(await checkRateLimit(admin, id))) {
-    return NextResponse.json(
-      { error: "Too many submissions. Please try again later." },
-      { status: 429 }
-    );
-  }
-
+  // Fetch form fields & build validation schema
   const { data: fields } = await supabase
     .from("form_fields")
     .select("*")
@@ -170,14 +122,14 @@ export async function POST(
     return NextResponse.json({ error: "Validation failed", details: errors }, { status: 400 });
   }
 
-  const { error } = await supabase.from("submissions").insert({
+  const { error: insertError } = await supabase.from("submissions").insert({
     form_id: id,
     data: result.data,
     ip_hash: getIpHash(),
   });
 
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  if (insertError) {
+    return NextResponse.json({ error: insertError.message }, { status: 500 });
   }
 
   return NextResponse.json({ success: true, whatsapp_number: assignedPhone });
