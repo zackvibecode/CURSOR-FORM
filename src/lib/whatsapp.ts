@@ -9,19 +9,26 @@ function sanitizeWhatsAppText(text: string): string {
   return text
     .trim()
     .replace(/\*/g, "")
-    .replace(/\s+/g, " ");
+    .replace(/\s+/g, " ")
+    .replace(/[\u2013\u2014]/g, "-");
+}
+
+/** Wrap text in WhatsApp bold markers with no extra whitespace inside. */
+function whatsappBold(text: string): string {
+  const trimmed = text.trim();
+  if (!trimmed) return "";
+  return `*${trimmed}*`;
 }
 
 /** Format a field label for WhatsApp bold, e.g. *Your name:* */
 function formatWhatsAppBoldLabel(label: string): string {
   const cleanLabel = sanitizeWhatsAppText(label);
 
-  // Label already includes trailing colon — keep spacing inside bold markers.
   if (/:\s*$/.test(cleanLabel)) {
-    return `*${cleanLabel}*`;
+    return whatsappBold(cleanLabel);
   }
 
-  return `*${cleanLabel}:*`;
+  return whatsappBold(`${cleanLabel}:`);
 }
 
 export function buildWhatsAppMessage(
@@ -30,7 +37,7 @@ export function buildWhatsAppMessage(
   answers: Record<string, string>
 ): string {
   const cleanTitle = sanitizeWhatsAppText(formTitle);
-  const lines = [`*New Lead — ${cleanTitle}*`, ""];
+  const lines = [whatsappBold(`New Lead - ${cleanTitle}`), ""];
 
   fields.forEach((field) => {
     if (field.type === "title") return;

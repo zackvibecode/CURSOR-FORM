@@ -44,9 +44,13 @@ export function PublicFormClient({ slug }: { slug: string }) {
       body: JSON.stringify(answers),
     });
 
+    const data = await res.json();
+
     if (!res.ok) {
-      throw new Error("Submission failed");
+      throw new Error(data.error ?? "Submission failed");
     }
+
+    return data.whatsapp_number as string | undefined;
   };
 
   if (loading) {

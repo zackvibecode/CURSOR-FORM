@@ -14,7 +14,7 @@ interface PublicFormProps {
   whatsappNumber: string;
   fields: FormField[];
   formId: string;
-  onSubmit?: (data: Record<string, string>) => Promise<void>;
+  onSubmit?: (data: Record<string, string>) => Promise<string | void>;
   preview?: boolean;
 }
 
@@ -69,11 +69,16 @@ export function PublicFormView({
     setSubmitting(true);
 
     try {
+      let targetPhone = whatsappNumber;
+
       if (onSubmit) {
-        await onSubmit(values);
+        const assignedPhone = await onSubmit(values);
+        if (assignedPhone) {
+          targetPhone = assignedPhone;
+        }
       }
 
-      const url = buildWhatsAppUrl(whatsappNumber, title, fields, values);
+      const url = buildWhatsAppUrl(targetPhone, title, fields, values);
       window.location.href = url;
     } catch (err) {
       setErrors({ _form: "Submission failed. Please try again." });

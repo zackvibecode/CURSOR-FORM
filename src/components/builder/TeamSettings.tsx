@@ -42,25 +42,46 @@ export function TeamSettings({ formId }: TeamSettingsProps) {
   }, [formId]);
 
   const handleSave = async () => {
-    if (teamMembers.length === 0) {
-      toast("Add at least one team member", "error");
+    console.log("[TeamSettings] Saving...", { formId, distributionMode, teamMembers });
+
+    if (distributionMode === "distribute") {
+      const validMembers = teamMembers.filter((member) => member.phone?.trim());
+      if (validMembers.length === 0) {
+        toast("Add at least one team member for round-robin", "error");
+        return;
+      }
+    }
+
+    if (distributionMode === "conditional") {
+      toast("Conditional routing is coming soon", "error");
       return;
     }
+
     setSaving(true);
     try {
-      const res = await fetch(`/api/forms/${formId}/team-settings`, {
+      const url = `/api/forms/${formId}/team-settings`;
+      console.log("[TeamSettings] Fetching:", url);
+
+      const res = await fetch(url, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ distribution_mode: distributionMode, team_members: teamMembers }),
       });
+
+      console.log("[TeamSettings] Response status:", res.status);
+
       if (!res.ok) {
         const data = await res.json();
+        console.error("[TeamSettings] Save failed:", data);
         toast(data.error ?? "Failed to save", "error");
         return;
       }
+      const savedData = await res.json();
+      console.log("[TeamSettings] Saved:", savedData);
       toast("Team settings saved!", "success");
       setFetched(true);
-    } catch {
+    } catch (err) {
+      console.error("[TeamSettings] Network error:", err);
       toast("Network error", "error");
     }
     setSaving(false);
@@ -85,7 +106,13 @@ export function TeamSettings({ formId }: TeamSettingsProps) {
   const modes = [
     { key: "single" as const, icon: Users, label: "Single", desc: "Send to one number" },
     { key: "distribute" as const, icon: GitBranch, label: "Distribute", desc: "Round-robin across team" },
-    { key: "conditional" as const, icon: Split, label: "Conditional", desc: "Route based on conditions" },
+    {
+      key: "conditional" as const,
+      icon: Split,
+      label: "Conditional",
+      desc: "Coming soon",
+      disabled: true,
+    },
   ];
 
   if (loading && !fetched) {
@@ -110,15 +137,24 @@ export function TeamSettings({ formId }: TeamSettingsProps) {
         {modes.map((mode) => {
           const Icon = mode.icon;
           const isActive = distributionMode === mode.key;
+          const isDisabled = "disabled" in mode && mode.disabled;
           return (
             <button
               key={mode.key}
-              onClick={() => setDistributionMode(mode.key)}
+              type="button"
+              disabled={isDisabled}
+              onClick={() => {
+                if (isDisabled) {
+                  toast("Conditional routing is coming soon", "error");
+                  return;
+                }
+                setDistributionMode(mode.key);
+              }}
               className={`flex flex-col items-start gap-3 rounded-xl border-2 p-4 text-left transition-all ${
                 isActive
                   ? "border-whatsapp bg-whatsapp/5"
                   : "border-brand-border bg-white hover:border-gray-300"
-              }`}
+              } ${isDisabled ? "cursor-not-allowed opacity-60" : ""}`}
             >
               <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${
                 isActive ? "bg-whatsapp/10 text-whatsapp-deep" : "bg-gray-100 text-gray-400"
