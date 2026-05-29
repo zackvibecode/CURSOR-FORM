@@ -13,8 +13,8 @@ export function BrandLogo({
 }) {
   const heights = {
     sm: "h-7",
-    md: "h-8",
-    lg: "h-10",
+    md: "h-9",
+    lg: "h-11",
   };
 
   return (
@@ -23,18 +23,21 @@ export function BrandLogo({
         <Image
           src="/favicon.png"
           alt="OneForm"
-          width={36}
-          height={36}
-          className={cn("w-auto", heights[size])}
+          width={1024}
+          height={769}
+          className={cn("aspect-square w-auto object-contain mix-blend-screen", heights[size])}
           priority
         />
       ) : (
         <Image
           src="/oneform-logo.png"
           alt="OneForm"
-          width={220}
-          height={56}
-          className={cn("w-auto", heights[size])}
+          width={1024}
+          height={769}
+          className={cn(
+            "w-auto max-w-[180px] mix-blend-screen sm:max-w-[220px]",
+            heights[size]
+          )}
           priority
         />
       )}

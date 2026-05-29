@@ -68,7 +68,7 @@ export function AIFeatures() {
               {/* Generated form preview */}
               <div className="rounded-xl border border-whatsapp/20 bg-white p-4 shadow-sm">
                 <div className="mb-3 flex items-center gap-2 text-sm font-medium text-whatsapp-deep">
-                  <Image src="/favicon.png" alt="" width={20} height={20} className="h-5 w-5" />
+                  <Image src="/favicon.png" alt="" width={20} height={20} className="h-5 w-5 mix-blend-screen" />
                   Generated Form
                 </div>
                 <div className="space-y-2.5">

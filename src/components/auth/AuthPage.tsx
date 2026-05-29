@@ -57,7 +57,8 @@ function AuthForm({ mode }: { mode: "login" | "signup" }) {
     }
 
     try {
-      const res = await fetch("/api/auth/login", {
+      const endpoint = mode === "signup" ? "/api/auth/signup" : "/api/auth/login";
+      const res = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: email.trim(), password }),
@@ -66,7 +67,14 @@ function AuthForm({ mode }: { mode: "login" | "signup" }) {
       const data = await res.json();
 
       if (!res.ok) {
-        setError(data.error ?? "Login failed.");
+        setError(data.error ?? "Something went wrong.");
+        setLoading(false);
+        return;
+      }
+
+      // If signup returned a message (email confirmation required)
+      if (data.message) {
+        setSuccess(data.message);
         setLoading(false);
         return;
       }
