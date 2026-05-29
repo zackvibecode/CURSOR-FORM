@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { createAdminClient } from "@/lib/supabase/admin";
 
 export async function GET(
   _request: Request,
@@ -17,7 +16,6 @@ export async function GET(
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
   }
 
-  // Verify user owns the form
   const { data: form } = await supabase
     .from("forms")
     .select("id, user_id")
@@ -29,11 +27,7 @@ export async function GET(
     return NextResponse.json({ error: "Form not found" }, { status: 404 });
   }
 
-  // Use admin client to bypass RLS for team settings (ownership already verified above)
-  const admin = createAdminClient();
-  const client = admin ?? supabase;
-
-  const { data: teamSettings, error } = await client
+  const { data: teamSettings, error } = await supabase
     .from("form_team_settings")
     .select("*")
     .eq("form_id", id)
@@ -64,7 +58,6 @@ export async function PUT(
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
   }
 
-  // Verify user owns the form (with user_id filter for extra safety)
   const { data: form } = await supabase
     .from("forms")
     .select("id, user_id")
@@ -114,11 +107,7 @@ export async function PUT(
     );
   }
 
-  // Use admin client to bypass RLS for upsert (ownership already verified above)
-  const admin = createAdminClient();
-  const client = admin ?? supabase;
-
-  const { data, error } = await client
+  const { data, error } = await supabase
     .from("form_team_settings")
     .upsert(
       {
@@ -132,7 +121,7 @@ export async function PUT(
     .single();
 
   if (error) {
-    console.error("[team-settings] Upsert failed:", error.message, error.details);
+    console.error("[team-settings] Upsert failed:", error.message);
     return NextResponse.json({ error: `Failed to save: ${error.message}` }, { status: 500 });
   }
 
