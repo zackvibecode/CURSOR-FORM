@@ -64,29 +64,24 @@ export async function POST(
     const members = teamSettings.team_members.filter((m) => m.phone?.trim());
 
     if (members.length > 0) {
+      // Try RPC first (works with anon key because function is SECURITY DEFINER)
       const { data: claimedIndex, error: rpcError } = await supabase.rpc(
         "claim_next_rotation_index",
         { p_form_id: id, p_member_count: members.length }
       );
 
-      if (rpcError) {
-        console.error("[team-rotator] RPC failed:", rpcError.message);
-        // Fallback: use non-atomic computation
-        const idx = ((teamSettings.last_assigned_index % members.length) + members.length) % members.length;
-        assignedPhone = members[idx].phone.trim();
-
-        // Best-effort update
-        const nextIdx = (idx + 1) % members.length;
-        await supabase.rpc("claim_next_rotation_index", { p_form_id: id, p_member_count: members.length });
-      } else if (claimedIndex !== null && claimedIndex !== undefined) {
+      if (!rpcError && typeof claimedIndex === "number") {
         assignedPhone = members[claimedIndex].phone.trim();
       } else {
-        // Fallback: just get first member
-        assignedPhone = members[0].phone.trim();
+        // RPC unavailable — use non-atomic fallback
+        console.warn("[team-rotator] RPC unavailable, using fallback rotation");
+        const idx = ((teamSettings.last_assigned_index % members.length) + members.length) % members.length;
+        assignedPhone = members[idx].phone.trim();
       }
     }
   } else if (teamSettings?.distribution_mode === "single" && teamSettings.team_members.length === 1) {
-    assignedPhone = teamSettings.team_members[0].phone?.trim() || assignedPhone;
+    const phone = teamSettings.team_members[0].phone?.trim();
+    if (phone) assignedPhone = phone;
   }
 
   if (!assignedPhone) {
