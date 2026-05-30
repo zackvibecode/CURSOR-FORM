@@ -29,6 +29,8 @@ import {
   Search,
   Users,
   Puzzle,
+  Plus,
+  X,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -66,6 +68,8 @@ export function FormBuilder({ formId, initialData }: FormBuilderProps) {
   );
   const [confirmModal, setConfirmModal] = useState(false);
   const [confirmAction, setConfirmAction] = useState<"save" | "publish" | null>(null);
+  // Mobile-only: which drawer is open ("add" = field palette, "edit" = field settings)
+  const [mobileDrawer, setMobileDrawer] = useState<"add" | "edit" | null>(null);
 
   const selectedField = fields.find((f) => f.id === selectedId) ?? null;
 
@@ -219,12 +223,22 @@ export function FormBuilder({ formId, initialData }: FormBuilderProps) {
       </div>
 
       {tab === "build" ? (
-        <div className="flex flex-1 flex-col overflow-auto lg:flex-row lg:overflow-hidden">
-          <FieldPalette onAddField={handleAddField} />
+        <div className="relative flex flex-1 flex-col overflow-hidden lg:flex-row">
+          {/* Palette: inline column on desktop only */}
+          <div className="hidden lg:flex">
+            <FieldPalette onAddField={handleAddField} />
+          </div>
+
           <FormCanvas
             fields={fields}
             selectedId={selectedId}
-            onSelect={setSelectedId}
+            onSelect={(id) => {
+              setSelectedId(id);
+              // On mobile, tapping a field opens the edit drawer
+              if (typeof window !== "undefined" && window.innerWidth < 1024) {
+                setMobileDrawer("edit");
+              }
+            }}
             onReorder={setFields}
             onDelete={(id) => {
               setFields((prev) => prev.filter((f) => f.id !== id));
@@ -233,12 +247,79 @@ export function FormBuilder({ formId, initialData }: FormBuilderProps) {
             formTitle={title}
             formDescription={description}
           />
-          <FieldEditor
-            field={selectedField}
-            onUpdate={handleUpdateField}
-            whatsappTemplate={whatsappTemplate}
-            onWhatsappTemplateChange={setWhatsappTemplate}
-          />
+
+          {/* Editor: inline column on desktop only */}
+          <div className="hidden lg:flex">
+            <FieldEditor
+              field={selectedField}
+              onUpdate={handleUpdateField}
+              whatsappTemplate={whatsappTemplate}
+              onWhatsappTemplateChange={setWhatsappTemplate}
+            />
+          </div>
+
+          {/* Mobile floating "Add Field" button */}
+          <button
+            onClick={() => setMobileDrawer("add")}
+            className="fixed bottom-6 right-6 z-30 flex items-center gap-2 rounded-full bg-whatsapp px-5 py-3.5 text-sm font-semibold text-white shadow-lg transition-all active:scale-95 lg:hidden"
+          >
+            <Plus className="h-5 w-5" />
+            Add Field
+          </button>
+
+          {/* Mobile drawers */}
+          {mobileDrawer && (
+            <div className="fixed inset-0 z-40 lg:hidden">
+              <div
+                className="absolute inset-0 bg-black/40"
+                onClick={() => setMobileDrawer(null)}
+                aria-hidden="true"
+              />
+              <div className="absolute inset-y-0 right-0 flex w-full max-w-md flex-col bg-white shadow-2xl">
+                {mobileDrawer === "add" ? (
+                  <>
+                    <div className="flex items-center justify-between border-b border-brand-border px-4 py-3">
+                      <span className="text-xs font-bold uppercase tracking-wider text-brand-muted">
+                        Add a field
+                      </span>
+                      <button
+                        onClick={() => setMobileDrawer(null)}
+                        className="rounded-lg p-1.5 text-brand-muted hover:bg-gray-100"
+                        aria-label="Close"
+                      >
+                        <X className="h-5 w-5" />
+                      </button>
+                    </div>
+                    <div className="flex-1 overflow-auto">
+                      <FieldPalette
+                        vertical
+                        onAddField={(type) => {
+                          handleAddField(type);
+                          setMobileDrawer("edit");
+                        }}
+                      />
+                    </div>
+                  </>
+                ) : (
+                  <FieldEditor
+                    drawer
+                    field={selectedField}
+                    onUpdate={handleUpdateField}
+                    onBack={() => setMobileDrawer(null)}
+                    onDelete={
+                      selectedField
+                        ? () => {
+                            setFields((prev) => prev.filter((f) => f.id !== selectedField.id));
+                            setSelectedId(null);
+                            setMobileDrawer(null);
+                          }
+                        : undefined
+                    }
+                  />
+                )}
+              </div>
+            </div>
+          )}
         </div>
       ) : (
         <div className="flex flex-1 flex-col overflow-auto lg:flex-row lg:overflow-hidden">

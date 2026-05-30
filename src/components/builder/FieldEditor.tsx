@@ -3,6 +3,7 @@
 import type { FormField } from "@/lib/form-schema";
 import { Label } from "@/components/ui/Label";
 import { Textarea } from "@/components/ui/Textarea";
+import { ArrowLeft, Trash2 } from "lucide-react";
 import { OptionsFieldEditor, StandardFieldEditor } from "./OptionsFieldEditor";
 
 const FIELD_LABELS: Record<string, string> = {
@@ -24,6 +25,9 @@ interface FieldEditorProps {
   onUpdate: (field: FormField) => void;
   whatsappTemplate?: string;
   onWhatsappTemplateChange?: (value: string) => void;
+  drawer?: boolean;
+  onBack?: () => void;
+  onDelete?: () => void;
 }
 
 export function FieldEditor({
@@ -31,6 +35,9 @@ export function FieldEditor({
   onUpdate,
   whatsappTemplate,
   onWhatsappTemplateChange,
+  drawer = false,
+  onBack,
+  onDelete,
 }: FieldEditorProps) {
   if (!field) {
     return (
@@ -64,6 +71,43 @@ export function FieldEditor({
 
   const hasOptions = ["dropdown", "multiple_choice", "checkbox"].includes(field.type);
   const fieldLabel = FIELD_LABELS[field.type] ?? "Field";
+
+  // Drawer mode (mobile): full-screen panel with Back + Delete header
+  if (drawer) {
+    return (
+      <div className="flex h-full flex-col bg-white">
+        <div className="flex items-center justify-between border-b border-brand-border px-4 py-3">
+          <button
+            onClick={onBack}
+            className="flex items-center gap-1.5 text-sm font-medium text-brand-muted hover:text-brand-text"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back
+          </button>
+          <span className="text-xs font-bold uppercase tracking-wider text-brand-muted">
+            Edit {fieldLabel}
+          </span>
+          {onDelete ? (
+            <button
+              onClick={onDelete}
+              className="flex items-center gap-1 text-sm font-medium text-brand-red hover:underline"
+            >
+              <Trash2 className="h-4 w-4" />
+            </button>
+          ) : (
+            <span className="w-4" />
+          )}
+        </div>
+        <div className="flex-1 overflow-auto p-5">
+          {hasOptions ? (
+            <OptionsFieldEditor field={field} onUpdate={onUpdate} />
+          ) : (
+            <StandardFieldEditor field={field} onUpdate={onUpdate} />
+          )}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <aside className="w-80 shrink-0 overflow-auto border-l border-brand-border bg-white p-5">
