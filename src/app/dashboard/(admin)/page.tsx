@@ -29,41 +29,48 @@ export default async function DashboardOverviewPage() {
   const formIds = (forms ?? []).map((f) => f.id);
   const formIdFilter = formIds.length > 0 ? formIds : ["none"];
 
-  const [
-    submissionsBundle,
-    { data: subscription },
-    { count: monthSubmissions },
-  ] = await Promise.all([
-    formIds.length > 0
-      ? Promise.all([
-          supabase
-            .from("submissions")
-            .select("*, forms(title)")
-            .in("form_id", formIds)
-            .order("submitted_at", { ascending: false })
-            .limit(50),
-          supabase
-            .from("form_fields")
-            .select("id, label, type, form_id")
-            .in("form_id", formIds),
-        ])
-      : Promise.resolve([{ data: [] }, { data: [] }] as const),
-    supabase.from("subscriptions").select("*").eq("user_id", user.id).single(),
-    supabase
-      .from("submissions")
-      .select("*", { count: "exact", head: true })
-      .in("form_id", formIdFilter)
-      .gte("submitted_at", firstDayOfMonth),
-  ]);
-
   let submissions: ReturnType<typeof mapSubmissionsToRows> = [];
+  let subscription: { plan?: string; status?: string } | null = null;
+  let monthSubmissions = 0;
+
   if (formIds.length > 0) {
-    const [submissionsResult, fieldsResult] = submissionsBundle;
+    const [submissionsResult, fieldsResult, subResult, monthResult] = await Promise.all([
+      supabase
+        .from("submissions")
+        .select("*, forms(title)")
+        .in("form_id", formIds)
+        .order("submitted_at", { ascending: false })
+        .limit(50),
+      supabase
+        .from("form_fields")
+        .select("id, label, type, form_id")
+        .in("form_id", formIds),
+      supabase.from("subscriptions").select("*").eq("user_id", user.id).single(),
+      supabase
+        .from("submissions")
+        .select("*", { count: "exact", head: true })
+        .in("form_id", formIdFilter)
+        .gte("submitted_at", firstDayOfMonth),
+    ]);
+
     submissions = mapSubmissionsToRows(
       submissionsResult.data ?? [],
       forms ?? [],
       fieldsResult.data ?? []
     );
+    subscription = subResult.data;
+    monthSubmissions = monthResult.count ?? 0;
+  } else {
+    const [subResult, monthResult] = await Promise.all([
+      supabase.from("subscriptions").select("*").eq("user_id", user.id).single(),
+      supabase
+        .from("submissions")
+        .select("*", { count: "exact", head: true })
+        .in("form_id", formIdFilter)
+        .gte("submitted_at", firstDayOfMonth),
+    ]);
+    subscription = subResult.data;
+    monthSubmissions = monthResult.count ?? 0;
   }
 
   const stats = computeDashboardStats(
@@ -81,7 +88,7 @@ export default async function DashboardOverviewPage() {
   const limits = getPlanLimits(plan);
   const formsCount = (forms ?? []).length;
   const status = subscription?.status ?? "active";
-  const submissionsThisMonth = monthSubmissions ?? 0;
+  const submissionsThisMonth = monthSubmissions;
 
   const planLabelColors: Record<string, string> = {
     free: "bg-gray-100 text-gray-700 border-gray-200",
