@@ -124,9 +124,9 @@ export default async function DashboardOverviewPage() {
 
       {plan === "free" && (
         <div className="rounded-xl border border-whatsapp/20 bg-gradient-to-r from-whatsapp/5 to-transparent p-5">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-whatsapp/10">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-whatsapp/10">
                 <Crown className="h-5 w-5 text-whatsapp-deep" />
               </div>
               <div>
@@ -145,7 +145,7 @@ export default async function DashboardOverviewPage() {
             </div>
             <Link
               href="/pricing"
-              className="inline-flex items-center gap-2 rounded-xl bg-whatsapp px-4 py-2 text-sm font-semibold text-white shadow-sm transition-all hover:bg-[#0DB849] active:scale-[0.98]"
+              className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-whatsapp px-4 py-2 text-sm font-semibold text-white shadow-sm transition-all hover:bg-[#0DB849] active:scale-[0.98]"
             >
               Upgrade to Pro
               <ArrowRight className="h-4 w-4" />

@@ -7,7 +7,7 @@ import { Play, ChevronDown, MessageCircle } from "lucide-react";
 
 export function Hero() {
   return (
-    <section className="relative overflow-hidden bg-gradient-hero pt-32 pb-16 sm:pt-36 sm:pb-20 lg:pt-40 lg:pb-28">
+    <section className="relative overflow-hidden bg-gradient-hero pt-28 pb-14 sm:pt-36 sm:pb-20 lg:pt-40 lg:pb-28">
       {/* Subtle background pattern */}
       <div className="pattern-dots absolute inset-0 opacity-40" />
 
@@ -110,12 +110,12 @@ export function Hero() {
               {/* Soft backdrop glow */}
               <div className="absolute inset-0 -top-6 rounded-[2.5rem] bg-gradient-to-br from-green-50 via-gray-50 to-blue-50 opacity-60" />
 
-              <div className="relative z-10 flex items-start justify-center gap-5">
+              <div className="relative z-10 flex items-start justify-center gap-3 sm:gap-5">
                 {/* Form preview card */}
                 <motion.div
                   animate={{ y: [0, -6, 0] }}
                   transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
-                  className="mt-8 w-56 shrink-0 rounded-2xl border border-gray-100 bg-white p-5 shadow-xl sm:w-60"
+                  className="mt-8 w-[44vw] max-w-56 shrink-0 rounded-2xl border border-gray-100 bg-white p-4 shadow-xl sm:w-60 sm:p-5"
                 >
                   <div className="mb-4 border-b border-gray-100 pb-3 text-center">
                     <span className="text-sm font-bold text-gray-800">OneForm</span>

@@ -34,7 +34,7 @@ export function FieldEditor({
 }: FieldEditorProps) {
   if (!field) {
     return (
-      <aside className="w-80 shrink-0 overflow-auto border-l border-brand-border bg-white p-5">
+      <aside className="w-full shrink-0 overflow-auto border-t border-brand-border bg-white p-5 lg:w-80 lg:border-t-0 lg:border-l">
         <h3 className="mb-2 text-xs font-bold uppercase tracking-wider text-brand-muted">
           Field Settings
         </h3>

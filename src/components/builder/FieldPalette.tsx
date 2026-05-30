@@ -36,16 +36,16 @@ interface FieldPaletteProps {
 
 export function FieldPalette({ onAddField }: FieldPaletteProps) {
   return (
-    <aside className="w-56 shrink-0 overflow-auto border-r border-brand-border bg-white p-4">
-      <h3 className="mb-4 text-xs font-bold uppercase tracking-wider text-brand-muted">
+    <aside className="w-full shrink-0 overflow-x-auto border-b border-brand-border bg-white p-3 lg:w-56 lg:overflow-y-auto lg:border-b-0 lg:border-r lg:p-4">
+      <h3 className="mb-3 hidden text-xs font-bold uppercase tracking-wider text-brand-muted lg:mb-4 lg:block">
         Field Components
       </h3>
-      <div className="space-y-2">
+      <div className="flex gap-2 lg:flex-col lg:space-y-2 lg:gap-0">
         {BUILDER_FIELDS.map(({ type, label, icon: Icon }) => (
           <button
             key={type}
             onClick={() => onAddField(type)}
-            className="flex w-full items-center gap-3 rounded-xl border border-brand-border bg-brand-bg/30 px-3 py-2.5 text-left text-sm font-medium transition-all hover:border-whatsapp hover:bg-white hover:shadow-card"
+            className="flex shrink-0 items-center gap-2 rounded-xl border border-brand-border bg-brand-bg/30 px-3 py-2.5 text-left text-sm font-medium transition-all hover:border-whatsapp hover:bg-white hover:shadow-card lg:w-full lg:gap-3"
           >
             <Icon className="h-4 w-4 text-whatsapp" strokeWidth={1.75} />
             {label}

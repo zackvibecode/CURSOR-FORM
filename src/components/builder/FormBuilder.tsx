@@ -145,21 +145,21 @@ export function FormBuilder({ formId, initialData }: FormBuilderProps) {
   return (
     <div className="fixed inset-0 z-50 flex h-screen flex-col bg-brand-bg">
       <header className="flex h-16 shrink-0 items-center justify-between border-b border-brand-border bg-white px-4">
-        <div className="flex items-center gap-4">
+        <div className="flex min-w-0 items-center gap-2 sm:gap-4">
           <Link
             href="/dashboard/forms"
             className="flex items-center gap-2 text-sm text-brand-muted transition-colors hover:text-whatsapp-deep"
           >
-            <ArrowLeft className="h-4 w-4" />
+            <ArrowLeft className="h-4 w-4 shrink-0" />
             <span className="hidden sm:inline">Back to Forms</span>
           </Link>
           <Input
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            className="max-w-xs border-0 bg-transparent text-lg font-bold focus:ring-0"
+            className="w-32 border-0 bg-transparent text-base font-bold focus:ring-0 sm:max-w-xs sm:w-auto sm:text-lg"
           />
           <span
-            className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${
+            className={`hidden rounded-full px-2.5 py-0.5 text-xs font-semibold sm:inline ${
               status === "published"
                 ? "bg-whatsapp/10 text-whatsapp-deep"
                 : "bg-gray-100 text-brand-muted"
@@ -175,7 +175,7 @@ export function FormBuilder({ formId, initialData }: FormBuilderProps) {
           )}
           <Button variant="ghost" size="sm" onClick={() => setPreviewOpen(true)}>
             <Eye className="h-4 w-4" />
-            Preview
+            <span className="hidden sm:inline">Preview</span>
           </Button>
           <Button
             variant="outline"
@@ -184,11 +184,11 @@ export function FormBuilder({ formId, initialData }: FormBuilderProps) {
             disabled={saving}
           >
             <Save className="h-4 w-4" />
-            Save
+            <span className="hidden sm:inline">Save</span>
           </Button>
           <Button variant="whatsapp" size="sm" showWhatsAppIcon onClick={() => requestSave(true)} disabled={saving}>
             <Globe className="h-4 w-4" />
-            Publish
+            <span className="hidden sm:inline">Publish</span>
           </Button>
         </div>
       </header>
@@ -219,7 +219,7 @@ export function FormBuilder({ formId, initialData }: FormBuilderProps) {
       </div>
 
       {tab === "build" ? (
-        <div className="flex flex-1 overflow-hidden">
+        <div className="flex flex-1 flex-col overflow-auto lg:flex-row lg:overflow-hidden">
           <FieldPalette onAddField={handleAddField} />
           <FormCanvas
             fields={fields}
