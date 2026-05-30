@@ -27,7 +27,7 @@ export default function DashboardToolsPage() {
   return (
     <div className="mx-auto max-w-4xl space-y-8">
       <div>
-        <h2 className="text-2xl font-bold text-brand-text">Free Tools</h2>
+        <h2 className="text-xl font-bold text-brand-text">Free Tools</h2>
         <p className="mt-1 text-sm text-brand-muted">
           Helpful tools available on your plan — generate QR codes and WhatsApp links.
         </p>

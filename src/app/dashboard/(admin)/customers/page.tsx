@@ -47,7 +47,7 @@ export default async function CustomersPage() {
   return (
     <div className="mx-auto max-w-7xl space-y-6">
       <div>
-        <h2 className="text-2xl font-bold text-brand-text">Customers</h2>
+        <h2 className="text-xl font-bold text-brand-text">Customers</h2>
         <p className="text-brand-muted">
           Unique contacts collected through your WhatsApp forms
         </p>

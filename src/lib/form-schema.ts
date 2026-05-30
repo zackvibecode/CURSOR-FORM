@@ -11,6 +11,7 @@ export const FIELD_TYPES = [
   "multiple_choice",
   "checkbox",
   "date",
+  "image",
 ] as const;
 
 export const FORM_FIELD_TYPES = FIELD_TYPES;
@@ -27,6 +28,9 @@ export const formFieldSchema = z.object({
     .object({
       multiline: z.boolean().optional(),
       subtitle: z.string().optional(),
+      imageUrl: z.string().optional(),
+      imageAlt: z.string().optional(),
+      align: z.enum(["left", "center", "right"]).optional(),
     })
     .optional(),
 });
@@ -85,6 +89,7 @@ export function createDefaultField(type: FieldType, orderIndex: number): FormFie
       options: ["Option 1", "Option 2"],
     },
     date: { label: "Preferred date", required: false },
+    image: { label: "Image", required: false, settings: { align: "center" } },
   };
 
   return formFieldSchema.parse({

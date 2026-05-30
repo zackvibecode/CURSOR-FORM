@@ -39,7 +39,7 @@ export default async function AnalyticsPage() {
   return (
     <div className="mx-auto max-w-7xl space-y-8">
       <div>
-        <h2 className="text-2xl font-bold text-brand-text">Analytics</h2>
+        <h2 className="text-xl font-bold text-brand-text">Analytics</h2>
         <p className="text-brand-muted">
           Monitor your form performance and submission trends
         </p>

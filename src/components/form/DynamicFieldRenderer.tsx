@@ -25,13 +25,42 @@ export function DynamicFieldRenderer({
   return (
     <div className="space-y-5">
       {fields.map((field) => {
+        const align = field.settings?.align ?? "left";
+        const alignClass =
+          align === "center" ? "text-center" : align === "right" ? "text-right" : "text-left";
+        const justifyClass =
+          align === "center" ? "justify-center" : align === "right" ? "justify-end" : "justify-start";
+
         if (field.type === "title") {
           return (
-            <div key={field.id} className="pt-2">
+            <div key={field.id} className={cn("pt-2", alignClass)}>
               <h2 className="text-xl font-bold text-gray-900">{field.label}</h2>
               {field.settings?.subtitle && (
                 <p className="mt-1 text-sm text-gray-600">{field.settings.subtitle}</p>
               )}
+            </div>
+          );
+        }
+
+        if (field.type === "image") {
+          if (!field.settings?.imageUrl) {
+            return preview ? (
+              <div
+                key={field.id}
+                className="flex items-center justify-center rounded-xl border-2 border-dashed border-gray-200 py-10 text-sm text-gray-400"
+              >
+                No image uploaded yet
+              </div>
+            ) : null;
+          }
+          return (
+            <div key={field.id} className={cn("flex", justifyClass)}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={field.settings.imageUrl}
+                alt={field.settings.imageAlt ?? field.label ?? "Form image"}
+                className="max-h-80 max-w-full rounded-xl object-contain"
+              />
             </div>
           );
         }

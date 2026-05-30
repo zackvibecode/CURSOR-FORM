@@ -44,7 +44,7 @@ export default async function SubmissionsPage() {
   return (
     <div className="mx-auto max-w-7xl space-y-6">
       <div>
-        <h2 className="text-2xl font-bold text-brand-text">Submissions</h2>
+        <h2 className="text-xl font-bold text-brand-text">Submissions</h2>
         <p className="text-brand-muted">
           Track and manage all form submissions across your WhatsApp forms
         </p>

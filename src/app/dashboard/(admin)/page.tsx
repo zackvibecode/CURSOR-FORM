@@ -102,7 +102,7 @@ export default async function DashboardOverviewPage() {
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <p className="text-sm text-brand-muted">Welcome back</p>
-          <h2 className="text-2xl font-bold text-brand-text">Dashboard Overview</h2>
+          <h2 className="text-xl font-bold text-brand-text">Dashboard Overview</h2>
         </div>
         <CreateFormButton />
       </div>
@@ -161,7 +161,7 @@ export default async function DashboardOverviewPage() {
 
       <div>
         <div className="mb-4 flex items-center justify-between">
-          <h3 className="text-lg font-semibold text-brand-text">Latest Submissions</h3>
+          <h3 className="text-base font-semibold text-brand-text">Latest Submissions</h3>
           <Link
             href="/dashboard/submissions"
             className="text-sm font-medium text-whatsapp-deep hover:underline"

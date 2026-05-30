@@ -1,9 +1,26 @@
 "use client";
 
+import { useState } from "react";
 import type { FormField } from "@/lib/form-schema";
+import { createClient } from "@/lib/supabase/client";
 import { Input } from "@/components/ui/Input";
 import { Label } from "@/components/ui/Label";
-import { GripVertical, Trash2, Plus, Bold, Italic, Link as LinkIcon, HelpCircle } from "lucide-react";
+import { cn } from "@/lib/utils";
+import {
+  GripVertical,
+  Trash2,
+  Plus,
+  Bold,
+  Italic,
+  Link as LinkIcon,
+  HelpCircle,
+  AlignLeft as AlignLeftIcon,
+  AlignCenter,
+  AlignRight,
+  Upload,
+  Image as ImageIcon,
+  Loader2,
+} from "lucide-react";
 
 interface FieldLabelProps {
   children: React.ReactNode;
@@ -45,6 +62,138 @@ function RichTextToolbar({ value, onChange, placeholder = "Add description text 
         className="w-full rounded-b-xl border border-t-0 border-brand-border bg-white px-4 py-3 text-sm text-brand-text outline-none placeholder:text-brand-muted focus:border-whatsapp focus:ring-2 focus:ring-whatsapp/20"
         rows={2}
       />
+    </div>
+  );
+}
+
+type Align = "left" | "center" | "right";
+
+function AlignmentControl({
+  value,
+  onChange,
+}: {
+  value: Align;
+  onChange: (a: Align) => void;
+}) {
+  const options: { key: Align; icon: typeof AlignLeftIcon; label: string }[] = [
+    { key: "left", icon: AlignLeftIcon, label: "Left" },
+    { key: "center", icon: AlignCenter, label: "Center" },
+    { key: "right", icon: AlignRight, label: "Right" },
+  ];
+  return (
+    <div className="mt-1 inline-flex rounded-xl border border-brand-border bg-gray-50 p-1">
+      {options.map(({ key, icon: Icon, label }) => (
+        <button
+          key={key}
+          type="button"
+          onClick={() => onChange(key)}
+          title={label}
+          className={cn(
+            "flex h-8 w-9 items-center justify-center rounded-lg transition-colors",
+            value === key
+              ? "bg-white text-whatsapp-deep shadow-sm"
+              : "text-gray-400 hover:text-gray-600"
+          )}
+        >
+          <Icon className="h-4 w-4" />
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function ImageUploader({
+  field,
+  onUpdate,
+}: {
+  field: FormField;
+  onUpdate: (field: FormField) => void;
+}) {
+  const [uploading, setUploading] = useState(false);
+  const [error, setError] = useState("");
+  const imageUrl = field.settings?.imageUrl ?? "";
+
+  const handleFile = async (file: File) => {
+    setError("");
+    if (!file.type.startsWith("image/")) {
+      setError("Please select an image file.");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setError("Image must be under 5MB.");
+      return;
+    }
+
+    setUploading(true);
+    try {
+      const supabase = createClient();
+      const ext = file.name.split(".").pop() ?? "png";
+      const path = `${field.id}-${Date.now()}.${ext}`;
+      const { error: uploadError } = await supabase.storage
+        .from("form-images")
+        .upload(path, file, { upsert: true });
+      if (uploadError) {
+        setError(uploadError.message);
+        setUploading(false);
+        return;
+      }
+      const { data } = supabase.storage.from("form-images").getPublicUrl(path);
+      onUpdate({
+        ...field,
+        settings: { ...field.settings, imageUrl: data.publicUrl },
+      });
+    } catch {
+      setError("Upload failed. Please try again.");
+    }
+    setUploading(false);
+  };
+
+  return (
+    <div>
+      <FieldLabel>Image</FieldLabel>
+      {imageUrl ? (
+        <div className="mt-1 space-y-2">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={imageUrl}
+            alt="Uploaded preview"
+            className="max-h-40 w-full rounded-xl border border-brand-border object-contain"
+          />
+          <button
+            type="button"
+            onClick={() =>
+              onUpdate({ ...field, settings: { ...field.settings, imageUrl: "" } })
+            }
+            className="flex items-center gap-1.5 text-sm text-brand-red hover:underline"
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+            Remove image
+          </button>
+        </div>
+      ) : (
+        <label className="mt-1 flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-brand-border bg-gray-50 px-4 py-8 text-center transition-colors hover:border-whatsapp hover:bg-whatsapp/5">
+          {uploading ? (
+            <Loader2 className="h-6 w-6 animate-spin text-whatsapp" />
+          ) : (
+            <Upload className="h-6 w-6 text-gray-400" />
+          )}
+          <span className="text-sm font-medium text-brand-muted">
+            {uploading ? "Uploading..." : "Click to upload an image"}
+          </span>
+          <span className="text-xs text-gray-400">PNG, JPG up to 5MB</span>
+          <input
+            type="file"
+            accept="image/*"
+            className="hidden"
+            disabled={uploading}
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) handleFile(file);
+            }}
+          />
+        </label>
+      )}
+      {error && <p className="mt-1 text-sm text-brand-red">{error}</p>}
     </div>
   );
 }
@@ -124,6 +273,23 @@ interface StandardFieldEditorProps {
 }
 
 export function StandardFieldEditor({ field, onUpdate }: StandardFieldEditorProps) {
+  const align: Align = field.settings?.align ?? "left";
+  const setAlign = (a: Align) =>
+    onUpdate({ ...field, settings: { ...field.settings, align: a } });
+
+  // Image is a display-only component: uploader + alignment, no input props
+  if (field.type === "image") {
+    return (
+      <div className="space-y-5">
+        <ImageUploader field={field} onUpdate={onUpdate} />
+        <div>
+          <FieldLabel>Alignment</FieldLabel>
+          <AlignmentControl value={field.settings?.align ?? "center"} onChange={setAlign} />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-5">
       <div>
@@ -143,6 +309,13 @@ export function StandardFieldEditor({ field, onUpdate }: StandardFieldEditorProp
           onChange={(v) => onUpdate({ ...field, settings: { ...field.settings, subtitle: v } })}
         />
       </div>
+
+      {(field.type === "title" || field.type === "text") && (
+        <div>
+          <FieldLabel>Alignment</FieldLabel>
+          <AlignmentControl value={align} onChange={setAlign} />
+        </div>
+      )}
 
       {field.type !== "title" && (
         <div>

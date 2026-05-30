@@ -12,6 +12,7 @@ import {
   CheckSquare,
   ListChecks,
   Heading,
+  Image as ImageIcon,
   type LucideIcon,
 } from "lucide-react";
 
@@ -26,6 +27,7 @@ const BUILDER_FIELDS: { type: FieldType; label: string; icon: LucideIcon }[] = [
   { type: "textarea", label: "Textarea", icon: AlignLeft },
   { type: "date", label: "Date Picker", icon: Calendar },
   { type: "title", label: "Title / Heading", icon: Heading },
+  { type: "image", label: "Image", icon: ImageIcon },
 ];
 
 interface FieldPaletteProps {

@@ -108,7 +108,7 @@ export function FormList({ forms: initialForms }: FormListProps) {
     <div>
       <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-brand-text">My Forms</h1>
+          <h1 className="text-xl font-bold text-brand-text">My Forms</h1>
           <p className="text-brand-muted">Create and manage your WhatsApp lead forms</p>
         </div>
         <div className="flex gap-2">
