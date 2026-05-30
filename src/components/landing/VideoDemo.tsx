@@ -1,11 +1,18 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { Play } from "lucide-react";
 import { ScrollReveal } from "@/components/ui/ScrollReveal";
 
+/** https://youtu.be/rrBsU931GhU */
+const YOUTUBE_VIDEO_ID = "rrBsU931GhU";
+
 export function VideoDemo() {
   const [isPlaying, setIsPlaying] = useState(false);
+
+  const embedUrl = `https://www.youtube.com/embed/${YOUTUBE_VIDEO_ID}?autoplay=1&rel=0`;
+  const thumbnailUrl = `https://img.youtube.com/vi/${YOUTUBE_VIDEO_ID}/hqdefault.jpg`;
 
   return (
     <section className="bg-white py-20 sm:py-28">
@@ -28,33 +35,35 @@ export function VideoDemo() {
               {isPlaying ? (
                 <iframe
                   className="absolute inset-0 h-full w-full"
-                  src="https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=1&rel=0"
+                  src={embedUrl}
                   title="OneForm Demo"
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                   allowFullScreen
                 />
               ) : (
                 <>
-                  <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-gray-800 via-gray-900 to-black">
-                    <div className="absolute inset-0 opacity-20 max-md:hidden">
-                      <div className="absolute top-8 left-8 h-3 w-32 rounded-full bg-whatsapp/40" />
-                      <div className="absolute top-16 left-8 h-2 w-48 rounded-full bg-white/20" />
-                      <div className="absolute top-24 left-8 h-2 w-40 rounded-full bg-white/10" />
-                      <div className="absolute bottom-8 right-8 h-24 w-48 rounded-xl border border-whatsapp/20 bg-whatsapp/5" />
-                      <div className="absolute top-8 right-8 h-8 w-8 rounded-full bg-whatsapp/30" />
-                    </div>
+                  <Image
+                    src={thumbnailUrl}
+                    alt="OneForm demo video thumbnail"
+                    fill
+                    className="object-cover"
+                    sizes="(max-width: 1024px) 100vw, 896px"
+                    priority={false}
+                  />
+                  <div className="absolute inset-0 bg-black/35" />
 
-                    <button
-                      type="button"
-                      onClick={() => setIsPlaying(true)}
-                      className="group relative z-10 flex h-20 w-20 items-center justify-center rounded-full bg-whatsapp text-white shadow-lg shadow-whatsapp/30 transition-transform hover:scale-110 hover:bg-[#0DB849] active:scale-95"
-                      aria-label="Play demo video"
-                    >
+                  <button
+                    type="button"
+                    onClick={() => setIsPlaying(true)}
+                    className="group absolute inset-0 z-10 flex items-center justify-center"
+                    aria-label="Play OneForm demo on YouTube"
+                  >
+                    <span className="flex h-20 w-20 items-center justify-center rounded-full bg-whatsapp text-white shadow-lg shadow-whatsapp/30 transition-transform group-hover:scale-110 group-hover:bg-[#0DB849] active:scale-95">
                       <Play className="ml-1 h-8 w-8 fill-current" />
-                    </button>
-                  </div>
+                    </span>
+                  </button>
 
-                  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-6">
+                  <div className="absolute bottom-0 left-0 right-0 z-10 bg-gradient-to-t from-black/70 to-transparent p-6">
                     <p className="text-sm font-medium text-white/90">
                       Create your first WhatsApp form in under 5 minutes
                     </p>
