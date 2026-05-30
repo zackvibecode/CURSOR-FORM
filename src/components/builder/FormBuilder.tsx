@@ -241,9 +241,9 @@ export function FormBuilder({ formId, initialData }: FormBuilderProps) {
           />
         </div>
       ) : (
-        <div className="flex flex-1 overflow-hidden">
+        <div className="flex flex-1 flex-col overflow-auto lg:flex-row lg:overflow-hidden">
           {/* Settings Sidebar — Tally-style */}
-          <nav className="w-56 shrink-0 overflow-y-auto border-r border-brand-border bg-white p-3">
+          <nav className="flex w-full shrink-0 gap-2 overflow-x-auto border-b border-brand-border bg-white p-3 lg:w-56 lg:flex-col lg:gap-0 lg:overflow-y-auto lg:border-b-0 lg:border-r">
             {[
               { key: "general", label: "General", icon: Settings },
               { key: "team", label: "Team", icon: Users },
@@ -254,7 +254,7 @@ export function FormBuilder({ formId, initialData }: FormBuilderProps) {
               <button
                 key={item.key}
                 onClick={() => setTab(item.key as typeof tab)}
-                className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
+                className={`flex w-auto shrink-0 items-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors lg:w-full lg:gap-3 ${
                   tab === item.key
                     ? "bg-whatsapp/10 text-whatsapp-deep"
                     : "text-brand-muted hover:bg-gray-50 hover:text-brand-text"
