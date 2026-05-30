@@ -4,8 +4,13 @@
 
 @layer base {
   html {
-    scroll-behavior: smooth;
     scroll-padding-top: 96px;
+  }
+
+  @media (min-width: 768px) {
+    html {
+      scroll-behavior: smooth;
+    }
   }
 
   body {
@@ -50,5 +55,18 @@
   .animate-float-gentle-delay {
     animation: float-gentle 5s ease-in-out infinite;
     animation-delay: 0.5s;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+
+    .animate-fade-in,
+    .animate-float-gentle,
+    .animate-float-gentle-delay,
+    .animate-pulse-soft {
+      animation: none !important;
+    }
   }
 }

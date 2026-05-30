@@ -1,7 +1,5 @@
-"use client";
-
-import { motion } from "framer-motion";
 import { Star } from "lucide-react";
+import { ScrollReveal } from "@/components/ui/ScrollReveal";
 
 const testimonials = [
   {
@@ -97,13 +95,7 @@ export function Testimonials() {
   return (
     <section id="testimonials" className="bg-gradient-to-b from-gray-50 to-white py-20 sm:py-28">
       <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
-        <motion.div
-          className="mb-16 text-center"
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-100px" }}
-          transition={{ duration: 0.5 }}
-        >
+        <ScrollReveal className="mb-16 text-center">
           <span className="mb-3 inline-block rounded-full bg-whatsapp/10 px-4 py-1.5 text-xs font-semibold tracking-wide text-whatsapp-deep uppercase">
             Testimonials
           </span>
@@ -113,37 +105,30 @@ export function Testimonials() {
           <p className="mx-auto mt-4 max-w-xl text-gray-500">
             See what our customers have to say about their experience with OneForm
           </p>
-        </motion.div>
+        </ScrollReveal>
 
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {testimonials.map((item, index) => (
-            <motion.div
-              key={item.name}
-              className="group relative rounded-2xl border border-gray-100 bg-white p-6 shadow-sm transition-all hover:-translate-y-1 hover:shadow-md"
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.4, delay: index * 0.06 }}
-            >
-              <div className="absolute top-4 right-4 text-4xl leading-none text-gray-100 font-serif select-none">
-                &ldquo;
-              </div>
-              <StarRating count={item.stars} />
-              <p className="mb-6 text-sm leading-relaxed text-gray-600">
-                {item.quote}
-              </p>
-              <div className="flex items-center gap-3 border-t border-gray-50 pt-4">
-                <div
-                  className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white ${item.bg}`}
-                >
-                  {item.initials}
+            <ScrollReveal key={item.name} delay={Math.min(index * 0.04, 0.2)}>
+              <div className="relative rounded-2xl border border-gray-100 bg-white p-6 shadow-sm transition-shadow hover:shadow-md md:hover:-translate-y-1">
+                <div className="absolute top-4 right-4 select-none font-serif text-4xl leading-none text-gray-100">
+                  &ldquo;
                 </div>
-                <div className="min-w-0">
-                  <p className="truncate text-sm font-semibold text-gray-900">{item.name}</p>
-                  <p className="truncate text-xs text-gray-500">{item.role}</p>
+                <StarRating count={item.stars} />
+                <p className="mb-6 text-sm leading-relaxed text-gray-600">{item.quote}</p>
+                <div className="flex items-center gap-3 border-t border-gray-50 pt-4">
+                  <div
+                    className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white ${item.bg}`}
+                  >
+                    {item.initials}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-semibold text-gray-900">{item.name}</p>
+                    <p className="truncate text-xs text-gray-500">{item.role}</p>
+                  </div>
                 </div>
               </div>
-            </motion.div>
+            </ScrollReveal>
           ))}
         </div>
       </div>

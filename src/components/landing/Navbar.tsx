@@ -29,8 +29,8 @@ export function Navbar() {
   return (
     <header className="fixed top-4 left-4 right-4 z-50 lg:left-6 lg:right-6">
       <div className="mx-auto max-w-7xl">
-        <div className="flex h-[64px] items-center justify-between rounded-2xl border border-gray-200/80 bg-white/80 px-4 shadow-sm backdrop-blur-xl sm:px-6">
-          <BrandLogo />
+        <div className="flex h-[64px] items-center justify-between rounded-2xl border border-gray-200 bg-white px-4 shadow-sm sm:px-6">
+          <BrandLogo priority />
 
           <nav className="hidden items-center gap-1 md:flex">
             <a
@@ -119,7 +119,7 @@ export function Navbar() {
 
         {/* Mobile menu */}
         {open && (
-          <div className="mt-2 rounded-2xl border border-gray-200/80 bg-white/95 px-4 py-4 shadow-lg backdrop-blur-xl md:hidden">
+          <div className="mt-2 rounded-2xl border border-gray-200 bg-white px-4 py-4 shadow-lg md:hidden">
             <nav className="flex flex-col gap-1">
               <a href="#how-it-works" onClick={() => setOpen(false)} className="rounded-lg px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
                 How it works

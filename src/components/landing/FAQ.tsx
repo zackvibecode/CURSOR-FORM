@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
 import { ChevronDown, HelpCircle, MessageCircle } from "lucide-react";
+import { ScrollReveal } from "@/components/ui/ScrollReveal";
 import { cn } from "@/lib/utils";
 
 const faqs = [
@@ -46,13 +46,7 @@ export function FAQ() {
   return (
     <section id="faq" className="bg-white py-20 sm:py-28">
       <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
-        <motion.div
-          className="mb-12 text-center"
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-100px" }}
-          transition={{ duration: 0.5 }}
-        >
+        <ScrollReveal className="mb-12 text-center">
           <span className="mb-3 inline-block rounded-full bg-whatsapp/10 px-4 py-1.5 text-xs font-semibold tracking-wide text-whatsapp-deep uppercase">
             FAQ
           </span>
@@ -62,73 +56,61 @@ export function FAQ() {
           <p className="mx-auto mt-4 max-w-xl text-gray-500">
             Everything you need to know about OneForm. Can&apos;t find the answer? Chat with us.
           </p>
-        </motion.div>
+        </ScrollReveal>
 
         <div className="space-y-3">
           {faqs.map((faq, index) => (
-            <motion.div
-              key={faq.q}
-              className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm transition-shadow hover:shadow-md"
-              initial={{ opacity: 0, y: 12 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.3, delay: index * 0.05 }}
-            >
-              <button
-                className="flex w-full items-center justify-between px-6 py-4 text-left"
-                onClick={() => setOpenIndex(openIndex === index ? null : index)}
-                aria-expanded={openIndex === index}
-              >
-                <span className="pr-4 text-sm font-semibold text-gray-900">{faq.q}</span>
-                <ChevronDown
+            <ScrollReveal key={faq.q} delay={Math.min(index * 0.04, 0.2)}>
+              <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm transition-shadow hover:shadow-md">
+                <button
+                  type="button"
+                  className="flex w-full items-center justify-between px-6 py-4 text-left"
+                  onClick={() => setOpenIndex(openIndex === index ? null : index)}
+                  aria-expanded={openIndex === index}
+                >
+                  <span className="pr-4 text-sm font-semibold text-gray-900">{faq.q}</span>
+                  <ChevronDown
+                    className={cn(
+                      "h-5 w-5 shrink-0 text-gray-400 transition-transform duration-300",
+                      openIndex === index && "rotate-180 text-whatsapp"
+                    )}
+                  />
+                </button>
+                <div
                   className={cn(
-                    "h-5 w-5 shrink-0 text-gray-400 transition-transform duration-300",
-                    openIndex === index && "rotate-180 text-whatsapp"
+                    "grid transition-[grid-template-rows] duration-300 ease-out",
+                    openIndex === index ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
                   )}
-                />
-              </button>
-              <AnimatePresence initial={false}>
-                {openIndex === index && (
-                  <motion.div
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: "auto", opacity: 1 }}
-                    exit={{ height: 0, opacity: 0 }}
-                    transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
-                    className="overflow-hidden"
-                  >
+                >
+                  <div className="overflow-hidden">
                     <div className="border-t border-gray-100 px-6 py-4 text-sm leading-relaxed text-gray-600">
                       {faq.a}
                     </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </motion.div>
+                  </div>
+                </div>
+              </div>
+            </ScrollReveal>
           ))}
         </div>
 
-        {/* Have a Question CTA */}
-        <motion.div
-          className="mt-12 rounded-2xl bg-gradient-to-br from-whatsapp/5 to-whatsapp/10 p-8 text-center"
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.5, delay: 0.3 }}
-        >
-          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-whatsapp/10">
-            <MessageCircle className="h-6 w-6 text-whatsapp" />
+        <ScrollReveal className="mt-12" delay={0.15}>
+          <div className="rounded-2xl bg-gradient-to-br from-whatsapp/5 to-whatsapp/10 p-8 text-center">
+            <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-whatsapp/10">
+              <MessageCircle className="h-6 w-6 text-whatsapp" />
+            </div>
+            <h3 className="mb-2 text-lg font-semibold text-gray-900">Still have questions?</h3>
+            <p className="mb-5 text-sm text-gray-600">
+              Our team is here to help. Reach out and we&apos;ll get back to you within 24 hours.
+            </p>
+            <a
+              href="mailto:contact@oneform.app"
+              className="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-5 py-2.5 text-sm font-medium text-gray-700 shadow-sm transition-colors hover:border-whatsapp/30 hover:bg-whatsapp/5 hover:text-whatsapp-deep"
+            >
+              <HelpCircle className="h-4 w-4" />
+              Contact Us
+            </a>
           </div>
-          <h3 className="mb-2 text-lg font-semibold text-gray-900">Still have questions?</h3>
-          <p className="mb-5 text-sm text-gray-600">
-            Our team is here to help. Reach out and we&apos;ll get back to you within 24 hours.
-          </p>
-          <a
-            href="mailto:contact@oneform.app"
-            className="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-5 py-2.5 text-sm font-medium text-gray-700 shadow-sm transition-all hover:border-whatsapp/30 hover:bg-whatsapp/5 hover:text-whatsapp-deep"
-          >
-            <HelpCircle className="h-4 w-4" />
-            Contact Us
-          </a>
-        </motion.div>
+        </ScrollReveal>
       </div>
     </section>
   );

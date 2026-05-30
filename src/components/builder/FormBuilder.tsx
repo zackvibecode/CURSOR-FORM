@@ -89,6 +89,9 @@ export function FormBuilder({ formId, initialData }: FormBuilderProps) {
       setMessage("");
 
       try {
+        // #region agent log
+        fetch('http://127.0.0.1:7461/ingest/e4fb4d9f-9960-4a81-b70b-58952b4e6440',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'4a0815'},body:JSON.stringify({sessionId:'4a0815',runId:'post-fix',hypothesisId:'A,B',location:'FormBuilder.tsx:handleSave',message:'save payload keys',data:{payloadKeys:['title','slug','whatsapp_number','cta_text','description','status','fields','settings'],templateInState:whatsappTemplate?.slice(0,30),templateSentToApi:true},timestamp:Date.now()})}).catch(()=>{});
+        // #endregion
         const res = await fetch(`/api/forms/${formId}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
@@ -100,6 +103,7 @@ export function FormBuilder({ formId, initialData }: FormBuilderProps) {
             description,
             status: publish ? "published" : status,
             fields,
+            settings: { whatsapp_template: whatsappTemplate },
           }),
         });
 

@@ -10,10 +10,12 @@ export function BrandLogo({
   className,
   iconOnly = false,
   size = "md",
+  priority = false,
 }: {
   className?: string;
   iconOnly?: boolean;
   size?: "sm" | "md" | "lg";
+  priority?: boolean;
 }) {
   const heights = {
     sm: "h-6",
@@ -39,7 +41,7 @@ export function BrandLogo({
           width={ICON_SIZE}
           height={ICON_SIZE}
           className={cn("object-contain", iconHeights[size])}
-          priority
+          priority={priority}
         />
       ) : (
         <Image
@@ -48,7 +50,7 @@ export function BrandLogo({
           width={LOGO_WIDTH}
           height={LOGO_HEIGHT}
           className={cn("w-auto object-contain", heights[size])}
-          priority
+          priority={priority}
         />
       )}
     </Link>

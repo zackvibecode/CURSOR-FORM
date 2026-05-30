@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { motion } from "framer-motion";
 import { Check, X, Star } from "lucide-react";
+import { ScrollReveal } from "@/components/ui/ScrollReveal";
 import { cn } from "@/lib/utils";
 
 const plans = [
@@ -73,13 +73,7 @@ export function Pricing() {
     <section id="pricing" className="bg-gradient-to-b from-white to-gray-50 py-20 sm:py-28">
       <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
         {/* Header */}
-        <motion.div
-          className="mb-12 text-center"
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-100px" }}
-          transition={{ duration: 0.5 }}
-        >
+        <ScrollReveal className="mb-12 text-center">
           <span className="mb-3 inline-block rounded-full bg-whatsapp/10 px-4 py-1.5 text-xs font-semibold tracking-wide text-whatsapp-deep uppercase">
             Pricing
           </span>
@@ -119,25 +113,21 @@ export function Pricing() {
               </span>
             )}
           </div>
-        </motion.div>
+        </ScrollReveal>
 
         {/* Pricing Cards */}
         <div className="grid gap-8 lg:grid-cols-3">
           {plans.map((plan, index) => {
             const price = isYearly ? plan.yearlyPrice : plan.monthlyPrice;
             return (
-              <motion.div
-                key={plan.name}
+              <ScrollReveal key={plan.name} delay={index * 0.08}>
+              <div
                 className={cn(
-                  "relative flex flex-col rounded-2xl border p-8 transition-all",
+                  "relative flex h-full flex-col rounded-2xl border p-8 transition-shadow",
                   plan.popular
-                    ? "border-whatsapp bg-white shadow-card-lg ring-1 ring-whatsapp/20 scale-[1.02] lg:scale-105"
+                    ? "border-whatsapp bg-white shadow-card-lg ring-1 ring-whatsapp/20 lg:scale-[1.02]"
                     : "border-gray-200 bg-white shadow-card hover:shadow-card-lg"
                 )}
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.4, delay: index * 0.1 }}
               >
                 {plan.popular && (
                   <div className="absolute -top-4 left-1/2 -translate-x-1/2">
@@ -211,20 +201,15 @@ export function Pricing() {
                     </div>
                   ))}
                 </div>
-              </motion.div>
+              </div>
+              </ScrollReveal>
             );
           })}
         </div>
 
         {/* Pricing FAQ */}
-        <motion.div
-          className="mt-16 max-w-2xl mx-auto"
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.5, delay: 0.3 }}
-        >
-          <div className="rounded-2xl bg-white border border-gray-200 p-8 shadow-sm">
+        <ScrollReveal className="mx-auto mt-16 max-w-2xl" delay={0.15}>
+          <div className="rounded-2xl border border-gray-200 bg-white p-8 shadow-sm">
             <h3 className="mb-4 text-center text-lg font-semibold text-gray-900">
               Pricing Questions
             </h3>
@@ -241,7 +226,7 @@ export function Pricing() {
               ))}
             </div>
           </div>
-        </motion.div>
+        </ScrollReveal>
       </div>
     </section>
   );

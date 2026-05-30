@@ -36,7 +36,7 @@ export function DashboardTopBar({ userName, onMenuClick }: DashboardTopBarProps)
   };
 
   return (
-    <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-brand-border bg-white/90 px-4 backdrop-blur-md sm:px-6">
+    <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-brand-border bg-white px-4 sm:px-6">
       <div className="flex items-center gap-4">
         <button
           onClick={onMenuClick}

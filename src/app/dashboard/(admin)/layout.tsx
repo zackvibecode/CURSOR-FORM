@@ -14,22 +14,18 @@ export default async function AdminLayout({
 
   if (!user) return null;
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("name")
-    .eq("id", user.id)
-    .single();
-
-  const { data: subscription } = await supabase
-    .from("subscriptions")
-    .select("plan, status")
-    .eq("user_id", user.id)
-    .single();
-
-  const { count: formsCount } = await supabase
-    .from("forms")
-    .select("*", { count: "exact", head: true })
-    .eq("user_id", user.id);
+  const [
+    { data: profile },
+    { data: subscription },
+    { count: formsCount },
+  ] = await Promise.all([
+    supabase.from("profiles").select("name").eq("id", user.id).single(),
+    supabase.from("subscriptions").select("plan, status").eq("user_id", user.id).single(),
+    supabase
+      .from("forms")
+      .select("*", { count: "exact", head: true })
+      .eq("user_id", user.id),
+  ]);
 
   // Pass auth data via React context instead of re-fetching in child pages
   return (
