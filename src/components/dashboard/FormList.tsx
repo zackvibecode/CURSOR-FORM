@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
 import { getFormPublicUrl } from "@/lib/forms";
 import { formatDate } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import { FORM_TEMPLATES } from "@/lib/templates";
 import { CreateFormButton } from "./DashboardHeader";
 import {
@@ -17,8 +18,13 @@ import {
   ExternalLink,
   FileText,
   Loader2,
+  Pin,
 } from "lucide-react";
+import { toast } from "@/components/ui/Toast";
 import { useEffect, useState } from "react";
+
+const MAX_PINNED = 5;
+const PINNED_STORAGE_KEY = "oneform_pinned_forms";
 
 interface FormRow {
   id: string;
@@ -41,10 +47,45 @@ export function FormList({ forms: initialForms }: FormListProps) {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [creatingTemplateId, setCreatingTemplateId] = useState<string | null>(null);
   const [error, setError] = useState("");
+  const [pinnedIds, setPinnedIds] = useState<string[]>([]);
 
   useEffect(() => {
     setForms(initialForms);
   }, [initialForms]);
+
+  // Load pinned forms from localStorage (no backend change)
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(PINNED_STORAGE_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) setPinnedIds(parsed.filter((id) => typeof id === "string"));
+      }
+    } catch {
+      // ignore malformed storage
+    }
+  }, []);
+
+  const togglePin = (id: string) => {
+    setPinnedIds((prev) => {
+      let next: string[];
+      if (prev.includes(id)) {
+        next = prev.filter((p) => p !== id);
+      } else {
+        if (prev.length >= MAX_PINNED) {
+          toast(`You can pin up to ${MAX_PINNED} forms only.`, "error");
+          return prev;
+        }
+        next = [...prev, id];
+      }
+      try {
+        localStorage.setItem(PINNED_STORAGE_KEY, JSON.stringify(next));
+      } catch {
+        // ignore storage write failure
+      }
+      return next;
+    });
+  };
 
   useEffect(() => {
     async function refreshForms() {
@@ -104,6 +145,18 @@ export function FormList({ forms: initialForms }: FormListProps) {
     }
   };
 
+  const isPinned = (id: string) => pinnedIds.includes(id);
+
+  // Pinned forms first (in pin order), then the rest by original order
+  const sortedForms = [...forms].sort((a, b) => {
+    const ap = pinnedIds.indexOf(a.id);
+    const bp = pinnedIds.indexOf(b.id);
+    if (ap !== -1 && bp !== -1) return ap - bp;
+    if (ap !== -1) return -1;
+    if (bp !== -1) return 1;
+    return 0;
+  });
+
   return (
     <div>
       <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -136,10 +189,11 @@ export function FormList({ forms: initialForms }: FormListProps) {
         </Card>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {forms.map((form) => {
+          {sortedForms.map((form) => {
             const responseCount = form.submissions?.[0]?.count ?? 0;
+            const pinned = isPinned(form.id);
             return (
-              <Card key={form.id} className="flex flex-col">
+              <Card key={form.id} className={cn("flex flex-col", pinned && "ring-1 ring-whatsapp/30")}>
                 <div className="mb-4 flex items-start justify-between">
                   <div>
                     <h3 className="font-bold">{form.title}</h3>
@@ -147,15 +201,31 @@ export function FormList({ forms: initialForms }: FormListProps) {
                       Updated {formatDate(form.updated_at)}
                     </p>
                   </div>
-                  <span
-                    className={`rounded-full px-2 py-0.5 text-xs font-semibold ${
-                      form.status === "published"
-                        ? "bg-whatsapp/10 text-whatsapp-dark"
-                        : "bg-gray-100 text-gray-600"
-                    }`}
-                  >
-                    {form.status}
-                  </span>
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => togglePin(form.id)}
+                      title={pinned ? "Unpin form" : "Pin form"}
+                      aria-label={pinned ? "Unpin form" : "Pin form"}
+                      className={cn(
+                        "rounded-lg p-1.5 transition-colors",
+                        pinned
+                          ? "bg-whatsapp/10 text-whatsapp-deep"
+                          : "text-gray-300 hover:bg-gray-100 hover:text-gray-500"
+                      )}
+                    >
+                      <Pin className={cn("h-4 w-4", pinned && "fill-current")} />
+                    </button>
+                    <span
+                      className={`rounded-full px-2 py-0.5 text-xs font-semibold ${
+                        form.status === "published"
+                          ? "bg-whatsapp/10 text-whatsapp-dark"
+                          : "bg-gray-100 text-gray-600"
+                      }`}
+                    >
+                      {form.status}
+                    </span>
+                  </div>
                 </div>
 
                 <p className="mb-4 text-sm text-gray-600">

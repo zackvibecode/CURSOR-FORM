@@ -14,6 +14,7 @@ interface PublicFormProps {
   whatsappNumber: string;
   fields: FormField[];
   formId: string;
+  whatsappTemplate?: string | null;
   onSubmit?: (data: Record<string, string>) => Promise<string | void>;
   preview?: boolean;
 }
@@ -25,6 +26,7 @@ export function PublicFormView({
   whatsappNumber,
   fields,
   formId,
+  whatsappTemplate,
   onSubmit,
   preview = false,
 }: PublicFormProps) {
@@ -78,7 +80,7 @@ export function PublicFormView({
         }
       }
 
-      const url = buildWhatsAppUrl(targetPhone, title, fields, values);
+      const url = buildWhatsAppUrl(targetPhone, title, fields, values, whatsappTemplate);
       window.location.href = url;
     } catch (err) {
       setErrors({ _form: "Submission failed. Please try again." });
@@ -92,9 +94,6 @@ export function PublicFormView({
         <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-whatsapp text-white shadow-soft">
           <WhatsAppIcon className="h-7 w-7" />
         </div>
-        {title.trim() && (
-          <h1 className="text-lg font-semibold text-brand-text">{title}</h1>
-        )}
         {description && <p className="mt-1 text-sm text-brand-muted">{description}</p>}
       </div>
 

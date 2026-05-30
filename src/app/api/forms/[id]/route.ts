@@ -61,7 +61,7 @@ export async function PUT(
   }
 
   const body = await request.json();
-  const { title, slug, whatsapp_number, cta_text, description, status, fields } = body;
+  const { title, slug, whatsapp_number, cta_text, description, status, fields, settings } = body;
 
   if (slug) {
     const { data: existing } = await supabase
@@ -85,6 +85,7 @@ export async function PUT(
       cta_text,
       description,
       status,
+      ...(settings !== undefined ? { settings } : {}),
     })
     .eq("id", id)
     .select()

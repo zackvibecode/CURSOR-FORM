@@ -31,6 +31,25 @@ function getAvailableKeys(data: Record<string, unknown>): string {
   return Object.keys(data).join(", ");
 }
 
+// Extract every field answer (by label, in field order) for a submission.
+// Skips display-only fields (title/image). Used to render dynamic columns.
+function extractAllAnswers(
+  data: Record<string, unknown>,
+  fieldMap: Map<string, { label: string; type: string }>
+): { label: string; value: string }[] {
+  const result: { label: string; value: string }[] = [];
+  for (const [fieldId, { label, type }] of Array.from(fieldMap.entries())) {
+    if (type === "title" || type === "image") continue;
+    const raw = data[fieldId];
+    let value = "";
+    if (typeof raw === "string") value = raw;
+    else if (Array.isArray(raw)) value = raw.join(", ");
+    else if (raw != null) value = String(raw);
+    result.push({ label, value: value.trim() });
+  }
+  return result;
+}
+
 interface FieldRow {
   id: string;
   label: string;
@@ -72,6 +91,8 @@ export function mapSubmissionsToRows(
       debugInfo = getAvailableKeys(data);
     }
 
+    const answers = fieldMap ? extractAllAnswers(data, fieldMap) : [];
+
     // Determine the assigned team member display label (NAME only)
     const assignedName = sub.assigned_name?.trim() || null;
     const assignedPhone = sub.assigned_phone?.trim() || null;
@@ -87,6 +108,7 @@ export function mapSubmissionsToRows(
       id: sub.id,
       name,
       phone,
+      answers,
       formName: sub.forms?.title ?? formMap.get(sub.form_id) ?? "Unknown Form",
       status: "new" as const,
       date: sub.submitted_at,

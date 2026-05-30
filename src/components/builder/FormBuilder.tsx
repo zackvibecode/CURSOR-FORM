@@ -44,6 +44,7 @@ interface FormBuilderProps {
     description: string;
     status: "draft" | "published";
     fields: FormField[];
+    whatsappTemplate?: string;
   };
 }
 
@@ -64,7 +65,8 @@ export function FormBuilder({ formId, initialData }: FormBuilderProps) {
   const [message, setMessage] = useState("");
   const [copied, setCopied] = useState(false);
   const [whatsappTemplate, setWhatsappTemplate] = useState(
-    "Hi, I would like to submit my details:\nName:\nPhone:\nEmail:\nService:\nQuantity:\nPreferred Date:\nMessage:"
+    initialData.whatsappTemplate ??
+      "Hi, I would like to submit my details:\nName:\nPhone:\nEmail:\nService:\nQuantity:\nPreferred Date:\nMessage:"
   );
   const [confirmModal, setConfirmModal] = useState(false);
   const [confirmAction, setConfirmAction] = useState<"save" | "publish" | null>(null);
@@ -89,9 +91,6 @@ export function FormBuilder({ formId, initialData }: FormBuilderProps) {
       setMessage("");
 
       try {
-        // #region agent log
-        fetch('http://127.0.0.1:7461/ingest/e4fb4d9f-9960-4a81-b70b-58952b4e6440',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'4a0815'},body:JSON.stringify({sessionId:'4a0815',runId:'post-fix',hypothesisId:'A,B',location:'FormBuilder.tsx:handleSave',message:'save payload keys',data:{payloadKeys:['title','slug','whatsapp_number','cta_text','description','status','fields','settings'],templateInState:whatsappTemplate?.slice(0,30),templateSentToApi:true},timestamp:Date.now()})}).catch(()=>{});
-        // #endregion
         const res = await fetch(`/api/forms/${formId}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },

@@ -43,6 +43,9 @@ export function PublicFormClient({ form, fields }: PublicFormClientProps) {
             whatsappNumber={form.whatsapp_number}
             fields={fields}
             formId={form.id}
+            whatsappTemplate={
+              (form.settings as { whatsapp_template?: string } | null)?.whatsapp_template
+            }
             onSubmit={handleSubmit}
           />
         </div>

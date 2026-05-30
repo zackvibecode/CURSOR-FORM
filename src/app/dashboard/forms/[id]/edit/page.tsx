@@ -46,6 +46,8 @@ export default async function EditFormPage({
         description: form.description ?? "",
         status: form.status,
         fields: (fields ?? []).map(mapDbFieldToFormField),
+        whatsappTemplate:
+          (form.settings as { whatsapp_template?: string } | null)?.whatsapp_template,
       }}
     />
   );

@@ -32,9 +32,19 @@ export function DynamicFieldRenderer({
           align === "center" ? "justify-center" : align === "right" ? "justify-end" : "justify-start";
 
         if (field.type === "title") {
+          const isHeadline = field.settings?.size === "headline";
+          const isBold = field.settings?.bold ?? true;
           return (
             <div key={field.id} className={cn("pt-2", alignClass)}>
-              <h2 className="text-xl font-bold text-gray-900">{field.label}</h2>
+              <h2
+                className={cn(
+                  "text-gray-900",
+                  isHeadline ? "text-3xl" : "text-xl",
+                  isBold ? "font-bold" : "font-normal"
+                )}
+              >
+                {field.label}
+              </h2>
               {field.settings?.subtitle && (
                 <p className="mt-1 text-sm text-gray-600">{field.settings.subtitle}</p>
               )}

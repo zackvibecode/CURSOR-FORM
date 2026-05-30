@@ -31,6 +31,8 @@ export const formFieldSchema = z.object({
       imageUrl: z.string().optional(),
       imageAlt: z.string().optional(),
       align: z.enum(["left", "center", "right"]).optional(),
+      bold: z.boolean().optional(),
+      size: z.enum(["normal", "headline"]).optional(),
     })
     .optional(),
 });

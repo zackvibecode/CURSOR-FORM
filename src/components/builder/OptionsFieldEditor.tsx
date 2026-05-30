@@ -317,6 +317,49 @@ export function StandardFieldEditor({ field, onUpdate }: StandardFieldEditorProp
         </div>
       )}
 
+      {field.type === "title" && (
+        <div>
+          <FieldLabel>Text Style</FieldLabel>
+          <div className="mt-1 flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={() =>
+                onUpdate({
+                  ...field,
+                  settings: { ...field.settings, bold: !field.settings?.bold },
+                })
+              }
+              title="Bold"
+              className={cn(
+                "flex h-8 w-9 items-center justify-center rounded-lg border transition-colors",
+                field.settings?.bold
+                  ? "border-whatsapp bg-whatsapp/10 text-whatsapp-deep"
+                  : "border-brand-border bg-gray-50 text-gray-400 hover:text-gray-600"
+              )}
+            >
+              <Bold className="h-4 w-4" />
+            </button>
+            <div className="inline-flex rounded-xl border border-brand-border bg-gray-50 p-1">
+              {(["normal", "headline"] as const).map((s) => (
+                <button
+                  key={s}
+                  type="button"
+                  onClick={() => onUpdate({ ...field, settings: { ...field.settings, size: s } })}
+                  className={cn(
+                    "rounded-lg px-3 py-1.5 text-xs font-semibold capitalize transition-colors",
+                    (field.settings?.size ?? "normal") === s
+                      ? "bg-white text-whatsapp-deep shadow-sm"
+                      : "text-gray-400 hover:text-gray-600"
+                  )}
+                >
+                  {s}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
       {field.type !== "title" && (
         <div>
           <FieldLabel>Placeholder</FieldLabel>
