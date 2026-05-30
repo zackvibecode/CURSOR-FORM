@@ -1,14 +1,12 @@
-import { ScrollReveal } from "@/components/ui/ScrollReveal";
-
 /** https://youtu.be/rrBsU931GhU */
 const YOUTUBE_VIDEO_ID = "rrBsU931GhU";
 const EMBED_URL = `https://www.youtube.com/embed/${YOUTUBE_VIDEO_ID}?rel=0&modestbranding=1`;
 
 export function VideoDemo() {
   return (
-    <section id="demo-video" className="bg-white py-20 sm:py-28">
+    <section id="demo-video" className="bg-white py-16 sm:py-24">
       <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
-        <ScrollReveal className="mb-12 text-center">
+        <div className="mb-10 text-center">
           <span className="mb-3 inline-block rounded-full bg-whatsapp/10 px-4 py-1.5 text-xs font-semibold tracking-wide text-whatsapp-deep uppercase">
             Demo
           </span>
@@ -18,18 +16,16 @@ export function VideoDemo() {
           <p className="mx-auto mt-4 max-w-xl text-gray-500">
             Watch how easy it is to create a WhatsApp form and start collecting responses in minutes
           </p>
-        </ScrollReveal>
+        </div>
 
         <div className="relative mx-auto max-w-4xl overflow-hidden rounded-2xl border border-gray-200 bg-gray-900 shadow-card-lg">
-          <div className="relative aspect-video w-full">
+          <div className="relative aspect-video w-full min-h-[280px] sm:min-h-[360px] lg:min-h-[420px]">
             <iframe
-              className="absolute inset-0 h-full w-full"
+              className="absolute inset-0 h-full w-full border-0"
               src={EMBED_URL}
               title="OneForm Demo"
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
               allowFullScreen
-              loading="lazy"
-              referrerPolicy="strict-origin-when-cross-origin"
             />
           </div>
         </div>

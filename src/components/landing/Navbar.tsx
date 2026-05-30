@@ -34,6 +34,12 @@ export function Navbar() {
 
           <nav className="hidden items-center gap-1 md:flex">
             <a
+              href="#demo-video"
+              className="rounded-lg px-3 py-2 text-sm font-medium text-gray-600 transition-colors hover:text-whatsapp-deep"
+            >
+              Demo
+            </a>
+            <a
               href="#how-it-works"
               className="rounded-lg px-3 py-2 text-sm font-medium text-gray-600 transition-colors hover:text-whatsapp-deep"
             >
@@ -121,6 +127,9 @@ export function Navbar() {
         {open && (
           <div className="mt-2 rounded-2xl border border-gray-200 bg-white px-4 py-4 shadow-lg md:hidden">
             <nav className="flex flex-col gap-1">
+              <a href="#demo-video" onClick={() => setOpen(false)} className="rounded-lg px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
+                Demo Video
+              </a>
               <a href="#how-it-works" onClick={() => setOpen(false)} className="rounded-lg px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
                 How it works
               </a>

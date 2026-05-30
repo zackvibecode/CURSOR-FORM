@@ -1,12 +1,9 @@
 import dynamic from "next/dynamic";
 import { Navbar } from "@/components/landing/Navbar";
 import { Hero } from "@/components/landing/Hero";
+import { VideoDemo } from "@/components/landing/VideoDemo";
 import { HowItWorks } from "@/components/landing/HowItWorks";
 
-const VideoDemo = dynamic(
-  () => import("@/components/landing/VideoDemo").then((m) => ({ default: m.VideoDemo })),
-  { loading: () => <div className="min-h-[320px] bg-white" aria-hidden /> }
-);
 const Comparison = dynamic(
   () => import("@/components/landing/Comparison").then((m) => ({ default: m.Comparison })),
   { loading: () => <div className="min-h-[240px] bg-white" aria-hidden /> }
@@ -47,8 +44,8 @@ export default function HomePage() {
       <Navbar />
       <main>
         <Hero />
-        <HowItWorks />
         <VideoDemo />
+        <HowItWorks />
         <Comparison />
         <AIFeatures />
         <Testimonials />
