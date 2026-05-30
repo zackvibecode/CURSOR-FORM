@@ -72,15 +72,14 @@ export function mapSubmissionsToRows(
       debugInfo = getAvailableKeys(data);
     }
 
-    // Determine the assigned team member display label
+    // Determine the assigned team member display label (NAME only)
     const assignedName = sub.assigned_name?.trim() || null;
     const assignedPhone = sub.assigned_phone?.trim() || null;
     let assignedTo = "—";
-    if (assignedName && assignedPhone) {
-      assignedTo = `${assignedName} (${assignedPhone})`;
-    } else if (assignedName) {
+    if (assignedName) {
       assignedTo = assignedName;
     } else if (assignedPhone) {
+      // Fallback to phone only if no name was saved for this member
       assignedTo = assignedPhone;
     }
 
