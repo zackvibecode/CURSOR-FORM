@@ -1,8 +1,18 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
-import { createAdminClient, findUserIdByEmail, setUserPassword } from "@/lib/supabase/admin";
+import { rateLimit, ipFromRequest } from "@/lib/rate-limit";
 
 export async function POST(request: NextRequest) {
+  // Rate limit: max 10 login attempts per IP per minute (brute-force guard).
+  const ip = ipFromRequest(request);
+  const limit = rateLimit(`login:${ip}`, 10, 60_000);
+  if (!limit.allowed) {
+    return NextResponse.json(
+      { error: "Too many login attempts. Please try again in a moment." },
+      { status: 429, headers: { "Retry-After": String(limit.retryAfterSeconds) } }
+    );
+  }
+
   const body = await request.json();
   const email = typeof body.email === "string" ? body.email.trim() : "";
   const password = typeof body.password === "string" ? body.password : "";
@@ -33,31 +43,19 @@ export async function POST(request: NextRequest) {
     }
   );
 
-  let { error } = await supabase.auth.signInWithPassword({ email, password });
+  const { error } = await supabase.auth.signInWithPassword({ email, password });
 
   if (!error) {
     return response;
   }
 
-  // If sign-in failed, user doesn't exist, or password is wrong — do NOT auto-create accounts
-  const existingUserId = await findUserIdByEmail(email);
-
-  if (existingUserId && createAdminClient()) {
-    // User exists but password might be wrong — silently update it (convenience for forgotten passwords)
-    const { error: updateError } = await setUserPassword(existingUserId, password);
-    if (updateError) {
-      return NextResponse.json({ error: updateError }, { status: 400 });
-    }
-
-    ({ error } = await supabase.auth.signInWithPassword({ email, password }));
-    if (!error) {
-      return response;
-    }
-  }
-
-  // User does not exist — reject password login. Do not auto-create accounts.
+  // SECURITY: Never reset a password just because someone typed the wrong one.
+  // The previous code here silently overwrote the account password with
+  // whatever was submitted (via the service role key) and logged the attacker
+  // in — an account-takeover hole. A wrong password must simply be rejected.
+  // Forgotten passwords are handled by the proper reset-password flow instead.
   return NextResponse.json(
-    { error: "Invalid email or password. If you don't have an account, use the signup page." },
+    { error: "Invalid email or password." },
     { status: 401 }
   );
 }

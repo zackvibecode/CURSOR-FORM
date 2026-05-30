@@ -14,6 +14,7 @@ import {
   Wrench,
   X,
   Crown,
+  ShieldCheck,
 } from "lucide-react";
 
 const mainNavItems = [
@@ -31,6 +32,7 @@ interface DashboardSidebarProps {
   plan?: string;
   status?: string;
   formsCount?: number;
+  isAdmin?: boolean;
 }
 
 function PlanBadge({ plan, status }: { plan: string; status: string }) {
@@ -74,6 +76,7 @@ export function DashboardSidebar({
   plan = "free",
   status = "active",
   formsCount = 0,
+  isAdmin = false,
 }: DashboardSidebarProps) {
   const pathname = usePathname();
 
@@ -152,6 +155,25 @@ export function DashboardSidebar({
             <Wrench className="h-5 w-5" strokeWidth={1.75} />
             Tools
           </Link>
+
+          {isAdmin && (
+            <>
+              <div className="my-2 border-t border-gray-100" />
+              <Link
+                href="/dashboard/admin/subscriptions"
+                onClick={onClose}
+                className={cn(
+                  "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200",
+                  isActive("/dashboard/admin")
+                    ? "bg-whatsapp/10 text-whatsapp-deep"
+                    : "text-brand-muted hover:bg-gray-50 hover:text-brand-text"
+                )}
+              >
+                <ShieldCheck className="h-5 w-5" strokeWidth={1.75} />
+                Admin
+              </Link>
+            </>
+          )}
         </nav>
 
         <div className="border-t border-brand-border p-4">

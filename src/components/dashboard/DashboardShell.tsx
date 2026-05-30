@@ -10,6 +10,7 @@ interface DashboardShellProps {
   plan?: string;
   status?: string;
   formsCount?: number;
+  isAdmin?: boolean;
 }
 
 export function DashboardShell({
@@ -18,6 +19,7 @@ export function DashboardShell({
   plan = "free",
   status = "active",
   formsCount = 0,
+  isAdmin = false,
 }: DashboardShellProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
@@ -29,6 +31,7 @@ export function DashboardShell({
         plan={plan}
         status={status}
         formsCount={formsCount}
+        isAdmin={isAdmin}
       />
 
       <div className="flex min-w-0 flex-1 flex-col">

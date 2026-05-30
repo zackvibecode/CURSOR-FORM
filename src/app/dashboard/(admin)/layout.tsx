@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { DashboardShell } from "@/components/dashboard/DashboardShell";
 import { PlanStatusBanner } from "@/components/dashboard/PlanStatusBanner";
+import { isAdminEmail } from "@/lib/auth/is-admin";
 
 export default async function AdminLayout({
   children,
@@ -13,6 +14,8 @@ export default async function AdminLayout({
   } = await supabase.auth.getUser();
 
   if (!user) return null;
+
+  const admin = isAdminEmail(user.email);
 
   const [
     { data: profile },
@@ -34,6 +37,7 @@ export default async function AdminLayout({
       plan={subscription?.plan ?? "free"}
       status={subscription?.status ?? "active"}
       formsCount={formsCount ?? 0}
+      isAdmin={admin}
     >
       <PlanStatusBanner
         plan={subscription?.plan ?? "free"}
