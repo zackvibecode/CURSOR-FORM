@@ -11,10 +11,12 @@ import {
   Users,
   BarChart3,
   Settings,
+  Wrench,
   X,
+  Crown,
 } from "lucide-react";
 
-const navItems = [
+const mainNavItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard, exact: true },
   { href: "/dashboard/forms", label: "Forms", icon: FileText },
   { href: "/dashboard/submissions", label: "Submissions", icon: Inbox },
@@ -26,9 +28,53 @@ const navItems = [
 interface DashboardSidebarProps {
   open: boolean;
   onClose: () => void;
+  plan?: string;
+  status?: string;
+  formsCount?: number;
 }
 
-export function DashboardSidebar({ open, onClose }: DashboardSidebarProps) {
+function PlanBadge({ plan, status }: { plan: string; status: string }) {
+  const planColors: Record<string, string> = {
+    free: "bg-gray-100 text-gray-700",
+    pro: "bg-whatsapp/10 text-whatsapp-deep",
+    business: "bg-purple-100 text-purple-700",
+  };
+
+  const planLabels: Record<string, string> = {
+    free: "Free",
+    pro: "Pro",
+    business: "Business",
+  };
+
+  return (
+    <div className="space-y-1">
+      <div className="flex items-center gap-2">
+        <span
+          className={cn(
+            "inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold",
+            planColors[plan] ?? planColors.free
+          )}
+        >
+          {plan !== "free" && <Crown className="h-3 w-3" />}
+          {planLabels[plan] ?? "Free"}
+        </span>
+        {status === "pending" && (
+          <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-medium text-amber-700">
+            Pending
+          </span>
+        )}
+      </div>
+    </div>
+  );
+}
+
+export function DashboardSidebar({
+  open,
+  onClose,
+  plan = "free",
+  status = "active",
+  formsCount = 0,
+}: DashboardSidebarProps) {
   const pathname = usePathname();
 
   const isActive = (href: string, exact?: boolean) => {
@@ -38,6 +84,8 @@ export function DashboardSidebar({ open, onClose }: DashboardSidebarProps) {
     if (exact) return pathname === href;
     return pathname.startsWith(href);
   };
+
+  const freeFormLimit = 3;
 
   return (
     <>
@@ -67,7 +115,7 @@ export function DashboardSidebar({ open, onClose }: DashboardSidebarProps) {
         </div>
 
         <nav className="flex-1 space-y-1 p-4">
-          {navItems.map((item) => {
+          {mainNavItems.map((item) => {
             const active = isActive(item.href, item.exact);
             return (
               <Link
@@ -86,10 +134,36 @@ export function DashboardSidebar({ open, onClose }: DashboardSidebarProps) {
               </Link>
             );
           })}
+
+          {/* Divider before Tools */}
+          <div className="my-2 border-t border-gray-100" />
+
+          {/* Tools */}
+          <Link
+            href="/dashboard/tools"
+            onClick={onClose}
+            className={cn(
+              "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200",
+              isActive("/dashboard/tools")
+                ? "bg-whatsapp/10 text-whatsapp-deep"
+                : "text-brand-muted hover:bg-gray-50 hover:text-brand-text"
+            )}
+          >
+            <Wrench className="h-5 w-5" strokeWidth={1.75} />
+            Tools
+          </Link>
         </nav>
 
         <div className="border-t border-brand-border p-4">
-          <p className="text-xs text-brand-muted">OneForm</p>
+          <PlanBadge plan={plan} status={status} />
+          {plan === "free" && (
+            <p className="mt-1 text-xs text-brand-muted">
+              {formsCount}/{freeFormLimit} forms used
+            </p>
+          )}
+          {status === "pending" && (
+            <p className="mt-1 text-xs text-amber-600">Awaiting approval</p>
+          )}
         </div>
       </aside>
     </>

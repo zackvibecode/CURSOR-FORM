@@ -14,6 +14,8 @@ function AuthForm({ mode }: { mode: "login" | "signup" }) {
   const searchParams = useSearchParams();
   const redirect = searchParams.get("redirect") || "/dashboard";
   const template = searchParams.get("template");
+  const selectedPlan = searchParams.get("plan");
+  const billingCycle = searchParams.get("cycle") || "monthly";
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -61,7 +63,13 @@ function AuthForm({ mode }: { mode: "login" | "signup" }) {
       const res = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: email.trim(), password }),
+        body: JSON.stringify({
+          email: email.trim(),
+          password,
+          ...(mode === "signup" && selectedPlan
+            ? { plan: selectedPlan, cycle: billingCycle }
+            : {}),
+        }),
       });
 
       const data = await res.json();

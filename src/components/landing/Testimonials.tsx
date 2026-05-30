@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
+import { Star } from "lucide-react";
 
 const testimonials = [
   {
@@ -10,6 +11,7 @@ const testimonials = [
     role: "Business Consultant",
     initials: "JG",
     bg: "bg-blue-500",
+    stars: 5,
   },
   {
     quote:
@@ -18,6 +20,7 @@ const testimonials = [
     role: "Web in Development House",
     initials: "JD",
     bg: "bg-green-500",
+    stars: 5,
   },
   {
     quote:
@@ -26,6 +29,7 @@ const testimonials = [
     role: "CXassist",
     initials: "VN",
     bg: "bg-purple-500",
+    stars: 5,
   },
   {
     quote:
@@ -34,6 +38,7 @@ const testimonials = [
     role: "AMPSolar Technology",
     initials: "AP",
     bg: "bg-orange-500",
+    stars: 4,
   },
   {
     quote:
@@ -42,6 +47,7 @@ const testimonials = [
     role: "Adventura",
     initials: "PZ",
     bg: "bg-teal-500",
+    stars: 5,
   },
   {
     quote:
@@ -50,12 +56,46 @@ const testimonials = [
     role: "Business Owner",
     initials: "JS",
     bg: "bg-indigo-500",
+    stars: 5,
+  },
+  {
+    quote:
+      "We switched from Typeform to OneForm and haven't looked back. Getting responses directly on WhatsApp changed how we handle enquiries.",
+    name: "Sarah Chen",
+    role: "Marketing Director, Bloom Studio",
+    initials: "SC",
+    bg: "bg-rose-500",
+    stars: 5,
+  },
+  {
+    quote:
+      "The AI form builder is a game changer. I described my restaurant booking needs and got a perfect form in seconds. Absolutely brilliant!",
+    name: "Ahmad Razak",
+    role: "Owner, Warung Digital",
+    initials: "AR",
+    bg: "bg-amber-500",
+    stars: 5,
   },
 ];
 
+function StarRating({ count }: { count: number }) {
+  return (
+    <div className="mb-3 flex gap-0.5">
+      {Array.from({ length: 5 }).map((_, i) => (
+        <Star
+          key={i}
+          className={`h-4 w-4 ${
+            i < count ? "fill-amber-400 text-amber-400" : "fill-gray-200 text-gray-200"
+          }`}
+        />
+      ))}
+    </div>
+  );
+}
+
 export function Testimonials() {
   return (
-    <section className="bg-gradient-to-b from-gray-50 to-white py-20 sm:py-28">
+    <section id="testimonials" className="bg-gradient-to-b from-gray-50 to-white py-20 sm:py-28">
       <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
         <motion.div
           className="mb-16 text-center"
@@ -64,33 +104,43 @@ export function Testimonials() {
           viewport={{ once: true, margin: "-100px" }}
           transition={{ duration: 0.5 }}
         >
+          <span className="mb-3 inline-block rounded-full bg-whatsapp/10 px-4 py-1.5 text-xs font-semibold tracking-wide text-whatsapp-deep uppercase">
+            Testimonials
+          </span>
           <h2 className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
             Trusted by Businesses Worldwide
           </h2>
+          <p className="mx-auto mt-4 max-w-xl text-gray-500">
+            See what our customers have to say about their experience with OneForm
+          </p>
         </motion.div>
 
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {testimonials.map((item, index) => (
             <motion.div
               key={item.name}
-              className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm transition-shadow hover:shadow-md"
+              className="group relative rounded-2xl border border-gray-100 bg-white p-6 shadow-sm transition-all hover:-translate-y-1 hover:shadow-md"
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              transition={{ duration: 0.4, delay: index * 0.08 }}
+              transition={{ duration: 0.4, delay: index * 0.06 }}
             >
+              <div className="absolute top-4 right-4 text-4xl leading-none text-gray-100 font-serif select-none">
+                &ldquo;
+              </div>
+              <StarRating count={item.stars} />
               <p className="mb-6 text-sm leading-relaxed text-gray-600">
-                &ldquo;{item.quote}&rdquo;
+                {item.quote}
               </p>
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-3 border-t border-gray-50 pt-4">
                 <div
-                  className={`flex h-10 w-10 items-center justify-center rounded-full text-xs font-bold text-white ${item.bg}`}
+                  className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white ${item.bg}`}
                 >
                   {item.initials}
                 </div>
-                <div>
-                  <p className="text-sm font-semibold text-gray-900">{item.name}</p>
-                  <p className="text-xs text-gray-500">{item.role}</p>
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-semibold text-gray-900">{item.name}</p>
+                  <p className="truncate text-xs text-gray-500">{item.role}</p>
                 </div>
               </div>
             </motion.div>

@@ -1,11 +1,13 @@
 import { Navbar } from "@/components/landing/Navbar";
 import { Hero } from "@/components/landing/Hero";
 import { HowItWorks } from "@/components/landing/HowItWorks";
+import { VideoDemo } from "@/components/landing/VideoDemo";
 import { Comparison } from "@/components/landing/Comparison";
 import { AIFeatures } from "@/components/landing/AIFeatures";
 import { Testimonials } from "@/components/landing/Testimonials";
 import { Templates } from "@/components/landing/Templates";
 import { FAQ } from "@/components/landing/FAQ";
+import { CTASection } from "@/components/landing/CTASection";
 import { Footer } from "@/components/landing/Footer";
 import { FloatingWhatsAppButton } from "@/components/ui/FloatingWhatsAppButton";
 
@@ -16,11 +18,13 @@ export default function HomePage() {
       <main>
         <Hero />
         <HowItWorks />
+        <VideoDemo />
         <Comparison />
         <AIFeatures />
         <Testimonials />
         <Templates />
         <FAQ />
+        <CTASection />
       </main>
       <Footer />
       <FloatingWhatsAppButton />

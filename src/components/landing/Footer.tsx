@@ -1,72 +1,124 @@
 "use client";
 
 import Link from "next/link";
-import { motion } from "framer-motion";
 import { BrandLogo } from "@/components/ui/BrandLogo";
-import { WhatsAppIcon } from "@/components/ui/WhatsAppIcon";
+import { Twitter, Linkedin, Github, Mail } from "lucide-react";
+
+const footerLinks = {
+  product: [
+    { label: "Features", href: "#features" },
+    { label: "Templates", href: "#templates" },
+    { label: "Pricing", href: "/pricing" },
+    { label: "Demo", href: "/demo" },
+  ],
+  tools: [
+    { label: "QR Code Generator", href: "/tools/qr-generator" },
+    { label: "WhatsApp Link Generator", href: "/tools/link-generator" },
+    { label: "All Free Tools", href: "/tools" },
+  ],
+  support: [
+    { label: "FAQ", href: "#faq" },
+    { label: "Contact Us", href: "mailto:contact@oneform.app" },
+    { label: "Privacy Policy", href: "#" },
+    { label: "Terms of Service", href: "#" },
+  ],
+};
 
 export function Footer() {
   return (
-    <>
-      {/* CTA Section */}
-      <section className="bg-gradient-to-b from-white to-gray-50 py-20 sm:py-28">
-        <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 text-center">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: "-100px" }}
-            transition={{ duration: 0.5 }}
-          >
-            <h2 className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl lg:text-5xl">
-              Ready to Transform Your
-              <br />
-              <span className="text-whatsapp">Customer Interaction?</span>
-            </h2>
-            <p className="mx-auto mt-4 max-w-lg text-gray-500">
-              Sign up and see the difference OneForm can make for your business
-            </p>
-            <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
-              <Link href="/signup">
-                <button className="inline-flex items-center gap-2 rounded-xl bg-whatsapp px-8 py-4 text-base font-bold text-white shadow-md transition-all hover:bg-[#0DB849] hover:shadow-lg active:scale-[0.98]">
-                  <WhatsAppIcon className="h-5 w-5" />
-                  Create a free form
-                </button>
-              </Link>
-            </div>
-          </motion.div>
-        </div>
-      </section>
-
-      {/* Footer */}
-      <footer className="border-t border-gray-200 bg-white py-12">
-        <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col items-start justify-between gap-8 sm:flex-row sm:items-center">
+    <footer className="border-t border-gray-200 bg-white">
+      <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6 lg:px-8">
+        <div className="grid gap-12 sm:grid-cols-2 lg:grid-cols-5">
+          {/* Brand column */}
+          <div className="lg:col-span-2">
             <BrandLogo />
-            <nav className="flex flex-wrap gap-6 text-sm text-gray-500">
-              <Link href="/demo" className="transition-colors hover:text-whatsapp-deep">
-                Demo
-              </Link>
-              <Link href="/signup" className="transition-colors hover:text-whatsapp-deep">
-                Get Started
-              </Link>
-              <Link href="/login" className="transition-colors hover:text-whatsapp-deep">
-                Login
-              </Link>
-              <a
-                href="https://oneform.app"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="transition-colors hover:text-whatsapp-deep"
-              >
-                oneform.app
-              </a>
-            </nav>
+            <p className="mt-4 max-w-xs text-sm leading-relaxed text-gray-500">
+              The smartest way to collect form responses directly on WhatsApp. Create beautiful forms in minutes, no coding required.
+            </p>
+            <div className="mt-6 flex gap-3">
+              {[
+                { icon: Twitter, href: "#", label: "Twitter" },
+                { icon: Linkedin, href: "#", label: "LinkedIn" },
+                { icon: Github, href: "#", label: "GitHub" },
+                { icon: Mail, href: "mailto:contact@oneform.app", label: "Email" },
+              ].map((social) => (
+                <a
+                  key={social.label}
+                  href={social.href}
+                  aria-label={social.label}
+                  className="flex h-9 w-9 items-center justify-center rounded-lg border border-gray-200 text-gray-400 transition-all hover:border-whatsapp/30 hover:bg-whatsapp/5 hover:text-whatsapp"
+                >
+                  <social.icon className="h-4 w-4" />
+                </a>
+              ))}
+            </div>
           </div>
-          <div className="mt-8 border-t border-gray-100 pt-8 text-center text-sm text-gray-400">
-            <p>&copy; {new Date().getFullYear()} OneForm. All rights reserved.</p>
+
+          {/* Product links */}
+          <div>
+            <h3 className="mb-4 text-sm font-semibold text-gray-900">Product</h3>
+            <ul className="space-y-3">
+              {footerLinks.product.map((link) => (
+                <li key={link.label}>
+                  <Link
+                    href={link.href}
+                    className="text-sm text-gray-500 transition-colors hover:text-whatsapp-deep"
+                  >
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Tools links */}
+          <div>
+            <h3 className="mb-4 text-sm font-semibold text-gray-900">Free Tools</h3>
+            <ul className="space-y-3">
+              {footerLinks.tools.map((link) => (
+                <li key={link.label}>
+                  <Link
+                    href={link.href}
+                    className="text-sm text-gray-500 transition-colors hover:text-whatsapp-deep"
+                  >
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Support links */}
+          <div>
+            <h3 className="mb-4 text-sm font-semibold text-gray-900">Support</h3>
+            <ul className="space-y-3">
+              {footerLinks.support.map((link) => (
+                <li key={link.label}>
+                  {link.href.startsWith("mailto:") ? (
+                    <a
+                      href={link.href}
+                      className="text-sm text-gray-500 transition-colors hover:text-whatsapp-deep"
+                    >
+                      {link.label}
+                    </a>
+                  ) : (
+                    <Link
+                      href={link.href}
+                      className="text-sm text-gray-500 transition-colors hover:text-whatsapp-deep"
+                    >
+                      {link.label}
+                    </Link>
+                  )}
+                </li>
+              ))}
+            </ul>
           </div>
         </div>
-      </footer>
-    </>
+
+        <div className="mt-12 border-t border-gray-100 pt-8 text-center text-sm text-gray-400">
+          <p>&copy; {new Date().getFullYear()} OneForm. All rights reserved.</p>
+        </div>
+      </div>
+    </footer>
   );
 }

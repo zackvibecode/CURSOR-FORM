@@ -13,6 +13,9 @@ export interface SubmissionRow {
   formName: string;
   status: SubmissionStatus;
   date: string;
+  assignedTo?: string;
+  assignedName?: string | null;
+  assignedPhone?: string | null;
   debugInfo?: string | null;
 }
 
@@ -38,7 +41,7 @@ export function SubmissionsTable({ submissions, compact = false }: SubmissionsTa
         <table className="w-full min-w-[640px] text-left text-sm">
           <thead>
             <tr className="border-b border-brand-border bg-brand-bg/50">
-              {["Name", "Phone", "Form Name", "Status", "Date"].map((col) => (
+              {["Name", "Phone", "Form Name", "Team Member", "Status", "Date"].map((col) => (
                 <th
                   key={col}
                   className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-brand-muted sm:px-6"
@@ -80,6 +83,15 @@ export function SubmissionsTable({ submissions, compact = false }: SubmissionsTa
                   </td>
                   <td className="px-4 py-4 text-brand-muted sm:px-6">{row.phone}</td>
                   <td className="px-4 py-4 text-brand-muted sm:px-6">{row.formName}</td>
+                  <td className="px-4 py-4 sm:px-6">
+                    {row.assignedTo && row.assignedTo !== "—" ? (
+                      <span className="inline-flex items-center rounded-full bg-whatsapp/10 px-2.5 py-1 text-xs font-medium text-whatsapp-deep">
+                        {row.assignedTo}
+                      </span>
+                    ) : (
+                      <span className="text-brand-muted">—</span>
+                    )}
+                  </td>
                   <td className="px-4 py-4 sm:px-6">
                     <Badge variant={row.status}>{row.status}</Badge>
                   </td>

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { slugify } from "@/lib/utils";
 import { getTemplateById } from "@/lib/templates";
+import { checkFormLimit } from "@/lib/check-limits";
 
 export async function GET(request: Request) {
   const supabase = await createClient();
@@ -48,6 +49,19 @@ export async function POST(request: Request) {
 
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  // Check form creation limit
+  const limitCheck = await checkFormLimit(user.id);
+  if (!limitCheck.allowed) {
+    return NextResponse.json(
+      {
+        error: "form_limit_reached",
+        message: `You've reached your ${limitCheck.plan} plan limit of ${limitCheck.max} forms. Upgrade to create more forms.`,
+        limit: limitCheck,
+      },
+      { status: 403 }
+    );
   }
 
   const body = await request.json();

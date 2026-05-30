@@ -1,18 +1,30 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { BrandLogo } from "@/components/ui/BrandLogo";
-import { Menu, X, ChevronDown } from "lucide-react";
+import { Menu, X, ChevronDown, QrCode, LinkIcon, Wrench } from "lucide-react";
 
-const navLinks = [
-  { label: "Try Demo", href: "/demo" },
-  { label: "Pricing", href: "#pricing" },
+const toolsLinks = [
+  { label: "QR Code Generator", href: "/tools/qr-generator", icon: QrCode },
+  { label: "WhatsApp Link Generator", href: "/tools/link-generator", icon: LinkIcon },
 ];
 
 export function Navbar() {
   const [open, setOpen] = useState(false);
   const [toolsOpen, setToolsOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setToolsOpen(false);
+      }
+    }
+    if (toolsOpen) document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [toolsOpen]);
 
   return (
     <header className="fixed top-4 left-4 right-4 z-50 lg:left-6 lg:right-6">
@@ -33,6 +45,12 @@ export function Navbar() {
             >
               Features
             </a>
+            <Link
+              href="/pricing"
+              className="rounded-lg px-3 py-2 text-sm font-medium text-gray-600 transition-colors hover:text-whatsapp-deep"
+            >
+              Pricing
+            </Link>
             <a
               href="#templates"
               className="rounded-lg px-3 py-2 text-sm font-medium text-gray-600 transition-colors hover:text-whatsapp-deep"
@@ -41,34 +59,36 @@ export function Navbar() {
             </a>
 
             {/* Tools Dropdown */}
-            <div className="relative">
+            <div className="relative" ref={dropdownRef}>
               <button
                 className="flex items-center gap-1 rounded-lg px-3 py-2 text-sm font-medium text-gray-600 transition-colors hover:text-whatsapp-deep"
                 onClick={() => setToolsOpen(!toolsOpen)}
               >
                 Tools
-                <ChevronDown className={`h-4 w-4 transition-transform ${toolsOpen ? "rotate-180" : ""}`} />
+                <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${toolsOpen ? "rotate-180" : ""}`} />
               </button>
               {toolsOpen && (
-                <div className="absolute top-full right-0 mt-2 w-56 rounded-xl border border-gray-200 bg-white p-2 shadow-lg">
-                  {[
-                    "Message Formatter",
-                    "QR Code Generator",
-                    "Link Generator",
-                    "vCard Generator",
-                  ].map((tool) => (
-                    <button
-                      key={tool}
-                      className="block w-full rounded-lg px-3 py-2 text-left text-sm text-gray-600 transition-colors hover:bg-gray-50 hover:text-whatsapp-deep"
+                <div className="absolute top-full right-0 mt-2 w-64 rounded-xl border border-gray-200 bg-white p-2 shadow-lg">
+                  {toolsLinks.map((tool) => (
+                    <Link
+                      key={tool.label}
+                      href={tool.href}
+                      className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm text-gray-600 transition-colors hover:bg-whatsapp/5 hover:text-whatsapp-deep"
                       onClick={() => setToolsOpen(false)}
                     >
-                      {tool}
-                    </button>
+                      <tool.icon className="h-4 w-4 shrink-0 text-gray-400" />
+                      {tool.label}
+                    </Link>
                   ))}
                   <div className="my-1 border-t border-gray-100" />
-                  <button className="block w-full rounded-lg px-3 py-2 text-left text-sm font-medium text-whatsapp transition-colors hover:bg-whatsapp/5">
+                  <Link
+                    href="/tools"
+                    className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm font-medium text-whatsapp transition-colors hover:bg-whatsapp/5"
+                    onClick={() => setToolsOpen(false)}
+                  >
+                    <Wrench className="h-4 w-4 shrink-0" />
                     All Free Tools
-                  </button>
+                  </Link>
                 </div>
               )}
             </div>
@@ -107,11 +127,31 @@ export function Navbar() {
               <a href="#features" onClick={() => setOpen(false)} className="rounded-lg px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
                 Features
               </a>
+              <Link href="/pricing" onClick={() => setOpen(false)} className="rounded-lg px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
+                Pricing
+              </Link>
               <a href="#templates" onClick={() => setOpen(false)} className="rounded-lg px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
                 Templates
               </a>
               <Link href="/demo" onClick={() => setOpen(false)} className="rounded-lg px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
                 Try Demo
+              </Link>
+              <div className="my-2 border-t border-gray-100" />
+              <p className="px-3 py-1 text-xs font-semibold uppercase tracking-wide text-gray-400">Free Tools</p>
+              {toolsLinks.map((tool) => (
+                <Link
+                  key={tool.label}
+                  href={tool.href}
+                  onClick={() => setOpen(false)}
+                  className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                >
+                  <tool.icon className="h-4 w-4 text-gray-400" />
+                  {tool.label}
+                </Link>
+              ))}
+              <Link href="/tools" onClick={() => setOpen(false)} className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-whatsapp hover:bg-whatsapp/5">
+                <Wrench className="h-4 w-4" />
+                All Free Tools
               </Link>
               <div className="my-2 border-t border-gray-100" />
               <Link href="/login" onClick={() => setOpen(false)} className="rounded-lg px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">

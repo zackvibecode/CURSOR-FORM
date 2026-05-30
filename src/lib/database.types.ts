@@ -118,6 +118,8 @@ export interface Database {
           data: Json;
           submitted_at: string;
           ip_hash: string | null;
+          assigned_name: string | null;
+          assigned_phone: string | null;
         };
         Insert: {
           id?: string;
@@ -125,6 +127,8 @@ export interface Database {
           data?: Json;
           submitted_at?: string;
           ip_hash?: string | null;
+          assigned_name?: string | null;
+          assigned_phone?: string | null;
         };
         Update: {
           id?: string;
@@ -132,6 +136,43 @@ export interface Database {
           data?: Json;
           submitted_at?: string;
           ip_hash?: string | null;
+          assigned_name?: string | null;
+          assigned_phone?: string | null;
+        };
+      };
+      subscriptions: {
+        Row: {
+          id: string;
+          user_id: string;
+          plan: "free" | "pro" | "business";
+          status: "active" | "pending" | "expired" | "cancelled";
+          billing_cycle: "monthly" | "yearly" | null;
+          started_at: string | null;
+          expires_at: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          plan?: "free" | "pro" | "business";
+          status?: "active" | "pending" | "expired" | "cancelled";
+          billing_cycle?: "monthly" | "yearly" | null;
+          started_at?: string | null;
+          expires_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          plan?: "free" | "pro" | "business";
+          status?: "active" | "pending" | "expired" | "cancelled";
+          billing_cycle?: "monthly" | "yearly" | null;
+          started_at?: string | null;
+          expires_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
         };
       };
     };
@@ -142,3 +183,4 @@ export type Profile = Database["public"]["Tables"]["profiles"]["Row"];
 export type DbForm = Database["public"]["Tables"]["forms"]["Row"];
 export type DbFormField = Database["public"]["Tables"]["form_fields"]["Row"];
 export type DbSubmission = Database["public"]["Tables"]["submissions"]["Row"];
+export type Subscription = Database["public"]["Tables"]["subscriptions"]["Row"];

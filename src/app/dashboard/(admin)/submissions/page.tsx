@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import { SubmissionsTable } from "@/components/dashboard/SubmissionsTable";
+import { SubmissionsExplorer } from "@/components/dashboard/SubmissionsExplorer";
 import { mapSubmissionsToRows } from "@/lib/dashboard-stats";
 
 export const dynamic = "force-dynamic";
@@ -49,7 +49,7 @@ export default async function SubmissionsPage() {
           Track and manage all form submissions across your WhatsApp forms
         </p>
       </div>
-      <SubmissionsTable submissions={submissions} />
+      <SubmissionsExplorer submissions={submissions} />
     </div>
   );
 }

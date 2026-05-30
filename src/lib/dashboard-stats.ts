@@ -72,6 +72,18 @@ export function mapSubmissionsToRows(
       debugInfo = getAvailableKeys(data);
     }
 
+    // Determine the assigned team member display label
+    const assignedName = sub.assigned_name?.trim() || null;
+    const assignedPhone = sub.assigned_phone?.trim() || null;
+    let assignedTo = "—";
+    if (assignedName && assignedPhone) {
+      assignedTo = `${assignedName} (${assignedPhone})`;
+    } else if (assignedName) {
+      assignedTo = assignedName;
+    } else if (assignedPhone) {
+      assignedTo = assignedPhone;
+    }
+
     return {
       id: sub.id,
       name,
@@ -79,6 +91,9 @@ export function mapSubmissionsToRows(
       formName: sub.forms?.title ?? formMap.get(sub.form_id) ?? "Unknown Form",
       status: "new" as const,
       date: sub.submitted_at,
+      assignedTo,
+      assignedName,
+      assignedPhone,
       debugInfo,
     };
   });
@@ -86,7 +101,7 @@ export function mapSubmissionsToRows(
 
 export function computeDashboardStats(
   forms: Pick<DbForm, "id">[],
-  submissions: DbSubmission[]
+  submissions: Pick<DbSubmission, "id">[]
 ) {
   const totalForms = forms.length;
   const totalSubmissions = submissions.length;

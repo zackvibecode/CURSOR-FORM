@@ -1,26 +1,42 @@
 "use client";
 
 import { useState } from "react";
-import { motion } from "framer-motion";
-import { ChevronDown, HelpCircle } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { ChevronDown, HelpCircle, MessageCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const faqs = [
   {
-    q: "Is OneForm Free?",
-    a: "We have a free forever plan. You can choose a paid plan if you need powerful features.",
+    q: "Is OneForm free?",
+    a: "Yes! We have a free forever plan that includes up to 3 forms and 100 submissions per month. You can upgrade to a paid plan anytime if you need more powerful features like AI form builder, analytics, and custom branding.",
+  },
+  {
+    q: "How does the WhatsApp integration work?",
+    a: "When a customer fills out your form and clicks submit, their responses are sent directly to your WhatsApp number as a formatted message. The customer's phone number is automatically included, so you can reply instantly. No WhatsApp Business API needed!",
   },
   {
     q: "Is my data secure?",
-    a: "Our servers are the most secure and fastest ones available currently. We use Amazon web services and Cloudflare CDN.",
+    a: "Absolutely. We use industry-standard encryption for all data in transit and at rest. Our infrastructure runs on Amazon Web Services with Cloudflare CDN protection. We never share your data with third parties, and you retain full ownership of all form submissions.",
   },
   {
-    q: "How to Get Started",
-    a: "Simply signup using a Google account and create OneForm from any template. It's easier than you imagine.",
+    q: "How do I get started?",
+    a: "Simply sign up using your Google account or email, choose from our ready-to-use templates or build a form from scratch with our drag-and-drop builder. You can have your first WhatsApp form live in under 5 minutes!",
   },
   {
-    q: "Is OneForm run by WhatsApp or Facebook team?",
-    a: "No, OneForm is not affiliated with WhatsApp or Meta Inc. in any way. We are an independent product that operates using WhatsApp as a platform.",
+    q: "Can I customize the form design?",
+    a: "Yes! Our form builder lets you customize colors, fonts, logos, and layout. Pro and Business plans include full custom branding options including custom domains and white-label removal of OneForm branding.",
+  },
+  {
+    q: "What types of forms can I create?",
+    a: "You can create any type of form — contact forms, booking forms, order forms, feedback surveys, event registrations, lead capture forms, and more. Our AI form builder can also generate forms from a simple text description of what you need.",
+  },
+  {
+    q: "Can multiple team members access submissions?",
+    a: "Yes! With our Business plan, up to 5 team members can collaborate on forms and view submissions. You can also set up round-robin routing to distribute incoming leads across different WhatsApp numbers automatically.",
+  },
+  {
+    q: "Is OneForm affiliated with WhatsApp or Meta?",
+    a: "No, OneForm is not affiliated with WhatsApp or Meta Inc. in any way. We are an independent product that uses WhatsApp as a messaging platform to deliver form responses to your phone.",
   },
 ];
 
@@ -37,9 +53,15 @@ export function FAQ() {
           viewport={{ once: true, margin: "-100px" }}
           transition={{ duration: 0.5 }}
         >
+          <span className="mb-3 inline-block rounded-full bg-whatsapp/10 px-4 py-1.5 text-xs font-semibold tracking-wide text-whatsapp-deep uppercase">
+            FAQ
+          </span>
           <h2 className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
             Frequently Asked Questions
           </h2>
+          <p className="mx-auto mt-4 max-w-xl text-gray-500">
+            Everything you need to know about OneForm. Can&apos;t find the answer? Chat with us.
+          </p>
         </motion.div>
 
         <div className="space-y-3">
@@ -50,51 +72,58 @@ export function FAQ() {
               initial={{ opacity: 0, y: 12 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              transition={{ duration: 0.3, delay: index * 0.08 }}
+              transition={{ duration: 0.3, delay: index * 0.05 }}
             >
               <button
                 className="flex w-full items-center justify-between px-6 py-4 text-left"
                 onClick={() => setOpenIndex(openIndex === index ? null : index)}
+                aria-expanded={openIndex === index}
               >
-                <span className="text-sm font-semibold text-gray-900">{faq.q}</span>
+                <span className="pr-4 text-sm font-semibold text-gray-900">{faq.q}</span>
                 <ChevronDown
                   className={cn(
-                    "h-5 w-5 shrink-0 text-gray-400 transition-transform duration-200",
+                    "h-5 w-5 shrink-0 text-gray-400 transition-transform duration-300",
                     openIndex === index && "rotate-180 text-whatsapp"
                   )}
                 />
               </button>
-              <div
-                className={cn(
-                  "overflow-hidden transition-all duration-200",
-                  openIndex === index ? "max-h-40" : "max-h-0"
+              <AnimatePresence initial={false}>
+                {openIndex === index && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: "auto", opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
+                    className="overflow-hidden"
+                  >
+                    <div className="border-t border-gray-100 px-6 py-4 text-sm leading-relaxed text-gray-600">
+                      {faq.a}
+                    </div>
+                  </motion.div>
                 )}
-              >
-                <div className="border-t border-gray-100 px-6 py-4 text-sm leading-relaxed text-gray-600">
-                  {faq.a}
-                </div>
-              </div>
+              </AnimatePresence>
             </motion.div>
           ))}
         </div>
 
         {/* Have a Question CTA */}
         <motion.div
-          className="mt-12 text-center"
-          initial={{ opacity: 0 }}
-          whileInView={{ opacity: 1 }}
+          className="mt-12 rounded-2xl bg-gradient-to-br from-whatsapp/5 to-whatsapp/10 p-8 text-center"
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.5, delay: 0.3 }}
         >
-          <p className="mb-3 text-sm text-gray-500">
-            Have a Question?
-          </p>
-          <p className="mb-4 text-sm text-gray-600">
-            If you have more questions feel free to contact us.
+          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-whatsapp/10">
+            <MessageCircle className="h-6 w-6 text-whatsapp" />
+          </div>
+          <h3 className="mb-2 text-lg font-semibold text-gray-900">Still have questions?</h3>
+          <p className="mb-5 text-sm text-gray-600">
+            Our team is here to help. Reach out and we&apos;ll get back to you within 24 hours.
           </p>
           <a
             href="mailto:contact@oneform.app"
-            className="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-5 py-2.5 text-sm font-medium text-gray-700 shadow-sm transition-all hover:bg-gray-50 hover:border-gray-300"
+            className="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-5 py-2.5 text-sm font-medium text-gray-700 shadow-sm transition-all hover:border-whatsapp/30 hover:bg-whatsapp/5 hover:text-whatsapp-deep"
           >
             <HelpCircle className="h-4 w-4" />
             Contact Us
