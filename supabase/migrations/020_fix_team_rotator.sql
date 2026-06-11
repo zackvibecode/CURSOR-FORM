@@ -1,7 +1,4 @@
--- Robust recipient resolver for public (anonymous) form submissions.
--- Runs as SECURITY DEFINER so it bypasses RLS without needing the service-role
--- key in the deployment environment. Handles both 'single' and 'distribute'
--- (round-robin) modes and returns the assigned member's name + phone atomically.
+-- Fix team round-robin: preserve member order and always pick from team list in distribute mode.
 
 CREATE OR REPLACE FUNCTION resolve_form_recipient(p_form_id UUID)
 RETURNS TABLE(member_name TEXT, member_phone TEXT) AS $$
@@ -23,6 +20,7 @@ BEGIN
     RETURN;
   END IF;
 
+  -- Keep members with phones, preserve original list order
   SELECT jsonb_agg(elem ORDER BY ord) INTO v_members
   FROM jsonb_array_elements(COALESCE(v_members, '[]'::jsonb)) WITH ORDINALITY AS t(elem, ord)
   WHERE COALESCE(btrim(elem->>'phone'), '') <> '';

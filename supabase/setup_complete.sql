@@ -513,9 +513,9 @@ BEGIN
     RETURN;
   END IF;
 
-  -- Keep only members that have a non-empty phone
-  SELECT jsonb_agg(elem) INTO v_members
-  FROM jsonb_array_elements(COALESCE(v_members, '[]'::jsonb)) elem
+  -- Keep members with phones, preserve original list order
+  SELECT jsonb_agg(elem ORDER BY ord) INTO v_members
+  FROM jsonb_array_elements(COALESCE(v_members, '[]'::jsonb)) WITH ORDINALITY AS t(elem, ord)
   WHERE COALESCE(btrim(elem->>'phone'), '') <> '';
 
   v_count := COALESCE(jsonb_array_length(v_members), 0);

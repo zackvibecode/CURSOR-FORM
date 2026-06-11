@@ -114,6 +114,7 @@ export async function PUT(
         form_id: id,
         distribution_mode,
         team_members: sanitizedMembers,
+        last_assigned_index: 0,
       },
       { onConflict: "form_id" }
     )

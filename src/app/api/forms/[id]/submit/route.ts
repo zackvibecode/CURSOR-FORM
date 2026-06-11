@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { mapDbFieldToFormField } from "@/lib/forms";
 import { buildAnswersSchema } from "@/lib/form-schema";
 import { checkSubmissionLimit } from "@/lib/check-limits";
+import { resolveSubmissionRecipient } from "@/lib/resolve-recipient";
 import { rateLimit, ipFromRequest } from "@/lib/rate-limit";
 import { headers } from "next/headers";
 
@@ -64,34 +65,27 @@ export async function POST(
     );
   }
 
-  // Resolve recipient via SECURITY DEFINER RPC so it works for anonymous
-  // public visitors. (Reading form_team_settings directly is blocked by RLS
-  // for anonymous users, which previously made every lead fall back to the
-  // form's default number instead of rotating.)
-  let assignedPhone: string = form.whatsapp_number?.trim() ?? "";
-  let assignedName: string | null = null;
-
-  const { data: recipient, error: recipientError } = await supabase.rpc(
-    "resolve_form_recipient",
-    { p_form_id: id }
+  // Team rotator: round-robin across team members when distribute mode is on.
+  // Never silently fall back to the main form number when distribute is configured.
+  const resolved = await resolveSubmissionRecipient(
+    supabase,
+    id,
+    form.whatsapp_number?.trim() ?? ""
   );
 
-  if (recipientError) {
-    console.warn("[team-rotator] resolve_form_recipient failed:", recipientError.message);
-  } else if (Array.isArray(recipient) && recipient.length > 0) {
-    const r = recipient[0] as { member_name: string | null; member_phone: string | null };
-    if (r?.member_phone?.trim()) {
-      assignedPhone = r.member_phone.trim();
-      assignedName = r.member_name?.trim() || null;
-    }
-  }
-
-  if (!assignedPhone) {
+  if (!resolved?.phone) {
     return NextResponse.json(
-      { error: "WhatsApp number not configured for this form" },
+      {
+        error: "team_routing_failed",
+        message:
+          "Team rotator is enabled but no team WhatsApp numbers are configured. Add team members in Form Settings → Team.",
+      },
       { status: 400 }
     );
   }
+
+  const assignedPhone = resolved.phone;
+  const assignedName = resolved.name;
 
   // Fetch form fields & build validation schema
   const { data: fields } = await supabase
@@ -131,5 +125,10 @@ export async function POST(
     return NextResponse.json({ error: insertError.message }, { status: 500 });
   }
 
-  return NextResponse.json({ success: true, whatsapp_number: assignedPhone });
+  return NextResponse.json({
+    success: true,
+    whatsapp_number: assignedPhone,
+    assigned_name: assignedName,
+    from_team: resolved.fromTeam,
+  });
 }

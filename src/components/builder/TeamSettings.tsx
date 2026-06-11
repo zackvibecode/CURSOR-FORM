@@ -122,6 +122,13 @@ export function TeamSettings({ formId }: TeamSettingsProps) {
         <p className="mt-1 text-sm text-brand-muted">
           Choose how form submissions are distributed to your team.
         </p>
+        {distributionMode === "distribute" && (
+          <p className="mt-2 rounded-lg border border-whatsapp/20 bg-whatsapp/5 px-3 py-2 text-xs text-whatsapp-deep">
+            <strong>Distribute mode:</strong> Leads rotate through the team numbers below only
+            (Member 1 → 2 → 3 → … → back to 1). The main WhatsApp number in General settings is
+            not used unless you add it as a team member here.
+          </p>
+        )}
       </div>
 
       {/* Distribution Mode Cards */}
