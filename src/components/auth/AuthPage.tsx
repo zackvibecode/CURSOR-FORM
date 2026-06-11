@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { requestPasswordReset } from "@/lib/auth/actions";
+import { safeRedirectPath } from "@/lib/auth/safe-path";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { BrandLogo } from "@/components/ui/BrandLogo";
@@ -29,13 +30,29 @@ function AuthForm({ mode }: { mode: "login" | "signup" }) {
 
   const getDashboardUrl = () => {
     if (template) return `/dashboard?template=${template}`;
-    return redirect.startsWith("/") ? redirect : "/dashboard";
+    return safeRedirectPath(redirect);
+  };
+
+  const appendPlanParams = (url: URL) => {
+    if (mode === "signup" && selectedPlan) {
+      url.searchParams.set("plan", selectedPlan);
+      url.searchParams.set("cycle", billingCycle);
+    }
+  };
+
+  const buildConfirmUrl = () => {
+    const redirectTo = new URL("/auth/confirm", window.location.origin);
+    redirectTo.searchParams.set("next", getDashboardUrl());
+    if (template) redirectTo.searchParams.set("template", template);
+    appendPlanParams(redirectTo);
+    return redirectTo.toString();
   };
 
   const buildCallbackUrl = () => {
     const redirectTo = new URL("/auth/callback", window.location.origin);
     redirectTo.searchParams.set("next", getDashboardUrl());
     if (template) redirectTo.searchParams.set("template", template);
+    appendPlanParams(redirectTo);
     return redirectTo.toString();
   };
 
@@ -109,7 +126,7 @@ function AuthForm({ mode }: { mode: "login" | "signup" }) {
     const { error: authError } = await supabase.auth.signInWithOtp({
       email: email.trim(),
       options: {
-        emailRedirectTo: buildCallbackUrl(),
+        emailRedirectTo: buildConfirmUrl(),
         shouldCreateUser: mode === "signup",
       },
     });

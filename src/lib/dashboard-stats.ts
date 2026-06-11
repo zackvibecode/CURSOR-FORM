@@ -26,11 +26,6 @@ function extractByLabel(
   return "—";
 }
 
-// Get all available keys for debugging/tooltip
-function getAvailableKeys(data: Record<string, unknown>): string {
-  return Object.keys(data).join(", ");
-}
-
 // Extract every field answer (by label, in field order) for a submission.
 // Skips display-only fields (title/image). Used to render dynamic columns.
 function extractAllAnswers(
@@ -77,18 +72,13 @@ export function mapSubmissionsToRows(
 
     let name: string;
     let phone: string;
-    let debugInfo: string | null = null;
 
     if (fieldMap) {
       name = extractByLabel(data, fieldMap, ["name", "full"]);
       phone = extractByLabel(data, fieldMap, ["phone", "mobile", "tel", "no"]);
-      if (name === "—" || phone === "—") {
-        debugInfo = getAvailableKeys(data);
-      }
     } else {
       name = "—";
       phone = "—";
-      debugInfo = getAvailableKeys(data);
     }
 
     const answers = fieldMap ? extractAllAnswers(data, fieldMap) : [];
@@ -115,7 +105,6 @@ export function mapSubmissionsToRows(
       assignedTo,
       assignedName,
       assignedPhone,
-      debugInfo,
     };
   });
 }

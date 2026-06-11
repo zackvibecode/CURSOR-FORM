@@ -1,13 +1,17 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { safeRedirectPath } from "@/lib/auth/safe-path";
+import { ensurePendingSubscription } from "@/lib/subscription/pending-plan";
 
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get("code");
   const next = searchParams.get("next") ?? "/dashboard";
   const template = searchParams.get("template");
+  const plan = searchParams.get("plan");
+  const cycle = searchParams.get("cycle");
 
-  const safeNext = next.startsWith("/") ? next : "/dashboard";
+  const safeNext = safeRedirectPath(next);
   const redirectPath = template ? `/dashboard?template=${template}` : safeNext;
 
   if (!code) {
@@ -39,6 +43,14 @@ export async function GET(request: NextRequest) {
 
   if (error) {
     return NextResponse.redirect(`${origin}/login?error=auth`);
+  }
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (user && plan) {
+    await ensurePendingSubscription(supabase, user.id, plan, cycle);
   }
 
   return response;

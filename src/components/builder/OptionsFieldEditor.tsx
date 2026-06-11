@@ -127,8 +127,22 @@ function ImageUploader({
     setUploading(true);
     try {
       const supabase = createClient();
-      const ext = file.name.split(".").pop() ?? "png";
-      const path = `${field.id}-${Date.now()}.${ext}`;
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) {
+        setError("Please log in to upload images.");
+        setUploading(false);
+        return;
+      }
+      const ext = file.name.split(".").pop()?.toLowerCase() ?? "png";
+      const allowedExt = ["png", "jpg", "jpeg", "gif", "webp"];
+      if (!allowedExt.includes(ext)) {
+        setError("Only PNG, JPG, GIF, or WebP images are allowed.");
+        setUploading(false);
+        return;
+      }
+      const path = `${user.id}/${field.id}-${Date.now()}.${ext}`;
       const { error: uploadError } = await supabase.storage
         .from("form-images")
         .upload(path, file, { upsert: true });

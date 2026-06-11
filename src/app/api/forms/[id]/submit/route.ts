@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { mapDbFieldToFormField } from "@/lib/forms";
 import { buildAnswersSchema } from "@/lib/form-schema";
 import { checkSubmissionLimit } from "@/lib/check-limits";
+import { rateLimit, ipFromRequest } from "@/lib/rate-limit";
 import { headers } from "next/headers";
 
 function getIpHash(): string | null {
@@ -24,6 +25,16 @@ export async function POST(
   { params }: { params: { id: string } }
 ) {
   const { id } = params;
+
+  const ip = ipFromRequest(request);
+  const limit = rateLimit(`submit:${ip}:${id}`, 20, 60_000);
+  if (!limit.allowed) {
+    return NextResponse.json(
+      { error: "Too many submissions. Please try again in a moment." },
+      { status: 429, headers: { "Retry-After": String(limit.retryAfterSeconds) } }
+    );
+  }
+
   const supabase = await createClient();
 
   const { data: form } = await supabase

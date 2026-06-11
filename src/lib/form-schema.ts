@@ -56,6 +56,25 @@ export const formSettingsSchema = z.object({
 
 export type FormSettings = z.infer<typeof formSettingsSchema>;
 
+export const formUpdateBodySchema = z.object({
+  title: z.string().min(1).optional(),
+  slug: z
+    .string()
+    .min(3)
+    .regex(/^[a-z0-9-]+$/)
+    .optional(),
+  whatsapp_number: z
+    .string()
+    .min(8)
+    .regex(/^\+?[0-9\s-]+$/)
+    .optional(),
+  cta_text: z.string().min(1).optional(),
+  description: z.string().optional(),
+  status: z.enum(["draft", "published"]).optional(),
+  settings: z.record(z.unknown()).optional(),
+  fields: z.array(formFieldSchema).optional(),
+});
+
 export const formSchema = formSettingsSchema.extend({
   id: z.string().uuid(),
   user_id: z.string().uuid(),

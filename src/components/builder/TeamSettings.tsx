@@ -42,8 +42,6 @@ export function TeamSettings({ formId }: TeamSettingsProps) {
   }, [formId]);
 
   const handleSave = async () => {
-    console.log("[TeamSettings] Saving...", { formId, distributionMode, teamMembers });
-
     if (distributionMode === "distribute") {
       const validMembers = teamMembers.filter((member) => member.phone?.trim());
       if (validMembers.length === 0) {
@@ -60,7 +58,6 @@ export function TeamSettings({ formId }: TeamSettingsProps) {
     setSaving(true);
     try {
       const url = `/api/forms/${formId}/team-settings`;
-      console.log("[TeamSettings] Fetching:", url);
 
       const res = await fetch(url, {
         method: "PUT",
@@ -68,20 +65,15 @@ export function TeamSettings({ formId }: TeamSettingsProps) {
         body: JSON.stringify({ distribution_mode: distributionMode, team_members: teamMembers }),
       });
 
-      console.log("[TeamSettings] Response status:", res.status);
-
       if (!res.ok) {
         const data = await res.json();
-        console.error("[TeamSettings] Save failed:", data);
         toast(data.error ?? "Failed to save", "error");
         return;
       }
-      const savedData = await res.json();
-      console.log("[TeamSettings] Saved:", savedData);
+      await res.json();
       toast("Team settings saved!", "success");
       setFetched(true);
-    } catch (err) {
-      console.error("[TeamSettings] Network error:", err);
+    } catch {
       toast("Network error", "error");
     }
     setSaving(false);
