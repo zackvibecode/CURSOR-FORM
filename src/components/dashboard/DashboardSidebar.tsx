@@ -137,8 +137,8 @@ export function DashboardSidebar({
         )}
       >
         {/* Header / Logo */}
-        <div className="flex h-14 items-center justify-between border-b border-border px-4">
-          <BrandLogo size="sm" variant="text" />
+        <div className="flex h-14 items-center justify-between gap-2 border-b border-border px-4">
+          <BrandLogo size="sm" variant="text" className="max-w-[148px]" />
           <button
             onClick={onClose}
             className="rounded-md p-1.5 text-muted-fg transition-colors hover:bg-muted hover:text-fg lg:hidden"
