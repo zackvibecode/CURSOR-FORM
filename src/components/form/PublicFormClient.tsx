@@ -3,12 +3,21 @@
 import { PublicFormView } from "@/components/form/PublicFormView";
 import type { DbForm } from "@/lib/database.types";
 import type { FormField } from "@/lib/form-schema";
-import { BrandLogo } from "@/components/ui/BrandLogo";
+import type { CSSProperties } from "react";
 
 interface PublicFormClientProps {
   form: DbForm;
   fields: FormField[];
 }
+
+const lightFormTheme = {
+  "--bg": "#fafafa",
+  "--fg": "#0a0a0a",
+  "--card": "#ffffff",
+  "--border": "#e5e5e5",
+  "--muted": "#f5f5f5",
+  "--muted-fg": "#666666",
+} as CSSProperties;
 
 export function PublicFormClient({ form, fields }: PublicFormClientProps) {
   const handleSubmit = async (answers: Record<string, string>) => {
@@ -28,18 +37,13 @@ export function PublicFormClient({ form, fields }: PublicFormClientProps) {
   };
 
   return (
-    <div className="min-h-screen bg-bg">
-      <header className="border-b border-border bg-card">
-        <div className="mx-auto flex h-14 max-w-lg items-center px-4">
-          <BrandLogo />
-        </div>
-      </header>
+    <div className="min-h-screen bg-bg text-fg [color-scheme:light]" style={lightFormTheme}>
       <main className="px-4 py-10 sm:py-14">
-        <div className="mx-auto max-w-lg rounded-lg border border-border bg-card p-6 shadow-lg dark:shadow-none sm:p-8">
+        <div className="mx-auto max-w-lg rounded-xl border border-border bg-card p-6 shadow-sm sm:p-8">
           <PublicFormView
             title={form.title}
             description={form.description}
-            ctaText={form.cta_text || "Submit via WhatsApp"}
+            ctaText={form.cta_text || "Submit on WhatsApp"}
             whatsappNumber={form.whatsapp_number}
             fields={fields}
             formId={form.id}

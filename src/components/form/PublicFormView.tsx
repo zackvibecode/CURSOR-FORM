@@ -91,9 +91,6 @@ export function PublicFormView({
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <div className="mb-2 text-center">
-        <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-whatsapp text-white shadow-soft">
-          <WhatsAppIcon className="h-7 w-7" />
-        </div>
         {description && <p className="mt-1 text-sm text-muted-fg">{description}</p>}
       </div>
 
@@ -117,7 +114,7 @@ export function PublicFormView({
         size="lg"
         disabled={submitting || preview}
       >
-        {preview ? ctaText : submitting ? "Opening WhatsApp..." : ctaText || "Submit via WhatsApp"}
+        {preview ? ctaText : submitting ? "Opening WhatsApp..." : ctaText || "Submit on WhatsApp"}
       </Button>
 
       {!preview && (
