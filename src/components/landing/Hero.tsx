@@ -29,7 +29,7 @@ export function Hero() {
               <br />
               and streamline
               <br />
-              customer interactions{" "}
+              interactions{" "}
               <span className="relative inline-block">
                 effortlessly
                 <svg className="absolute -bottom-1 left-0 w-full" viewBox="0 0 200 8" fill="none">
@@ -46,7 +46,7 @@ export function Hero() {
 
             <p className="mt-6 max-w-md text-base leading-relaxed text-gray-500 sm:text-lg">
               Build forms without code &amp; get the data directly from the customer&apos;s
-              WhatsApp number
+              WhatsApp numbers
             </p>
 
             <div className="mt-8 flex w-full max-w-md flex-col gap-3 sm:flex-row">
@@ -175,6 +175,7 @@ export function Hero() {
           </div>
         </div>
       </div>
+
     </section>
   );
 }

@@ -49,10 +49,10 @@ const templates = [
 
 export function Templates() {
   return (
-    <section id="templates" className="bg-white py-20 sm:py-28">
+    <section id="templates" className="bg-gradient-mint py-20 sm:py-28">
       <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
         <ScrollReveal className="mb-16 text-center">
-          <h2 className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
+          <h2 className="text-balance text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
             Choose from our ready to use templates
           </h2>
           <p className="mx-auto mt-4 max-w-2xl text-gray-500">
@@ -63,7 +63,7 @@ export function Templates() {
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {templates.map((template, index) => (
             <ScrollReveal key={template.id} delay={Math.min(index * 0.06, 0.24)}>
-              <div className="group flex h-full flex-col rounded-2xl border border-gray-200 bg-white p-6 shadow-sm transition-shadow duration-300 hover:border-gray-300 hover:shadow-lg md:hover:-translate-y-1">
+              <div className="group flex h-full flex-col rounded-2xl border border-gray-200 bg-white p-6 shadow-sm transition-all duration-300 hover:border-whatsapp/30 hover:shadow-card-lg md:hover:-translate-y-1">
                 <div
                   className={`mb-4 flex h-12 w-12 items-center justify-center rounded-xl ${template.color}`}
                 >
@@ -85,7 +85,7 @@ export function Templates() {
                   <Link href={`/demo?template=${template.id}`}>
                     <button
                       type="button"
-                      className="rounded-xl border border-gray-200 px-4 py-2.5 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-50 active:scale-[0.98]"
+                      className="rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-medium text-gray-600 transition-colors hover:border-whatsapp/30 hover:bg-whatsapp/5 active:scale-[0.98]"
                     >
                       Demo
                     </button>

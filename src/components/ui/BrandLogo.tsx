@@ -2,6 +2,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 
+const LOGO_WIDTH = 842;
+const LOGO_HEIGHT = 179;
 const ICON_SIZE = 367;
 
 export function BrandLogo({
@@ -9,13 +11,21 @@ export function BrandLogo({
   iconOnly = false,
   size = "md",
   priority = false,
+  variant = "image",
 }: {
   className?: string;
   iconOnly?: boolean;
   size?: "sm" | "md" | "lg";
   priority?: boolean;
+  variant?: "image" | "text";
 }) {
-  const heights = {
+  const imageHeights = {
+    sm: "h-6",
+    md: "h-7",
+    lg: "h-8",
+  };
+
+  const textSizes = {
     sm: "text-lg",
     md: "text-xl",
     lg: "text-2xl",
@@ -30,20 +40,44 @@ export function BrandLogo({
   return (
     <Link
       href="/"
-      className={cn("group inline-flex shrink-0 items-center gap-2 overflow-hidden", className)}
+      className={cn(
+        "group inline-flex shrink-0 items-center overflow-hidden",
+        variant === "text" && "gap-2",
+        className
+      )}
     >
-      <Image
-        src="/favicon-icon.png"
-        alt="One Form"
-        width={ICON_SIZE}
-        height={ICON_SIZE}
-        className={cn("object-contain", iconHeights[size])}
-        priority={priority}
-      />
-      {!iconOnly && (
-        <span className={cn("font-bold tracking-tight text-fg", heights[size])}>
-          One<span className="text-whatsapp">Form</span>
-        </span>
+      {iconOnly ? (
+        <Image
+          src="/favicon-icon.png"
+          alt="One Form"
+          width={ICON_SIZE}
+          height={ICON_SIZE}
+          className={cn("object-contain", iconHeights[size])}
+          priority={priority}
+        />
+      ) : variant === "text" ? (
+        <>
+          <Image
+            src="/favicon-icon.png"
+            alt="One Form"
+            width={ICON_SIZE}
+            height={ICON_SIZE}
+            className={cn("object-contain", iconHeights[size])}
+            priority={priority}
+          />
+          <span className={cn("font-bold tracking-tight text-fg", textSizes[size])}>
+            One<span className="text-whatsapp">Form</span>
+          </span>
+        </>
+      ) : (
+        <Image
+          src="/oneform-logo.png"
+          alt="One Form"
+          width={LOGO_WIDTH}
+          height={LOGO_HEIGHT}
+          className={cn("w-auto object-contain", imageHeights[size])}
+          priority={priority}
+        />
       )}
     </Link>
   );

@@ -60,7 +60,8 @@ export function FieldEditor({
                 className="min-h-[160px] font-mono text-xs"
               />
               <p className="mt-2 text-[11px] text-muted-fg">
-                Customize the message sent to WhatsApp when a form is submitted.
+                Customize the message sent to WhatsApp. Use lines like
+                {" "}Name: / Phone: or placeholders like {"{{Your name}}"}.
               </p>
             </div>
           </div>
@@ -128,6 +129,10 @@ export function FieldEditor({
             onChange={(e) => onWhatsappTemplateChange(e.target.value)}
             className="min-h-[120px] font-mono text-xs"
           />
+          <p className="mt-2 text-[11px] text-muted-fg">
+            Lines like Name: and Phone: will auto-fill from submitted answers.
+            You can also use {"{{Field label}}"} placeholders.
+          </p>
         </div>
       )}
     </aside>

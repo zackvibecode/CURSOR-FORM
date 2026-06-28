@@ -40,7 +40,7 @@ const FloatingWhatsAppButton = dynamic(
 
 export default function HomePage() {
   return (
-    <>
+    <div className="bg-white text-gray-900 [--bg:#ffffff] [--fg:#111827] [--card:#ffffff] [--border:#e5e7eb] [--muted:#f7faf8] [--muted-fg:#6b7280] [color-scheme:light]">
       <Navbar />
       <main>
         <Hero />
@@ -55,6 +55,6 @@ export default function HomePage() {
       </main>
       <Footer />
       <FloatingWhatsAppButton />
-    </>
+    </div>
   );
 }

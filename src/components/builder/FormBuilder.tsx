@@ -123,7 +123,7 @@ export function FormBuilder({ formId, initialData }: FormBuilderProps) {
         setSaving(false);
       }
     },
-    [formId, title, slug, whatsappNumber, ctaText, description, status, fields]
+    [formId, title, slug, whatsappNumber, ctaText, description, status, fields, whatsappTemplate]
   );
 
   const requestSave = (publish: boolean) => {
@@ -319,6 +319,8 @@ export function FormBuilder({ formId, initialData }: FormBuilderProps) {
                     drawer
                     field={selectedField}
                     onUpdate={handleUpdateField}
+                    whatsappTemplate={whatsappTemplate}
+                    onWhatsappTemplateChange={setWhatsappTemplate}
                     onBack={() => setMobileDrawer(null)}
                     onDelete={
                       selectedField

@@ -65,20 +65,65 @@ export function buildWhatsAppMessageFromTemplate(
 ): string | null {
   if (!template || !template.trim()) return null;
 
-  // Map normalized label -> answer
+  const normalizeKey = (value: string) =>
+    value
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+
+  const addAnswerKey = (map: Map<string, string>, key: string, answer: string) => {
+    const normalized = normalizeKey(key);
+    if (normalized && !map.has(normalized)) {
+      map.set(normalized, answer);
+    }
+  };
+
+  // Map flexible label aliases -> answer. This lets templates use either
+  // {{Your name}} placeholders or plain lines like "Name:" / "Phone:".
   const labelToAnswer = new Map<string, string>();
   fields.forEach((field) => {
     if (field.type === "title") return;
     const answer = answers[field.id]?.trim();
     if (answer) {
-      labelToAnswer.set(field.label.trim().toLowerCase(), answer);
+      const label = field.label.trim();
+      addAnswerKey(labelToAnswer, label, answer);
+
+      const withoutCommonPrefix = label.replace(/^(your|customer|client)\s+/i, "");
+      addAnswerKey(labelToAnswer, withoutCommonPrefix, answer);
+
+      // Common form labels often include a suffix, but templates use the short
+      // version (e.g. "Phone:" instead of "Phone number:").
+      addAnswerKey(labelToAnswer, label.replace(/\s+(number|address)$/i, ""), answer);
+      addAnswerKey(labelToAnswer, withoutCommonPrefix.replace(/\s+(number|address)$/i, ""), answer);
+
+      if (field.type === "email") addAnswerKey(labelToAnswer, "email", answer);
+      if (field.type === "phone") addAnswerKey(labelToAnswer, "phone", answer);
+      if (field.type === "date") {
+        addAnswerKey(labelToAnswer, "date", answer);
+        addAnswerKey(labelToAnswer, "preferred date", answer);
+      }
+      if (field.type === "textarea") addAnswerKey(labelToAnswer, "message", answer);
     }
   });
 
-  const filled = template.replace(/\{\{\s*([^}]+?)\s*\}\}/g, (_match, rawKey) => {
-    const key = String(rawKey).trim().toLowerCase();
+  const withPlaceholders = template.replace(/\{\{\s*([^}]+?)\s*\}\}/g, (_match, rawKey) => {
+    const key = normalizeKey(String(rawKey));
     return labelToAnswer.get(key) ?? "";
   });
+
+  const filled = withPlaceholders
+    .split("\n")
+    .map((line) => {
+      const emptyLabelMatch = line.match(/^(\s*(?:[-*]\s*)?)([^:\n]+):\s*$/);
+      if (!emptyLabelMatch) return line;
+
+      const [, prefix, rawLabel] = emptyLabelMatch;
+      const answer = labelToAnswer.get(normalizeKey(rawLabel));
+      return answer ? `${prefix}${rawLabel}: ${answer}` : line;
+    })
+    .join("\n");
 
   // Collapse blank lines left by removed placeholders, then sanitize
   return filled

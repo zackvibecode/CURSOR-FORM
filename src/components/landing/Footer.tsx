@@ -46,7 +46,7 @@ export function Footer() {
                   key={social.label}
                   href={social.href}
                   aria-label={social.label}
-                  className="flex h-9 w-9 items-center justify-center rounded-lg border border-gray-200 text-gray-400 transition-all hover:border-whatsapp/30 hover:bg-whatsapp/5 hover:text-whatsapp"
+                  className="flex h-9 w-9 items-center justify-center rounded-lg border border-gray-200 text-gray-500 transition-all hover:border-whatsapp/30 hover:bg-whatsapp/5 hover:text-whatsapp"
                 >
                   <social.icon className="h-4 w-4" />
                 </a>
@@ -62,7 +62,7 @@ export function Footer() {
                 <li key={link.label}>
                   <Link
                     href={link.href}
-                    className="text-sm text-gray-500 transition-colors hover:text-whatsapp-deep"
+                    className="text-sm text-gray-500 transition-colors hover:text-whatsapp"
                   >
                     {link.label}
                   </Link>
@@ -79,7 +79,7 @@ export function Footer() {
                 <li key={link.label}>
                   <Link
                     href={link.href}
-                    className="text-sm text-gray-500 transition-colors hover:text-whatsapp-deep"
+                    className="text-sm text-gray-500 transition-colors hover:text-whatsapp"
                   >
                     {link.label}
                   </Link>
@@ -97,14 +97,14 @@ export function Footer() {
                   {link.href.startsWith("mailto:") ? (
                     <a
                       href={link.href}
-                      className="text-sm text-gray-500 transition-colors hover:text-whatsapp-deep"
+                      className="text-sm text-gray-500 transition-colors hover:text-whatsapp"
                     >
                       {link.label}
                     </a>
                   ) : (
                     <Link
                       href={link.href}
-                      className="text-sm text-gray-500 transition-colors hover:text-whatsapp-deep"
+                      className="text-sm text-gray-500 transition-colors hover:text-whatsapp"
                     >
                       {link.label}
                     </Link>
@@ -115,7 +115,7 @@ export function Footer() {
           </div>
         </div>
 
-        <div className="mt-12 border-t border-gray-100 pt-8 text-center text-sm text-gray-400">
+        <div className="mt-12 border-t border-gray-100 pt-8 text-center text-sm text-gray-500">
           <p>&copy; {new Date().getFullYear()} OneForm. All rights reserved.</p>
         </div>
       </div>

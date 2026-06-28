@@ -7,14 +7,16 @@ import { ToastContainer } from "@/components/ui/Toast";
 const geistSans = GeistSans;
 const geistMono = GeistMono;
 
-// Anti-FOUC: apply theme class before hydration
+// Anti-FOUC: apply saved dashboard theme before hydration.
 const themeInitScript = `
 (function() {
   try {
     var stored = localStorage.getItem('oneform-theme');
-    var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    var theme = stored || (prefersDark ? 'dark' : 'light');
-    if (theme === 'dark') document.documentElement.classList.add('dark');
+    if (stored === 'dark') {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
   } catch (e) {}
 })();
 `;
