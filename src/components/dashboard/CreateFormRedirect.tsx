@@ -31,10 +31,10 @@ export function CreateFormRedirect({ templateId }: { templateId: string }) {
   if (error) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center gap-4">
-        <p className="text-brand-red">{error}</p>
+        <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
         <button
           onClick={() => router.replace("/dashboard")}
-          className="text-sm font-semibold text-whatsapp hover:underline"
+          className="text-sm font-medium text-whatsapp-deep transition-colors hover:text-whatsapp dark:text-whatsapp"
         >
           Back to dashboard
         </button>
@@ -44,7 +44,7 @@ export function CreateFormRedirect({ templateId }: { templateId: string }) {
 
   return (
     <div className="flex min-h-screen items-center justify-center">
-      <p className="text-gray-600">Creating your form...</p>
+      <p className="text-sm text-muted-fg">Creating your form…</p>
     </div>
   );
 }

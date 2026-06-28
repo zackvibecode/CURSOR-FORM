@@ -1,7 +1,7 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
-import { CheckCircle2, XCircle, X } from "lucide-react";
+import { CheckCircle2, XCircle, X, Info } from "lucide-react";
 import { useEffect, useState } from "react";
 
 type ToastType = "success" | "error" | "info";
@@ -35,16 +35,16 @@ function removeToast(id: string) {
   notify();
 }
 
-const typeStyles: Record<ToastType, string> = {
-  success: "bg-emerald-50 border-emerald-200 text-emerald-800",
-  error: "bg-red-50 border-red-200 text-red-800",
-  info: "bg-blue-50 border-blue-200 text-blue-800",
+const accentBar: Record<ToastType, string> = {
+  success: "bg-whatsapp",
+  error: "bg-red-500",
+  info: "bg-blue-500",
 };
 
-const typeIcons: Record<ToastType, typeof CheckCircle2> = {
+const typeIcon: Record<ToastType, typeof CheckCircle2> = {
   success: CheckCircle2,
   error: XCircle,
-  info: CheckCircle2,
+  info: Info,
 };
 
 export function ToastContainer() {
@@ -61,23 +61,25 @@ export function ToastContainer() {
     <div className="fixed bottom-4 right-4 z-[100] flex flex-col gap-2 pointer-events-none">
       <AnimatePresence>
         {toasts.map((t) => {
-          const Icon = typeIcons[t.type];
+          const Icon = typeIcon[t.type];
           return (
             <motion.div
               key={t.id}
               initial={{ opacity: 0, y: 16, scale: 0.95 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 16, scale: 0.95 }}
-              transition={{ duration: 0.25 }}
-              className={`pointer-events-auto flex items-center gap-3 rounded-xl border px-4 py-3 shadow-lg ${typeStyles[t.type]}`}
+              transition={{ duration: 0.2 }}
+              className="pointer-events-auto flex items-center gap-3 overflow-hidden rounded-md border border-border bg-card py-2.5 pl-3 pr-4 text-sm shadow-md"
             >
-              <Icon className="h-5 w-5 shrink-0" />
-              <span className="text-sm font-medium">{t.message}</span>
+              <span className={accentBar[t.type] + " h-5 w-0.5 shrink-0 rounded-full"} />
+              <Icon className="h-4 w-4 shrink-0 text-muted-fg" />
+              <span className="font-medium text-fg">{t.message}</span>
               <button
                 onClick={() => removeToast(t.id)}
-                className="ml-2 shrink-0 opacity-60 hover:opacity-100"
+                className="ml-1 shrink-0 rounded p-0.5 text-muted-fg transition-colors hover:text-fg"
+                aria-label="Dismiss"
               >
-                <X className="h-4 w-4" />
+                <X className="h-3.5 w-3.5" />
               </button>
             </motion.div>
           );

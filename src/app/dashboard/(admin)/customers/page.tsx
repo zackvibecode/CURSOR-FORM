@@ -2,7 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { Badge } from "@/components/ui/Badge";
 import { extractCustomers, mapSubmissionsToRows } from "@/lib/dashboard-stats";
 import { formatDate } from "@/lib/utils";
-import { Phone, User } from "lucide-react";
+import { Phone } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -23,7 +23,6 @@ export default async function CustomersPage() {
   let customers: ReturnType<typeof extractCustomers> = [];
 
   if (formIds.length > 0) {
-    // Parallel queries for speed
     const [submissionsResult, fieldsResult] = await Promise.all([
       supabase
         .from("submissions")
@@ -45,41 +44,73 @@ export default async function CustomersPage() {
   }
 
   return (
-    <div className="mx-auto max-w-7xl space-y-6">
+    <div className="space-y-6">
       <div>
-        <h2 className="text-xl font-bold text-brand-text">Customers</h2>
-        <p className="text-brand-muted">
+        <h2 className="text-lg font-semibold text-fg">Customers</h2>
+        <p className="text-sm text-muted-fg">
           Unique contacts collected through your WhatsApp forms
         </p>
       </div>
 
       {customers.length === 0 ? (
-        <div className="rounded-2xl border border-brand-border bg-white p-12 text-center shadow-card">
-          <p className="text-brand-muted">No customers yet</p>
+        <div className="rounded-lg border border-dashed border-border bg-card p-12 text-center">
+          <p className="text-sm text-muted-fg">No customers yet</p>
         </div>
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {customers.map((customer) => (
-            <div
-              key={customer.id}
-              className="rounded-2xl border border-brand-border bg-white p-6 shadow-card transition-all hover:-translate-y-0.5 hover:shadow-card-lg"
-            >
-              <div className="mb-4 flex items-start justify-between">
-                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-whatsapp/10 text-whatsapp">
-                  <User className="h-5 w-5" />
-                </div>
-                <Badge variant={customer.status}>{customer.status}</Badge>
-              </div>
-              <h3 className="font-semibold text-brand-text">{customer.name}</h3>
-              <p className="mt-1 flex items-center gap-1.5 text-sm text-brand-muted">
-                <Phone className="h-3.5 w-3.5" />
-                {customer.phone}
-              </p>
-              <p className="mt-3 text-xs text-brand-muted">
-                Last form: {customer.formName} · {formatDate(customer.date)}
-              </p>
-            </div>
-          ))}
+        <div className="overflow-hidden rounded-lg border border-border bg-card">
+          <div className="overflow-x-auto scrollbar-thin">
+            <table className="w-full text-left text-sm">
+              <thead>
+                <tr className="border-b border-border bg-muted/40">
+                  <th className="px-4 py-2.5 text-[11px] font-semibold uppercase tracking-wider text-muted-fg">
+                    Name
+                  </th>
+                  <th className="px-4 py-2.5 text-[11px] font-semibold uppercase tracking-wider text-muted-fg">
+                    Phone
+                  </th>
+                  <th className="px-4 py-2.5 text-[11px] font-semibold uppercase tracking-wider text-muted-fg">
+                    Last form
+                  </th>
+                  <th className="px-4 py-2.5 text-[11px] font-semibold uppercase tracking-wider text-muted-fg">
+                    Status
+                  </th>
+                  <th className="px-4 py-2.5 text-[11px] font-semibold uppercase tracking-wider text-muted-fg">
+                    Last seen
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {customers.map((customer) => (
+                  <tr
+                    key={customer.id}
+                    className="border-b border-border/60 transition-colors last:border-0 hover:bg-muted/40"
+                  >
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-2.5">
+                        <div className="flex h-7 w-7 items-center justify-center rounded-full border border-border bg-card text-[11px] font-semibold text-muted-fg">
+                          {customer.name?.trim()?.[0]?.toUpperCase() ?? "?"}
+                        </div>
+                        <span className="font-medium text-fg">{customer.name}</span>
+                      </div>
+                    </td>
+                    <td className="whitespace-nowrap px-4 py-3 font-mono text-xs text-muted-fg">
+                      <span className="inline-flex items-center gap-1.5">
+                        <Phone className="h-3 w-3" />
+                        {customer.phone}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-muted-fg">{customer.formName}</td>
+                    <td className="px-4 py-3">
+                      <Badge variant={customer.status}>{customer.status}</Badge>
+                    </td>
+                    <td className="whitespace-nowrap px-4 py-3 font-mono text-xs text-muted-fg">
+                      {formatDate(customer.date)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
     </div>

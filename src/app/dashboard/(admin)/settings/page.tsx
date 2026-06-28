@@ -19,10 +19,10 @@ export default async function SettingsPage() {
     .single();
 
   return (
-    <div className="mx-auto max-w-7xl space-y-6">
+    <div className="space-y-6">
       <div>
-        <h2 className="text-xl font-bold text-brand-text">Settings</h2>
-        <p className="text-brand-muted">
+        <h2 className="text-lg font-semibold text-fg">Settings</h2>
+        <p className="text-sm text-muted-fg">
           Configure your business profile, WhatsApp integration, and notifications
         </p>
       </div>

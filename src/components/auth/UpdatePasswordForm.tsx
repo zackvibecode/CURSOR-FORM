@@ -40,13 +40,13 @@ export function UpdatePasswordForm() {
         <div className="mb-6 flex justify-center">
           <BrandLogo />
         </div>
-        <h1 className="mb-2 text-2xl font-bold text-brand-text">Set your password</h1>
-        <p className="text-brand-muted">Choose a password to finish setting up your account.</p>
+        <h1 className="mb-2 text-2xl font-bold text-fg">Set your password</h1>
+        <p className="text-muted-fg">Choose a password to finish setting up your account.</p>
       </div>
 
-      <div className="rounded-2xl border border-brand-border bg-white p-8 shadow-card">
+      <div className="rounded-lg border border-border bg-card p-8 shadow-lg dark:shadow-none">
         {error && (
-          <div className="mb-4 rounded-lg bg-red-50 px-4 py-3 text-sm text-brand-red">
+          <div className="mb-4 rounded-md border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-600 dark:text-red-400">
             {error}
           </div>
         )}

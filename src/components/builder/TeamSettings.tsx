@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { Trash2, Plus, Users, GitBranch, Split } from "lucide-react";
 import { toast } from "@/components/ui/Toast";
+import { cn } from "@/lib/utils";
 
 interface TeamMember {
   name?: string;
@@ -110,7 +111,7 @@ export function TeamSettings({ formId }: TeamSettingsProps) {
   if (loading && !fetched) {
     return (
       <div className="flex items-center justify-center py-12">
-        <div className="h-6 w-6 animate-spin rounded-full border-2 border-whatsapp border-t-transparent" />
+        <div className="h-5 w-5 animate-spin rounded-full border-2 border-whatsapp border-t-transparent" />
       </div>
     );
   }
@@ -118,12 +119,12 @@ export function TeamSettings({ formId }: TeamSettingsProps) {
   return (
     <div className="space-y-6">
       <div>
-        <h3 className="text-lg font-semibold text-brand-text">Team Distribution</h3>
-        <p className="mt-1 text-sm text-brand-muted">
+        <h3 className="text-sm font-semibold text-fg">Team distribution</h3>
+        <p className="mt-0.5 text-xs text-muted-fg">
           Choose how form submissions are distributed to your team.
         </p>
         {distributionMode === "distribute" && (
-          <p className="mt-2 rounded-lg border border-whatsapp/20 bg-whatsapp/5 px-3 py-2 text-xs text-whatsapp-deep">
+          <p className="mt-3 rounded-md border border-whatsapp/20 bg-whatsapp/5 px-3 py-2 text-[11px] text-whatsapp-deep dark:text-whatsapp">
             <strong>Distribute mode:</strong> Leads rotate through the team numbers below only
             (Member 1 → 2 → 3 → … → back to 1). The main WhatsApp number in General settings is
             not used unless you add it as a team member here.
@@ -131,8 +132,8 @@ export function TeamSettings({ formId }: TeamSettingsProps) {
         )}
       </div>
 
-      {/* Distribution Mode Cards */}
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+      {/* Distribution Mode */}
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
         {modes.map((mode) => {
           const Icon = mode.icon;
           const isActive = distributionMode === mode.key;
@@ -149,20 +150,27 @@ export function TeamSettings({ formId }: TeamSettingsProps) {
                 }
                 setDistributionMode(mode.key);
               }}
-              className={`flex flex-col items-start gap-3 rounded-xl border-2 p-4 text-left transition-all ${
+              className={cn(
+                "flex flex-col items-start gap-2.5 rounded-md border p-3 text-left transition-colors",
                 isActive
                   ? "border-whatsapp bg-whatsapp/5"
-                  : "border-brand-border bg-white hover:border-gray-300"
-              } ${isDisabled ? "cursor-not-allowed opacity-60" : ""}`}
+                  : "border-border bg-card hover:border-fg/30",
+                isDisabled && "cursor-not-allowed opacity-60"
+              )}
             >
-              <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${
-                isActive ? "bg-whatsapp/10 text-whatsapp-deep" : "bg-gray-100 text-gray-400"
-              }`}>
-                <Icon className="h-5 w-5" />
+              <div
+                className={cn(
+                  "flex h-7 w-7 items-center justify-center rounded-md border",
+                  isActive
+                    ? "border-whatsapp/30 bg-whatsapp/10 text-whatsapp-deep dark:text-whatsapp"
+                    : "border-border text-muted-fg"
+                )}
+              >
+                <Icon className="h-3.5 w-3.5" />
               </div>
               <div>
-                <p className="font-semibold text-brand-text">{mode.label}</p>
-                <p className="text-xs text-brand-muted">{mode.desc}</p>
+                <p className="text-sm font-semibold text-fg">{mode.label}</p>
+                <p className="text-[11px] text-muted-fg">{mode.desc}</p>
               </div>
             </button>
           );
@@ -171,9 +179,13 @@ export function TeamSettings({ formId }: TeamSettingsProps) {
 
       {/* Team Members */}
       <div>
-        <div className="mb-3 flex items-center justify-between">
-          <h4 className="text-sm font-semibold text-brand-text">Team Members</h4>
-          <span className="text-xs text-brand-muted">{teamMembers.length} member{teamMembers.length !== 1 ? "s" : ""}</span>
+        <div className="mb-2 flex items-center justify-between">
+          <h4 className="text-xs font-semibold uppercase tracking-wide text-muted-fg">
+            Team members
+          </h4>
+          <span className="font-mono text-[11px] text-muted-fg">
+            {teamMembers.length} member{teamMembers.length !== 1 ? "s" : ""}
+          </span>
         </div>
 
         <div className="space-y-2">
@@ -189,12 +201,9 @@ export function TeamSettings({ formId }: TeamSettingsProps) {
               </div>
               <div className="flex-1">
                 <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    className="flex shrink-0 items-center gap-1.5 rounded-lg border border-brand-border bg-gray-50 px-3 py-2 text-sm text-gray-600 hover:bg-gray-100"
-                  >
-                    🇲🇾 +60
-                  </button>
+                  <span className="flex shrink-0 items-center rounded-md border border-border bg-muted px-2.5 py-2 font-mono text-xs text-muted-fg">
+                    +60
+                  </span>
                   <Input
                     value={member.phone.replace(/^(\+60|0)/, "")}
                     onChange={(e) => {
@@ -203,17 +212,17 @@ export function TeamSettings({ formId }: TeamSettingsProps) {
                       updateMember(index, "phone", `+60${val}`);
                     }}
                     placeholder="12-345-6789"
-                    className="text-sm"
+                    className="font-mono text-sm"
                   />
                 </div>
               </div>
               <button
                 type="button"
                 onClick={() => removeMember(index)}
-                className="p-2 text-gray-300 hover:text-red-500 transition-opacity opacity-60 group-hover:opacity-100"
+                className="p-1.5 text-muted-fg/40 opacity-60 transition-opacity hover:text-red-600 group-hover:opacity-100"
                 title="Remove member"
               >
-                <Trash2 className="h-4 w-4" />
+                <Trash2 className="h-3.5 w-3.5" />
               </button>
             </div>
           ))}
@@ -223,17 +232,16 @@ export function TeamSettings({ formId }: TeamSettingsProps) {
           variant="ghost"
           size="sm"
           onClick={addMember}
-          className="mt-3 text-brand-muted hover:text-brand-text"
+          className="mt-3"
         >
-          <Plus className="h-4 w-4" />
+          <Plus className="h-3.5 w-3.5" />
           Add member
         </Button>
       </div>
 
-      {/* Save */}
       <div className="flex justify-end">
-        <Button variant="whatsapp" size="sm" onClick={handleSave} disabled={saving}>
-          {saving ? "Saving..." : "Save"}
+        <Button size="sm" onClick={handleSave} disabled={saving}>
+          {saving ? "Saving…" : "Save"}
         </Button>
       </div>
     </div>

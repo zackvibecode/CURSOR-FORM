@@ -41,10 +41,10 @@ export default function ToolsPage() {
           <span className="mb-3 inline-block rounded-full bg-whatsapp/10 px-4 py-1.5 text-xs font-semibold tracking-wide text-whatsapp-deep uppercase">
             Free Tools
           </span>
-          <h1 className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
+          <h1 className="text-3xl font-bold tracking-tight text-fg sm:text-4xl">
             Free WhatsApp Tools
           </h1>
-          <p className="mx-auto mt-4 max-w-xl text-gray-500">
+          <p className="mx-auto mt-4 max-w-xl text-muted-fg">
             Boost your WhatsApp marketing with our collection of free tools. No signup required.
           </p>
         </motion.div>
@@ -59,14 +59,14 @@ export default function ToolsPage() {
               transition={{ duration: 0.4, delay: index * 0.1 }}
             >
               <Link href={tool.href} className="group block h-full">
-                <div className="flex h-full flex-col rounded-2xl border border-gray-200 bg-white p-8 shadow-sm transition-all hover:-translate-y-1 hover:shadow-card-lg">
+                <div className="flex h-full flex-col rounded-lg border border-border bg-card p-8 shadow-sm transition-all hover:border-fg/30 hover:shadow-md dark:shadow-none">
                   <div className={`mb-5 inline-flex h-14 w-14 items-center justify-center rounded-xl ${tool.bgColor}`}>
                     <tool.icon className={`h-7 w-7 ${tool.textColor}`} />
                   </div>
-                  <h2 className="mb-3 text-xl font-bold text-gray-900 group-hover:text-whatsapp-deep">
+                  <h2 className="mb-3 text-xl font-bold text-fg group-hover:text-whatsapp-deep dark:group-hover:text-whatsapp">
                     {tool.title}
                   </h2>
-                  <p className="mb-6 flex-1 text-sm leading-relaxed text-gray-500">
+                  <p className="mb-6 flex-1 text-sm leading-relaxed text-muted-fg">
                     {tool.description}
                   </p>
                   <span className="inline-flex items-center gap-2 text-sm font-semibold text-whatsapp transition-colors group-hover:gap-3">
@@ -81,13 +81,13 @@ export default function ToolsPage() {
 
         {/* More tools coming */}
         <motion.div
-          className="mt-12 rounded-2xl border border-dashed border-gray-300 p-8 text-center"
+          className="mt-12 rounded-lg border border-dashed border-border p-8 text-center"
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
           viewport={{ once: true }}
           transition={{ duration: 0.5, delay: 0.3 }}
         >
-          <p className="text-sm font-medium text-gray-500">
+          <p className="text-sm font-medium text-muted-fg">
             More tools coming soon — Message Formatter, vCard Generator, Chat Button Generator & more
           </p>
         </motion.div>

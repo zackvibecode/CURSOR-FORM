@@ -90,88 +90,67 @@ export default async function DashboardOverviewPage() {
   const status = subscription?.status ?? "active";
   const submissionsThisMonth = monthSubmissions;
 
-  const planLabelColors: Record<string, string> = {
-    free: "bg-gray-100 text-gray-700 border-gray-200",
-    pro: "bg-whatsapp/10 text-whatsapp-deep border-whatsapp/20",
-    business: "bg-purple-100 text-purple-700 border-purple-200",
-  };
-
-  const planLabels: Record<string, string> = {
-    free: "Free",
-    pro: "Pro",
-    business: "Business",
-  };
-
   return (
-    <div className="mx-auto max-w-7xl space-y-8">
+    <div className="space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <p className="text-sm text-brand-muted">Welcome back</p>
-          <h2 className="text-xl font-bold text-brand-text">Dashboard Overview</h2>
+          <p className="text-xs text-muted-fg">Welcome back</p>
+          <h2 className="text-lg font-semibold text-fg">Overview</h2>
         </div>
         <CreateFormButton />
       </div>
 
-      {/* Plan Status Card */}
+      {/* Plan Status */}
       {status === "pending" && (
-        <div className="rounded-xl border border-amber-200 bg-amber-50 p-4">
-          <div className="flex items-center gap-2">
-            <Crown className="h-5 w-5 text-amber-600" />
-            <p className="text-sm font-semibold text-amber-800">
-              Your {planLabels[plan]} plan is pending approval
-            </p>
-          </div>
-          <p className="mt-1 text-xs text-amber-600">
-            Your request has been submitted. An admin will review it shortly.
+        <div className="flex items-center gap-2 rounded-md border border-amber-500/30 bg-amber-500/5 px-4 py-2.5">
+          <Crown className="h-3.5 w-3.5 text-amber-600 dark:text-amber-400" />
+          <p className="text-sm text-amber-800 dark:text-amber-200">
+            Your <span className="font-semibold">{plan}</span> plan is pending approval.
           </p>
         </div>
       )}
 
       {plan === "free" && (
-        <div className="rounded-xl border border-whatsapp/20 bg-gradient-to-r from-whatsapp/5 to-transparent p-5">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-whatsapp/10">
-                <Crown className="h-5 w-5 text-whatsapp-deep" />
-              </div>
-              <div>
-                <p className="text-sm font-semibold text-brand-text">
-                  You&apos;re on the Free plan
-                </p>
-                <p className="text-xs text-brand-muted">
-                  {formsCount}/{limits.maxForms === Infinity ? "∞" : limits.maxForms} forms ·{" "}
-                  {submissionsThisMonth}/
-                  {limits.maxSubmissionsPerMonth === Infinity
-                    ? "∞"
-                    : limits.maxSubmissionsPerMonth}{" "}
-                  submissions this month
-                </p>
-              </div>
+        <div className="flex flex-col gap-3 rounded-md border border-border bg-card px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-2.5">
+            <span className="h-1.5 w-1.5 rounded-full bg-whatsapp" />
+            <div>
+              <p className="text-sm font-medium text-fg">Free plan</p>
+              <p className="font-mono text-[11px] text-muted-fg">
+                {formsCount}/{limits.maxForms === Infinity ? "∞" : limits.maxForms} forms ·{" "}
+                {submissionsThisMonth}/
+                {limits.maxSubmissionsPerMonth === Infinity
+                  ? "∞"
+                  : limits.maxSubmissionsPerMonth}{" "}
+                submissions this month
+              </p>
             </div>
-            <Link
-              href="/pricing"
-              className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-whatsapp px-4 py-2 text-sm font-semibold text-white shadow-sm transition-all hover:bg-[#0DB849] active:scale-[0.98]"
-            >
-              Upgrade to Pro
-              <ArrowRight className="h-4 w-4" />
-            </Link>
           </div>
+          <Link
+            href="/pricing"
+            className="inline-flex shrink-0 items-center gap-1.5 rounded-md bg-fg px-3 py-1.5 text-xs font-medium text-bg transition-colors hover:bg-gray-600 dark:hover:bg-gray-200"
+          >
+            Upgrade to Pro
+            <ArrowRight className="h-3.5 w-3.5" />
+          </Link>
         </div>
       )}
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      {/* Stats */}
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard title="Total Forms" value={stats.totalForms} icon={FileText} />
         <StatCard title="Total Submissions" value={stats.totalSubmissions} icon={Inbox} />
       </div>
 
+      {/* Latest submissions */}
       <div>
-        <div className="mb-4 flex items-center justify-between">
-          <h3 className="text-base font-semibold text-brand-text">Latest Submissions</h3>
+        <div className="mb-3 flex items-center justify-between">
+          <h3 className="text-sm font-semibold text-fg">Latest Submissions</h3>
           <Link
             href="/dashboard/submissions"
-            className="text-sm font-medium text-whatsapp-deep hover:underline"
+            className="text-xs font-medium text-whatsapp-deep transition-colors hover:text-whatsapp dark:text-whatsapp"
           >
-            View all
+            View all →
           </Link>
         </div>
         <SubmissionsTable submissions={submissions} compact />

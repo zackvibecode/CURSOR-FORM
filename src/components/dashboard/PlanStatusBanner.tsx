@@ -20,37 +20,38 @@ export function PlanStatusBanner({ plan, status }: PlanStatusBannerProps) {
     business: "Business",
   };
 
-  // Pending approval banner takes priority
   if (status === "pending") {
     return (
-      <div className="mb-6 flex items-center justify-between gap-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3">
+      <div className="mb-6 flex items-center justify-between gap-4 rounded-md border border-amber-500/30 bg-amber-500/5 px-4 py-2.5">
         <div className="flex items-center gap-2">
-          <Crown className="h-4 w-4 shrink-0 text-amber-600" />
-          <p className="text-sm text-amber-800">
+          <Crown className="h-3.5 w-3.5 shrink-0 text-amber-600 dark:text-amber-400" />
+          <p className="text-sm text-amber-800 dark:text-amber-200">
             Your <span className="font-semibold">{planLabels[plan] ?? plan}</span> plan is pending
             approval. We&apos;ll activate it shortly.
           </p>
         </div>
         <button
           onClick={() => setDismissed(true)}
-          className="shrink-0 rounded-lg p-1 text-amber-600 hover:bg-amber-100"
+          className="shrink-0 rounded-md p-1 text-amber-600 transition-colors hover:bg-amber-500/10 dark:text-amber-400"
           aria-label="Dismiss"
         >
-          <X className="h-4 w-4" />
+          <X className="h-3.5 w-3.5" />
         </button>
       </div>
     );
   }
 
-  // Subtle upgrade prompt for free plan
   if (plan === "free" && status === "active") {
     return (
-      <div className="mb-6 flex items-center justify-between gap-4 rounded-xl border border-whatsapp/20 bg-whatsapp/5 px-4 py-3">
+      <div className="mb-6 flex items-center justify-between gap-4 rounded-md border border-border bg-card px-4 py-2.5">
         <div className="flex items-center gap-2">
-          <Crown className="h-4 w-4 shrink-0 text-whatsapp-deep" />
-          <p className="text-sm text-brand-text">
+          <span className="h-1.5 w-1.5 rounded-full bg-whatsapp" />
+          <p className="text-sm text-muted-fg">
             You&apos;re on the Free plan.{" "}
-            <Link href="/pricing" className="font-semibold text-whatsapp-deep hover:underline">
+            <Link
+              href="/pricing"
+              className="font-medium text-whatsapp-deep transition-colors hover:text-whatsapp dark:text-whatsapp"
+            >
               Upgrade to Pro
             </Link>{" "}
             for unlimited forms.
@@ -58,10 +59,10 @@ export function PlanStatusBanner({ plan, status }: PlanStatusBannerProps) {
         </div>
         <button
           onClick={() => setDismissed(true)}
-          className="shrink-0 rounded-lg p-1 text-whatsapp-deep hover:bg-whatsapp/10"
+          className="shrink-0 rounded-md p-1 text-muted-fg transition-colors hover:bg-muted hover:text-fg"
           aria-label="Dismiss"
         >
-          <X className="h-4 w-4" />
+          <X className="h-3.5 w-3.5" />
         </button>
       </div>
     );

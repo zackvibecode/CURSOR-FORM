@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { Badge } from "@/components/ui/Badge";
 import { Crown, RefreshCw, Check, X } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface SubscriptionRow {
   id: string;
@@ -69,17 +70,17 @@ export function AdminSubscriptionsClient() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <div className="flex gap-2">
+        <div className="flex gap-1.5">
           {(["pending", "all"] as FilterTab[]).map((t) => (
             <button
               key={t}
               onClick={() => setTab(t)}
-              className={
-                "rounded-lg px-3 py-1.5 text-sm font-medium capitalize transition-colors " +
-                (tab === t
-                  ? "bg-whatsapp/10 text-whatsapp-deep"
-                  : "text-brand-muted hover:bg-gray-50")
-              }
+              className={cn(
+                "rounded-md px-2.5 py-1 text-xs font-medium capitalize transition-colors",
+                tab === t
+                  ? "bg-fg text-bg"
+                  : "text-muted-fg hover:bg-muted hover:text-fg"
+              )}
             >
               {t}
             </button>
@@ -87,87 +88,104 @@ export function AdminSubscriptionsClient() {
         </div>
         <button
           onClick={load}
-          className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium text-brand-muted hover:bg-gray-50"
+          className="inline-flex items-center gap-1.5 rounded-md border border-border px-2.5 py-1 text-xs font-medium text-muted-fg transition-colors hover:bg-muted hover:text-fg"
         >
-          <RefreshCw className="h-4 w-4" />
+          <RefreshCw className="h-3.5 w-3.5" />
           Refresh
         </button>
       </div>
 
       {error && (
-        <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+        <div className="rounded-md border border-red-500/30 bg-red-500/5 p-3 text-sm text-red-600 dark:text-red-400">
           {error}
         </div>
       )}
 
       {loading ? (
-        <div className="rounded-2xl border border-brand-border bg-white p-12 text-center text-brand-muted">
+        <div className="rounded-lg border border-border bg-card p-12 text-center text-sm text-muted-fg">
           Loading…
         </div>
       ) : rows.length === 0 ? (
-        <div className="rounded-2xl border border-brand-border bg-white p-12 text-center text-brand-muted">
+        <div className="rounded-lg border border-dashed border-border bg-card p-12 text-center text-sm text-muted-fg">
           {tab === "pending" ? "No pending requests." : "No subscriptions yet."}
         </div>
       ) : (
-        <div className="overflow-hidden rounded-2xl border border-brand-border bg-white shadow-card">
-          <table className="w-full text-sm">
-            <thead className="border-b border-brand-border bg-gray-50/50 text-left text-xs uppercase text-brand-muted">
-              <tr>
-                <th className="px-4 py-3 font-medium">User</th>
-                <th className="px-4 py-3 font-medium">Plan</th>
-                <th className="px-4 py-3 font-medium">Cycle</th>
-                <th className="px-4 py-3 font-medium">Status</th>
-                <th className="px-4 py-3 text-right font-medium">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-brand-border">
-              {rows.map((row) => (
-                <tr key={row.id}>
-                  <td className="px-4 py-3 text-brand-text">{row.email}</td>
-                  <td className="px-4 py-3">
-                    <span className="inline-flex items-center gap-1 font-medium capitalize text-brand-text">
-                      {row.plan !== "free" && <Crown className="h-3.5 w-3.5 text-amber-500" />}
-                      {row.plan}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 capitalize text-brand-muted">
-                    {row.billing_cycle ?? "—"}
-                  </td>
-                  <td className="px-4 py-3">
-                    <Badge variant={row.status === "pending" ? "pending" : "converted"}>
-                      {row.status}
-                    </Badge>
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="flex justify-end gap-2">
-                      {row.status === "pending" ? (
-                        <>
-                          <button
-                            disabled={busyId === row.user_id}
-                            onClick={() => act(row.user_id, "approve")}
-                            className="inline-flex items-center gap-1 rounded-lg bg-whatsapp px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#0DB849] disabled:opacity-50"
-                          >
-                            <Check className="h-3.5 w-3.5" />
-                            Approve
-                          </button>
-                          <button
-                            disabled={busyId === row.user_id}
-                            onClick={() => act(row.user_id, "reject")}
-                            className="inline-flex items-center gap-1 rounded-lg border border-red-200 px-3 py-1.5 text-xs font-semibold text-red-600 hover:bg-red-50 disabled:opacity-50"
-                          >
-                            <X className="h-3.5 w-3.5" />
-                            Reject
-                          </button>
-                        </>
-                      ) : (
-                        <span className="text-xs text-brand-muted">—</span>
-                      )}
-                    </div>
-                  </td>
+        <div className="overflow-hidden rounded-lg border border-border bg-card">
+          <div className="overflow-x-auto scrollbar-thin">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-border bg-muted/40 text-left">
+                  <th className="px-4 py-2.5 text-[11px] font-semibold uppercase tracking-wider text-muted-fg">
+                    User
+                  </th>
+                  <th className="px-4 py-2.5 text-[11px] font-semibold uppercase tracking-wider text-muted-fg">
+                    Plan
+                  </th>
+                  <th className="px-4 py-2.5 text-[11px] font-semibold uppercase tracking-wider text-muted-fg">
+                    Cycle
+                  </th>
+                  <th className="px-4 py-2.5 text-[11px] font-semibold uppercase tracking-wider text-muted-fg">
+                    Status
+                  </th>
+                  <th className="px-4 py-2.5 text-right text-[11px] font-semibold uppercase tracking-wider text-muted-fg">
+                    Actions
+                  </th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {rows.map((row) => (
+                  <tr
+                    key={row.id}
+                    className="border-b border-border/60 transition-colors last:border-0 hover:bg-muted/40"
+                  >
+                    <td className="px-4 py-3 font-medium text-fg">{row.email}</td>
+                    <td className="px-4 py-3">
+                      <span className="inline-flex items-center gap-1.5 capitalize text-fg">
+                        {row.plan !== "free" && (
+                          <Crown className="h-3.5 w-3.5 text-amber-500" />
+                        )}
+                        {row.plan}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 capitalize text-muted-fg">
+                      {row.billing_cycle ?? "—"}
+                    </td>
+                    <td className="px-4 py-3">
+                      <Badge variant={row.status === "pending" ? "pending" : "converted"}>
+                        {row.status}
+                      </Badge>
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex justify-end gap-1.5">
+                        {row.status === "pending" ? (
+                          <>
+                            <button
+                              disabled={busyId === row.user_id}
+                              onClick={() => act(row.user_id, "approve")}
+                              className="inline-flex items-center gap-1 rounded-md bg-fg px-2.5 py-1 text-xs font-medium text-bg transition-colors hover:bg-gray-600 dark:hover:bg-gray-200 disabled:opacity-50"
+                            >
+                              <Check className="h-3.5 w-3.5" />
+                              Approve
+                            </button>
+                            <button
+                              disabled={busyId === row.user_id}
+                              onClick={() => act(row.user_id, "reject")}
+                              className="inline-flex items-center gap-1 rounded-md border border-red-500/30 px-2.5 py-1 text-xs font-medium text-red-600 transition-colors hover:bg-red-500/10 dark:text-red-400 disabled:opacity-50"
+                            >
+                              <X className="h-3.5 w-3.5" />
+                              Reject
+                            </button>
+                          </>
+                        ) : (
+                          <span className="text-xs text-muted-fg">—</span>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
     </div>

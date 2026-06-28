@@ -2,8 +2,6 @@ import Image from "next/image";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 
-const LOGO_WIDTH = 842;
-const LOGO_HEIGHT = 179;
 const ICON_SIZE = 367;
 
 export function BrandLogo({
@@ -18,9 +16,9 @@ export function BrandLogo({
   priority?: boolean;
 }) {
   const heights = {
-    sm: "h-6",
-    md: "h-7",
-    lg: "h-8",
+    sm: "text-lg",
+    md: "text-xl",
+    lg: "text-2xl",
   };
 
   const iconHeights = {
@@ -32,26 +30,20 @@ export function BrandLogo({
   return (
     <Link
       href="/"
-      className={cn("group inline-flex shrink-0 items-center overflow-hidden", className)}
+      className={cn("group inline-flex shrink-0 items-center gap-2 overflow-hidden", className)}
     >
-      {iconOnly ? (
-        <Image
-          src="/favicon-icon.png"
-          alt="One Form"
-          width={ICON_SIZE}
-          height={ICON_SIZE}
-          className={cn("object-contain", iconHeights[size])}
-          priority={priority}
-        />
-      ) : (
-        <Image
-          src="/oneform-logo.png"
-          alt="One Form"
-          width={LOGO_WIDTH}
-          height={LOGO_HEIGHT}
-          className={cn("w-auto object-contain", heights[size])}
-          priority={priority}
-        />
+      <Image
+        src="/favicon-icon.png"
+        alt="One Form"
+        width={ICON_SIZE}
+        height={ICON_SIZE}
+        className={cn("object-contain", iconHeights[size])}
+        priority={priority}
+      />
+      {!iconOnly && (
+        <span className={cn("font-bold tracking-tight text-fg", heights[size])}>
+          One<span className="text-whatsapp">Form</span>
+        </span>
       )}
     </Link>
   );

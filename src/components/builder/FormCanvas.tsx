@@ -56,9 +56,11 @@ function SortableField({
       ref={setNodeRef}
       style={style}
       className={cn(
-        "group relative rounded-xl border-2 bg-white p-4 transition-all",
-        selected ? "border-whatsapp shadow-md" : "border-gray-100 hover:border-gray-200",
-        isDragging && "opacity-50 shadow-lg"
+        "group relative rounded-md border bg-card p-4 transition-colors",
+        selected
+          ? "border-whatsapp ring-1 ring-whatsapp/40"
+          : "border-border hover:border-fg/30",
+        isDragging && "opacity-50"
       )}
       onClick={onSelect}
     >
@@ -66,23 +68,23 @@ function SortableField({
         <button
           {...attributes}
           {...listeners}
-          className="rounded-lg bg-white p-1 shadow-md hover:bg-gray-50"
+          className="cursor-grab rounded-md border border-border bg-card p-1 text-muted-fg shadow-sm hover:bg-muted active:cursor-grabbing"
           aria-label="Drag to reorder"
           onClick={(e) => e.stopPropagation()}
         >
-          <GripVertical className="h-4 w-4 text-gray-400" />
+          <GripVertical className="h-3.5 w-3.5" />
         </button>
       </div>
 
       <button
-        className="absolute -right-2 -top-2 rounded-full bg-brand-red p-1.5 text-white opacity-0 shadow-md transition-opacity group-hover:opacity-100"
+        className="absolute -right-2 -top-2 rounded-full border border-border bg-card p-1 text-muted-fg opacity-0 shadow-sm transition-opacity hover:text-red-600 group-hover:opacity-100"
         onClick={(e) => {
           e.stopPropagation();
           onDelete();
         }}
         aria-label="Delete field"
       >
-        <Trash2 className="h-3.5 w-3.5" />
+        <Trash2 className="h-3 w-3" />
       </button>
 
       <DynamicFieldRenderer
@@ -119,26 +121,25 @@ export function FormCanvas({
   };
 
   return (
-    <div className="flex-1 overflow-auto bg-brand-bg/50 p-6">
-      <div className="mb-4 text-center">
-        <span className="text-xs font-semibold uppercase tracking-wider text-brand-muted">
-          Live Preview
+    <div className="flex-1 overflow-auto bg-muted/30 p-6 scrollbar-thin">
+      <div className="mb-3 text-center">
+        <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-fg">
+          Live preview
         </span>
       </div>
-      <div className="mx-auto max-w-xl rounded-3xl border border-brand-border bg-white p-6 shadow-card-lg sm:p-8">
-        {/* Form Title & Description — only shown when a title is set */}
+      <div className="mx-auto max-w-xl rounded-lg border border-border bg-card p-6 sm:p-8">
         {formTitle.trim() && (
-          <div className="mb-6 pb-6 border-b border-gray-100">
-            <h2 className="text-lg font-semibold text-gray-900">{formTitle}</h2>
+          <div className="mb-6 border-b border-border pb-6">
+            <h2 className="text-base font-semibold text-fg">{formTitle}</h2>
             {formDescription && (
-              <p className="mt-1 text-sm text-gray-500">{formDescription}</p>
+              <p className="mt-1 text-sm text-muted-fg">{formDescription}</p>
             )}
           </div>
         )}
 
         {fields.length === 0 ? (
-          <div className="rounded-2xl border-2 border-dashed border-brand-border bg-brand-bg/30 p-12 text-center">
-            <p className="text-brand-muted">
+          <div className="rounded-md border border-dashed border-border bg-muted/30 p-12 text-center">
+            <p className="text-sm text-muted-fg">
               Add fields from the left panel to build your form
             </p>
           </div>
@@ -152,7 +153,7 @@ export function FormCanvas({
               items={fields.map((f) => f.id)}
               strategy={verticalListSortingStrategy}
             >
-              <div className="space-y-4">
+              <div className="space-y-3">
                 {fields.map((field) => (
                   <SortableField
                     key={field.id}

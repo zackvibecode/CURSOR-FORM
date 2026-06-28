@@ -21,7 +21,6 @@ export default async function SubmissionsPage() {
   let submissions: ReturnType<typeof mapSubmissionsToRows> = [];
 
   if (formIds.length > 0) {
-    // Parallel queries for speed
     const [submissionsResult, fieldsResult] = await Promise.all([
       supabase
         .from("submissions")
@@ -42,10 +41,10 @@ export default async function SubmissionsPage() {
   }
 
   return (
-    <div className="mx-auto max-w-7xl space-y-6">
+    <div className="space-y-6">
       <div>
-        <h2 className="text-xl font-bold text-brand-text">Submissions</h2>
-        <p className="text-brand-muted">
+        <h2 className="text-lg font-semibold text-fg">Submissions</h2>
+        <p className="text-sm text-muted-fg">
           Track and manage all form submissions across your WhatsApp forms
         </p>
       </div>

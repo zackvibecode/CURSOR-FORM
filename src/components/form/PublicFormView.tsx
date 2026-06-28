@@ -94,7 +94,7 @@ export function PublicFormView({
         <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-whatsapp text-white shadow-soft">
           <WhatsAppIcon className="h-7 w-7" />
         </div>
-        {description && <p className="mt-1 text-sm text-brand-muted">{description}</p>}
+        {description && <p className="mt-1 text-sm text-muted-fg">{description}</p>}
       </div>
 
       <DynamicFieldRenderer
@@ -106,7 +106,7 @@ export function PublicFormView({
       />
 
       {errors._form && (
-        <p className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-600">{errors._form}</p>
+        <p className="rounded-md border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-600 dark:text-red-400">{errors._form}</p>
       )}
 
       <Button
@@ -121,7 +121,7 @@ export function PublicFormView({
       </Button>
 
       {!preview && (
-        <p className="text-center text-xs text-brand-muted">
+        <p className="text-center text-xs text-muted-fg">
           Powered by OneForm · oneform.app
         </p>
       )}

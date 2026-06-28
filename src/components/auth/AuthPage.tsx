@@ -188,25 +188,25 @@ function AuthForm({ mode }: { mode: "login" | "signup" }) {
         <div className="mb-6 flex justify-center">
           <BrandLogo />
         </div>
-        <h1 className="mb-2 text-2xl font-bold text-brand-text">
+        <h1 className="mb-2 text-2xl font-bold text-fg">
           {mode === "login" ? "Welcome back" : "Create your account"}
         </h1>
-        <p className="text-brand-muted">
+        <p className="text-muted-fg">
           {mode === "login"
             ? "Sign in to manage your OneForm dashboard"
             : "Start collecting WhatsApp leads in minutes"}
         </p>
       </div>
 
-      <div className="rounded-2xl border border-brand-border bg-white p-8 shadow-card">
+      <div className="rounded-lg border border-border bg-card p-8 shadow-lg dark:shadow-none">
         {error && (
-          <div className="mb-4 rounded-lg bg-red-50 px-4 py-3 text-sm text-brand-red">
+          <div className="mb-4 rounded-md border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-600 dark:text-red-400">
             {error}
           </div>
         )}
 
         {success && (
-          <div className="mb-4 rounded-lg bg-whatsapp/10 px-4 py-3 text-sm text-whatsapp-dark">
+          <div className="mb-4 rounded-md border border-whatsapp/20 bg-whatsapp/10 px-4 py-3 text-sm text-whatsapp-deep dark:text-whatsapp">
             {success}
           </div>
         )}
@@ -262,7 +262,7 @@ function AuthForm({ mode }: { mode: "login" | "signup" }) {
 
           {showForgotPassword ? (
             <div className="space-y-3">
-              <p className="text-sm text-gray-500">
+              <p className="text-sm text-muted-fg">
                 We will email you a link to set a new password.
               </p>
               <Button type="button" className="w-full" disabled={loading} onClick={handleForgotPassword}>
@@ -271,7 +271,7 @@ function AuthForm({ mode }: { mode: "login" | "signup" }) {
               <button
                 type="button"
                 onClick={() => setShowForgotPassword(false)}
-                className="w-full text-center text-sm text-gray-500 hover:text-brand-text"
+                className="w-full text-center text-sm text-muted-fg transition-colors hover:text-fg"
               >
                 Back to login
               </button>
@@ -308,9 +308,9 @@ function AuthForm({ mode }: { mode: "login" | "signup" }) {
         )}
 
         <div className="my-6 flex items-center gap-3">
-          <div className="h-px flex-1 bg-gray-200" />
-          <span className="text-xs text-gray-400">or</span>
-          <div className="h-px flex-1 bg-gray-200" />
+          <div className="h-px flex-1 bg-border" />
+          <span className="text-xs text-muted-fg">or</span>
+          <div className="h-px flex-1 bg-border" />
         </div>
 
         <Button
@@ -341,12 +341,12 @@ function AuthForm({ mode }: { mode: "login" | "signup" }) {
         </Button>
 
         {mode === "login" && (
-          <p className="mt-4 text-center text-xs text-gray-500">
+          <p className="mt-4 text-center text-xs text-muted-fg">
             Account lama? Guna &quot;Send login link to email&quot; atau Google.
           </p>
         )}
 
-        <p className="mt-6 text-center text-sm text-gray-500">
+        <p className="mt-6 text-center text-sm text-muted-fg">
           {mode === "login" ? (
             <>
               Don&apos;t have an account?{" "}
@@ -370,8 +370,8 @@ function AuthForm({ mode }: { mode: "login" | "signup" }) {
 
 export function AuthPage({ mode }: { mode: "login" | "signup" }) {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-brand-bg px-4 py-12">
-      <Suspense fallback={<div className="text-gray-500">Loading...</div>}>
+    <div className="flex min-h-screen items-center justify-center bg-bg px-4 py-12">
+      <Suspense fallback={<div className="text-muted-fg">Loading...</div>}>
         <AuthForm mode={mode} />
       </Suspense>
     </div>

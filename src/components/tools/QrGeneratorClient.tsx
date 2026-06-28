@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { motion } from "framer-motion";
 import {
   Download,
   QrCode,
@@ -71,39 +70,34 @@ export function QrGeneratorClient({ inDashboard = false }: QrGeneratorClientProp
 
   const containerClass = inDashboard ? "" : "py-12 sm:py-20";
 
+  const inputClass =
+    "w-full rounded-md border border-border bg-card px-3 py-2 text-sm text-fg outline-none transition-colors placeholder:text-muted-fg focus:border-whatsapp focus:ring-2 focus:ring-whatsapp/20";
+
   return (
     <section className={containerClass}>
-      <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
+      <div className={inDashboard ? "" : "mx-auto max-w-5xl px-4 sm:px-6 lg:px-8"}>
         {!inDashboard && (
-          <motion.div
-            className="mb-10 text-center"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-          >
-            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-xl bg-blue-50">
-              <QrCode className="h-7 w-7 text-blue-600" />
+          <div className="mb-8 text-center">
+            <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-md border border-border text-muted-fg">
+              <QrCode className="h-5 w-5" />
             </div>
-            <h1 className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
+            <h1 className="text-2xl font-semibold tracking-tight text-fg sm:text-3xl">
               QR Code Generator
             </h1>
-            <p className="mx-auto mt-3 max-w-lg text-gray-500">
+            <p className="mx-auto mt-2 max-w-lg text-sm text-muted-fg">
               Generate QR codes for URLs or WhatsApp links. Customize colors and download in high quality.
             </p>
-          </motion.div>
+          </div>
         )}
 
-        <div className="grid gap-8 lg:grid-cols-[1fr_380px]">
+        <div className="grid gap-5 lg:grid-cols-[1fr_320px]">
           {/* Left: Controls */}
-          <motion.div
-            className="space-y-6"
-            initial={inDashboard ? false : { opacity: 0, x: -20 }}
-            animate={inDashboard ? {} : { opacity: 1, x: 0 }}
-            transition={{ duration: 0.5, delay: 0.1 }}
-          >
+          <div className="space-y-4">
             {/* Mode Toggle */}
-            <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-              <label className="mb-3 block text-sm font-semibold text-gray-900">Content Type</label>
+            <div className="rounded-lg border border-border bg-card p-4">
+              <label className="mb-2 block text-xs font-medium uppercase tracking-wide text-muted-fg">
+                Content type
+              </label>
               <div className="flex gap-2">
                 {[
                   { id: "url" as Mode, label: "URL", icon: LinkIcon },
@@ -113,13 +107,13 @@ export function QrGeneratorClient({ inDashboard = false }: QrGeneratorClientProp
                     key={m.id}
                     onClick={() => setMode(m.id)}
                     className={cn(
-                      "flex flex-1 items-center justify-center gap-2 rounded-lg border py-2.5 text-sm font-medium transition-all",
+                      "flex flex-1 items-center justify-center gap-2 rounded-md border py-2 text-sm font-medium transition-colors",
                       mode === m.id
-                        ? "border-whatsapp bg-whatsapp/5 text-whatsapp-deep"
-                        : "border-gray-200 text-gray-600 hover:border-gray-300 hover:bg-gray-50"
+                        ? "border-fg/30 bg-muted text-fg"
+                        : "border-border text-muted-fg hover:bg-muted/60 hover:text-fg"
                     )}
                   >
-                    <m.icon className="h-4 w-4" />
+                    <m.icon className="h-3.5 w-3.5" />
                     {m.label}
                   </button>
                 ))}
@@ -127,39 +121,45 @@ export function QrGeneratorClient({ inDashboard = false }: QrGeneratorClientProp
             </div>
 
             {/* Input Fields */}
-            <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+            <div className="rounded-lg border border-border bg-card p-4">
               {mode === "url" ? (
                 <div>
-                  <label className="mb-2 block text-sm font-semibold text-gray-900">Website URL</label>
+                  <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-muted-fg">
+                    Website URL
+                  </label>
                   <input
                     type="url"
                     value={url}
                     onChange={(e) => setUrl(e.target.value)}
                     placeholder="https://example.com"
-                    className="w-full rounded-lg border border-gray-200 px-4 py-3 text-sm text-gray-900 outline-none transition-all focus:border-whatsapp focus:ring-2 focus:ring-whatsapp/20"
+                    className={inputClass}
                   />
                 </div>
               ) : (
-                <div className="space-y-4">
+                <div className="space-y-3">
                   <div>
-                    <label className="mb-2 block text-sm font-semibold text-gray-900">Phone Number</label>
+                    <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-muted-fg">
+                      Phone number
+                    </label>
                     <input
                       type="tel"
                       value={phone}
                       onChange={(e) => setPhone(e.target.value)}
                       placeholder="60123456789 (with country code)"
-                      className="w-full rounded-lg border border-gray-200 px-4 py-3 text-sm text-gray-900 outline-none transition-all focus:border-whatsapp focus:ring-2 focus:ring-whatsapp/20"
+                      className={cn(inputClass, "font-mono")}
                     />
-                    <p className="mt-1 text-xs text-gray-400">Include country code without + sign</p>
+                    <p className="mt-1 text-[11px] text-muted-fg">Include country code without + sign</p>
                   </div>
                   <div>
-                    <label className="mb-2 block text-sm font-semibold text-gray-900">Pre-filled Message (optional)</label>
+                    <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-muted-fg">
+                      Pre-filled message (optional)
+                    </label>
                     <textarea
                       value={message}
                       onChange={(e) => setMessage(e.target.value)}
                       placeholder="Hi, I'm interested in..."
                       rows={3}
-                      className="w-full resize-none rounded-lg border border-gray-200 px-4 py-3 text-sm text-gray-900 outline-none transition-all focus:border-whatsapp focus:ring-2 focus:ring-whatsapp/20"
+                      className={cn(inputClass, "resize-none")}
                     />
                   </div>
                 </div>
@@ -167,45 +167,49 @@ export function QrGeneratorClient({ inDashboard = false }: QrGeneratorClientProp
             </div>
 
             {/* Customization */}
-            <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-              <div className="mb-4 flex items-center gap-2">
-                <Palette className="h-4 w-4 text-gray-400" />
-                <label className="text-sm font-semibold text-gray-900">Customize</label>
+            <div className="rounded-lg border border-border bg-card p-4">
+              <div className="mb-3 flex items-center gap-2">
+                <Palette className="h-3.5 w-3.5 text-muted-fg" />
+                <label className="text-xs font-medium uppercase tracking-wide text-muted-fg">
+                  Customize
+                </label>
               </div>
 
               <div className="space-y-4">
                 <div>
-                  <label className="mb-2 block text-xs font-medium text-gray-500">QR Color</label>
+                  <label className="mb-2 block text-[11px] text-muted-fg">QR color</label>
                   <div className="flex flex-wrap gap-2">
                     {presetColors.map((color) => (
                       <button
                         key={color.value}
                         onClick={() => setFgColor(color.value)}
                         className={cn(
-                          "flex h-8 w-8 items-center justify-center rounded-full border-2 transition-all",
-                          fgColor === color.value ? "border-gray-900 scale-110" : "border-transparent hover:scale-105"
+                          "flex h-7 w-7 items-center justify-center rounded-full border-2 transition-transform",
+                          fgColor === color.value
+                            ? "border-fg scale-110"
+                            : "border-transparent hover:scale-105"
                         )}
                         style={{ backgroundColor: `#${color.value}` }}
                         aria-label={color.label}
                         title={color.label}
                       >
-                        {fgColor === color.value && <Check className="h-3 w-3 text-white drop-shadow-md" />}
+                        {fgColor === color.value && (
+                          <Check className="h-3 w-3 text-white drop-shadow" />
+                        )}
                       </button>
                     ))}
-                    <div className="relative">
-                      <input
-                        type="color"
-                        value={`#${fgColor}`}
-                        onChange={(e) => setFgColor(e.target.value.replace("#", ""))}
-                        className="h-8 w-8 cursor-pointer rounded-full border-2 border-dashed border-gray-300 p-0"
-                        title="Custom color"
-                      />
-                    </div>
+                    <input
+                      type="color"
+                      value={`#${fgColor}`}
+                      onChange={(e) => setFgColor(e.target.value.replace("#", ""))}
+                      className="h-7 w-7 cursor-pointer rounded-full border-2 border-dashed border-border p-0"
+                      title="Custom color"
+                    />
                   </div>
                 </div>
 
                 <div>
-                  <label className="mb-2 block text-xs font-medium text-gray-500">
+                  <label className="mb-2 block font-mono text-[11px] text-muted-fg">
                     Size: {size}px
                   </label>
                   <input
@@ -217,27 +221,25 @@ export function QrGeneratorClient({ inDashboard = false }: QrGeneratorClientProp
                     onChange={(e) => setSize(Number(e.target.value))}
                     className="w-full accent-whatsapp"
                   />
-                  <div className="mt-1 flex justify-between text-xs text-gray-400">
+                  <div className="mt-1 flex justify-between font-mono text-[10px] text-muted-fg">
                     <span>128px</span>
                     <span>512px</span>
                   </div>
                 </div>
               </div>
             </div>
-          </motion.div>
+          </div>
 
           {/* Right: Preview & Download */}
-          <motion.div
-            className="lg:sticky lg:top-28 lg:self-start"
-            initial={inDashboard ? false : { opacity: 0, x: 20 }}
-            animate={inDashboard ? {} : { opacity: 1, x: 0 }}
-            transition={{ duration: 0.5, delay: 0.2 }}
-          >
-            <div className="rounded-2xl border border-gray-200 bg-white p-8 shadow-card text-center">
-              <h3 className="mb-6 text-sm font-semibold uppercase tracking-wide text-gray-400">Preview</h3>
+          <div className="lg:sticky lg:top-20 lg:self-start">
+            <div className="rounded-lg border border-border bg-card p-5 text-center">
+              <h3 className="mb-4 text-[11px] font-semibold uppercase tracking-wider text-muted-fg">
+                Preview
+              </h3>
 
-              <div className="mx-auto mb-6 inline-block rounded-xl border-2 border-dashed border-gray-200 p-4 bg-white">
+              <div className="mx-auto mb-4 inline-block rounded-md border border-dashed border-border bg-card p-3">
                 {qrUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
                   <img
                     src={qrUrl}
                     alt="QR Code"
@@ -246,30 +248,33 @@ export function QrGeneratorClient({ inDashboard = false }: QrGeneratorClientProp
                     className="block"
                   />
                 ) : (
-                  <div className="flex items-center justify-center" style={{ width: displaySize, height: displaySize }}>
-                    <QrCode className="h-12 w-12 text-gray-300" />
+                  <div
+                    className="flex items-center justify-center"
+                    style={{ width: displaySize, height: displaySize }}
+                  >
+                    <QrCode className="h-10 w-10 text-muted-fg/40" />
                   </div>
                 )}
               </div>
 
-              <p className="mb-6 truncate text-xs text-gray-400">{qrValue}</p>
+              <p className="mb-4 truncate font-mono text-[11px] text-muted-fg">{qrValue}</p>
 
               <button
                 onClick={handleDownload}
                 disabled={!qrUrl}
                 className={cn(
-                  "inline-flex w-full items-center justify-center gap-2 rounded-xl py-3 text-sm font-semibold transition-all active:scale-[0.98]",
+                  "inline-flex w-full items-center justify-center gap-2 rounded-md py-2 text-sm font-medium transition-colors",
                   downloaded
-                    ? "bg-green-500 text-white"
+                    ? "bg-whatsapp text-white"
                     : qrUrl
-                      ? "bg-whatsapp text-white shadow-md hover:bg-[#0DB849] hover:shadow-lg"
-                      : "cursor-not-allowed bg-gray-100 text-gray-400"
+                      ? "bg-fg text-bg hover:bg-gray-600 dark:hover:bg-gray-200"
+                      : "cursor-not-allowed bg-muted text-muted-fg/50"
                 )}
               >
                 {downloaded ? (
                   <>
                     <Check className="h-4 w-4" />
-                    Downloaded!
+                    Downloaded
                   </>
                 ) : (
                   <>
@@ -279,7 +284,7 @@ export function QrGeneratorClient({ inDashboard = false }: QrGeneratorClientProp
                 )}
               </button>
             </div>
-          </motion.div>
+          </div>
         </div>
       </div>
     </section>

@@ -25,9 +25,5 @@ export default async function FormsPage({
     .eq("user_id", user!.id)
     .order("updated_at", { ascending: false });
 
-  return (
-    <div className="mx-auto max-w-7xl">
-      <FormList forms={forms ?? []} />
-    </div>
-  );
+  return <FormList forms={forms ?? []} />;
 }

@@ -28,14 +28,14 @@ export function PublicFormClient({ form, fields }: PublicFormClientProps) {
   };
 
   return (
-    <div className="min-h-screen bg-brand-bg">
-      <header className="border-b border-brand-border bg-white">
+    <div className="min-h-screen bg-bg">
+      <header className="border-b border-border bg-card">
         <div className="mx-auto flex h-14 max-w-lg items-center px-4">
           <BrandLogo />
         </div>
       </header>
       <main className="px-4 py-10 sm:py-14">
-        <div className="mx-auto max-w-lg rounded-3xl border border-brand-border bg-white p-6 shadow-card-lg sm:p-8">
+        <div className="mx-auto max-w-lg rounded-lg border border-border bg-card p-6 shadow-lg dark:shadow-none sm:p-8">
           <PublicFormView
             title={form.title}
             description={form.description}

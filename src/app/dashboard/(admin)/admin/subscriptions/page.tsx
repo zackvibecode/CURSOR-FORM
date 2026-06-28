@@ -10,14 +10,13 @@ export default async function AdminSubscriptionsPage() {
   const { user, isAdmin } = await getAdminContext(supabase);
 
   if (!user) redirect("/login");
-  // Non-admins must never see this page.
   if (!isAdmin) redirect("/dashboard");
 
   return (
-    <div className="mx-auto max-w-5xl space-y-6">
+    <div className="max-w-5xl space-y-6">
       <div>
-        <h2 className="text-xl font-bold text-brand-text">Subscription Requests</h2>
-        <p className="text-brand-muted">
+        <h2 className="text-lg font-semibold text-fg">Subscription Requests</h2>
+        <p className="text-sm text-muted-fg">
           Approve or reject paid plan requests after confirming payment.
         </p>
       </div>

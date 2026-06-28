@@ -17,8 +17,11 @@ export default function DashboardError({
 
   return (
     <div className="flex min-h-[50vh] flex-col items-center justify-center px-4 text-center">
-      <h2 className="mb-2 text-xl font-bold text-brand-text">Something went wrong</h2>
-      <p className="mb-6 max-w-md text-sm text-brand-muted">
+      <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-md border border-border bg-card font-mono text-sm text-muted-fg">
+        !
+      </div>
+      <h2 className="mb-2 text-base font-semibold text-fg">Something went wrong</h2>
+      <p className="mb-6 max-w-md text-sm text-muted-fg">
         We could not load this page. Please try again or return to your dashboard.
       </p>
       <div className="flex gap-3">

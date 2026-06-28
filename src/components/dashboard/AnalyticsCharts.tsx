@@ -14,17 +14,16 @@ function buildPath(data: number[], width: number, height: number, max: number) {
 function TrendChart({
   title,
   data,
-  color = "#10D050",
 }: {
   title: string;
   data: number[];
-  color?: string;
 }) {
   if (data.length === 0) {
     return (
-      <div className="rounded-2xl border border-brand-border bg-white p-6 shadow-card">
-        <h3 className="mb-6 text-sm font-semibold text-brand-text">{title}</h3>
-        <div className="flex h-32 items-center justify-center text-sm text-brand-muted">
+      <div className="rounded-lg border border-border bg-card p-5">
+        <h3 className="mb-1 text-sm font-semibold text-fg">{title}</h3>
+        <p className="mb-5 text-xs text-muted-fg">Submissions over the last 30 days</p>
+        <div className="flex h-32 items-center justify-center text-sm text-muted-fg">
           Not enough data to display trends.
         </div>
       </div>
@@ -33,24 +32,51 @@ function TrendChart({
 
   const width = 400;
   const height = 120;
-  const max = Math.max(...data) * 1.1;
+  const max = Math.max(...data, 1) * 1.1;
   const path = buildPath(data, width, height, max);
+  const total = data.reduce((a, b) => a + b, 0);
 
   return (
-    <div className="rounded-2xl border border-brand-border bg-white p-6 shadow-card">
-      <h3 className="mb-6 text-sm font-semibold text-brand-text">{title}</h3>
+    <div className="rounded-lg border border-border bg-card p-5">
+      <div className="mb-1 flex items-center justify-between">
+        <h3 className="text-sm font-semibold text-fg">{title}</h3>
+        <span className="font-mono text-xs text-muted-fg">
+          {total} total
+        </span>
+      </div>
+      <p className="mb-5 text-xs text-muted-fg">Submissions over the last 30 days</p>
       <svg viewBox={`0 0 ${width} ${height + 20}`} className="w-full">
         <defs>
-          <linearGradient id={`grad-${title}`} x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor={color} stopOpacity="0.2" />
-            <stop offset="100%" stopColor={color} stopOpacity="0" />
+          <linearGradient id="trend-grad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#10D050" stopOpacity="0.15" />
+            <stop offset="100%" stopColor="#10D050" stopOpacity="0" />
           </linearGradient>
         </defs>
+        {/* horizontal grid lines */}
+        {[0, 0.25, 0.5, 0.75, 1].map((p) => (
+          <line
+            key={p}
+            x1="0"
+            x2={width}
+            y1={height * p}
+            y2={height * p}
+            stroke="currentColor"
+            strokeWidth="1"
+            className="text-border"
+          />
+        ))}
         <path
           d={`${path} L ${width} ${height} L 0 ${height} Z`}
-          fill={`url(#grad-${title})`}
+          fill="url(#trend-grad)"
         />
-        <path d={path} fill="none" stroke={color} strokeWidth="2.5" strokeLinecap="round" />
+        <path
+          d={path}
+          fill="none"
+          stroke="#10D050"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
       </svg>
     </div>
   );
@@ -62,7 +88,7 @@ export function AnalyticsCharts({
   submissionsPerDay: number[];
 }) {
   return (
-    <div className="grid gap-6 lg:grid-cols-2">
+    <div className="grid gap-4 lg:grid-cols-2">
       <TrendChart title="Submission Trend" data={submissionsPerDay} />
     </div>
   );

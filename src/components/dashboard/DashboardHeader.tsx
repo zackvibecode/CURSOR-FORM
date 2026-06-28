@@ -1,46 +1,9 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/Button";
-import { BrandLogo } from "@/components/ui/BrandLogo";
-import { LogOut, Plus, Loader2 } from "lucide-react";
+import { Plus, Loader2 } from "lucide-react";
 import { useState } from "react";
-
-interface DashboardHeaderProps {
-  userName?: string | null;
-}
-
-export function DashboardHeader({ userName }: DashboardHeaderProps) {
-  const router = useRouter();
-
-  const handleLogout = async () => {
-    const supabase = createClient();
-    await supabase.auth.signOut();
-    router.push("/");
-    router.refresh();
-  };
-
-  return (
-    <header className="border-b border-gray-100 bg-white">
-      <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
-        <BrandLogo size="md" />
-
-        <div className="flex items-center gap-4">
-          {userName && (
-            <span className="hidden text-sm text-gray-600 sm:block">
-              Hi, {userName.split(" ")[0]}
-            </span>
-          )}
-          <Button variant="ghost" size="sm" onClick={handleLogout}>
-            <LogOut className="h-4 w-4" />
-            Logout
-          </Button>
-        </div>
-      </div>
-    </header>
-  );
-}
 
 export function CreateFormButton({
   templateId,
@@ -90,13 +53,13 @@ export function CreateFormButton({
       {loading ? (
         <>
           <Loader2 className="h-4 w-4 animate-spin" />
-          Creating...
+          Creating…
         </>
       ) : (
         children ?? (
           <>
             <Plus className="h-4 w-4" />
-            Create new form
+            New form
           </>
         )
       )}

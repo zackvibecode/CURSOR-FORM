@@ -12,10 +12,10 @@ export default async function PublicFormPage({
 
   if (!data) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center bg-brand-bg px-4">
+      <div className="flex min-h-screen flex-col items-center justify-center bg-bg px-4">
         <div className="max-w-md text-center">
-          <h1 className="mb-2 text-2xl font-bold text-brand-text">Form not found</h1>
-          <p className="mb-6 text-brand-muted">
+          <h1 className="mb-2 text-2xl font-bold text-fg">Form not found</h1>
+          <p className="mb-6 text-muted-fg">
             This form may have been removed or is not published yet.
           </p>
           <Link href="/" className="font-semibold text-whatsapp-deep hover:underline">

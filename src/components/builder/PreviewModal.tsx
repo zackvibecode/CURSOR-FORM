@@ -31,26 +31,30 @@ export function PreviewModal({
   const [view, setView] = useState<"mobile" | "desktop">("mobile");
 
   return (
-    <Modal open={open} onClose={onClose} title="Form Preview" size="xl">
-      <div className="mb-4 flex justify-center gap-2">
+    <Modal open={open} onClose={onClose} title="Preview" size="xl">
+      <div className="mb-4 flex justify-center gap-1.5">
         <button
           onClick={() => setView("mobile")}
           className={cn(
-            "flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition-colors",
-            view === "mobile" ? "bg-whatsapp text-white" : "bg-gray-100"
+            "flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-xs font-medium transition-colors",
+            view === "mobile"
+              ? "border-fg/30 bg-muted text-fg"
+              : "border-border text-muted-fg hover:bg-muted hover:text-fg"
           )}
         >
-          <Smartphone className="h-4 w-4" />
+          <Smartphone className="h-3.5 w-3.5" />
           Mobile
         </button>
         <button
           onClick={() => setView("desktop")}
           className={cn(
-            "flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition-colors",
-            view === "desktop" ? "bg-whatsapp text-white" : "bg-gray-100"
+            "flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-xs font-medium transition-colors",
+            view === "desktop"
+              ? "border-fg/30 bg-muted text-fg"
+              : "border-border text-muted-fg hover:bg-muted hover:text-fg"
           )}
         >
-          <Monitor className="h-4 w-4" />
+          <Monitor className="h-3.5 w-3.5" />
           Desktop
         </button>
       </div>
@@ -58,7 +62,7 @@ export function PreviewModal({
       <div className="flex justify-center">
         <div
           className={cn(
-            "rounded-2xl border border-gray-200 bg-white p-6 shadow-card transition-all",
+            "rounded-lg border border-border bg-card p-6 transition-all",
             view === "mobile" ? "w-full max-w-sm" : "w-full max-w-2xl"
           )}
         >

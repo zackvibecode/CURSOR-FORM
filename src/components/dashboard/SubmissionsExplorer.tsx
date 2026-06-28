@@ -49,7 +49,6 @@ const presetLabels: { id: DatePreset; label: string }[] = [
 ];
 
 function escapeCsv(value: string): string {
-  // Wrap in quotes and escape inner quotes to keep CSV valid
   const needsQuotes = /[",\n]/.test(value);
   const escaped = value.replace(/"/g, '""');
   return needsQuotes ? `"${escaped}"` : escaped;
@@ -94,7 +93,6 @@ export function SubmissionsExplorer({ submissions }: SubmissionsExplorerProps) {
       .map((cols) => cols.map((c) => escapeCsv(String(c ?? ""))).join(","))
       .join("\n");
 
-    // Prepend BOM so Excel reads UTF-8 correctly
     const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
@@ -107,18 +105,18 @@ export function SubmissionsExplorer({ submissions }: SubmissionsExplorerProps) {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-col gap-4 rounded-2xl border border-brand-border bg-white p-4 shadow-card sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex flex-wrap items-center gap-2">
-          <Calendar className="h-4 w-4 text-brand-muted" />
+      <div className="flex flex-col gap-3 rounded-lg border border-border bg-card p-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-wrap items-center gap-1.5">
+          <Calendar className="mr-1 h-3.5 w-3.5 text-muted-fg" />
           {presetLabels.map((p) => (
             <button
               key={p.id}
               onClick={() => setPreset(p.id)}
               className={cn(
-                "rounded-lg px-3 py-1.5 text-sm font-medium transition-colors",
+                "rounded-md px-2.5 py-1 text-xs font-medium transition-colors",
                 preset === p.id
-                  ? "bg-whatsapp text-white"
-                  : "bg-gray-50 text-brand-muted hover:bg-gray-100 hover:text-brand-text"
+                  ? "bg-fg text-bg"
+                  : "text-muted-fg hover:bg-muted hover:text-fg"
               )}
             >
               {p.label}
@@ -130,43 +128,43 @@ export function SubmissionsExplorer({ submissions }: SubmissionsExplorerProps) {
           onClick={handleExport}
           disabled={filtered.length === 0}
           className={cn(
-            "inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition-all active:scale-[0.98]",
+            "inline-flex items-center justify-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-xs font-medium transition-colors",
             filtered.length === 0
-              ? "cursor-not-allowed bg-gray-100 text-gray-400"
-              : "bg-whatsapp text-white shadow-sm hover:bg-[#0DB849]"
+              ? "cursor-not-allowed text-muted-fg/50"
+              : "text-fg hover:bg-muted"
           )}
         >
-          <Download className="h-4 w-4" />
+          <Download className="h-3.5 w-3.5" />
           Export CSV
         </button>
       </div>
 
       {preset === "custom" && (
-        <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-brand-border bg-white p-4 shadow-card">
+        <div className="flex flex-wrap items-center gap-3 rounded-lg border border-border bg-card p-3">
           <div className="flex items-center gap-2">
-            <label className="text-sm font-medium text-brand-muted">From</label>
+            <label className="text-xs font-medium text-muted-fg">From</label>
             <input
               type="date"
               value={customStart}
               onChange={(e) => setCustomStart(e.target.value)}
-              className="rounded-lg border border-brand-border px-3 py-1.5 text-sm outline-none focus:border-whatsapp focus:ring-2 focus:ring-whatsapp/20"
+              className="rounded-md border border-border bg-card px-2.5 py-1.5 text-sm text-fg outline-none focus:border-whatsapp focus:ring-2 focus:ring-whatsapp/20"
             />
           </div>
           <div className="flex items-center gap-2">
-            <label className="text-sm font-medium text-brand-muted">To</label>
+            <label className="text-xs font-medium text-muted-fg">To</label>
             <input
               type="date"
               value={customEnd}
               onChange={(e) => setCustomEnd(e.target.value)}
-              className="rounded-lg border border-brand-border px-3 py-1.5 text-sm outline-none focus:border-whatsapp focus:ring-2 focus:ring-whatsapp/20"
+              className="rounded-md border border-border bg-card px-2.5 py-1.5 text-sm text-fg outline-none focus:border-whatsapp focus:ring-2 focus:ring-whatsapp/20"
             />
           </div>
         </div>
       )}
 
       <div className="flex items-center justify-between px-1">
-        <p className="text-sm text-brand-muted">
-          Showing <span className="font-semibold text-brand-text">{filtered.length}</span>{" "}
+        <p className="text-xs text-muted-fg">
+          Showing <span className="font-mono font-medium text-fg">{filtered.length}</span>{" "}
           submission{filtered.length === 1 ? "" : "s"}
         </p>
       </div>

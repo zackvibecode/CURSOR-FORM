@@ -18,40 +18,37 @@ import {
   AlignCenter,
   AlignRight,
   Upload,
-  Image as ImageIcon,
   Loader2,
 } from "lucide-react";
 
-interface FieldLabelProps {
-  children: React.ReactNode;
-}
-
-function FieldLabel({ children }: FieldLabelProps) {
+function FieldLabel({ children }: { children: React.ReactNode }) {
   return (
-    <Label className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-brand-muted">
+    <Label className="flex items-center gap-1.5 normal-case">
       {children}
-      <HelpCircle className="h-3 w-3 text-gray-300" />
+      <HelpCircle className="h-3 w-3 text-muted-fg/50" />
     </Label>
   );
 }
 
-interface RichTextToolbarProps {
+function RichTextToolbar({
+  value,
+  onChange,
+  placeholder = "Add description text here",
+}: {
   value: string;
   onChange: (value: string) => void;
   placeholder?: string;
-}
-
-function RichTextToolbar({ value, onChange, placeholder = "Add description text here" }: RichTextToolbarProps) {
+}) {
   return (
     <div className="mt-1">
-      <div className="flex items-center gap-1 rounded-t-xl border border-b-0 border-brand-border bg-gray-50 px-2 py-1.5">
-        <button type="button" className="rounded p-1 text-gray-500 hover:bg-gray-200 hover:text-gray-700" title="Bold">
+      <div className="flex items-center gap-1 rounded-t-md border border-b-0 border-border bg-muted px-2 py-1.5">
+        <button type="button" className="rounded p-1 text-muted-fg transition-colors hover:bg-border/50 hover:text-fg" title="Bold">
           <Bold className="h-3.5 w-3.5" />
         </button>
-        <button type="button" className="rounded p-1 text-gray-500 hover:bg-gray-200 hover:text-gray-700" title="Italic">
+        <button type="button" className="rounded p-1 text-muted-fg transition-colors hover:bg-border/50 hover:text-fg" title="Italic">
           <Italic className="h-3.5 w-3.5" />
         </button>
-        <button type="button" className="rounded p-1 text-gray-500 hover:bg-gray-200 hover:text-gray-700" title="Link">
+        <button type="button" className="rounded p-1 text-muted-fg transition-colors hover:bg-border/50 hover:text-fg" title="Link">
           <LinkIcon className="h-3.5 w-3.5" />
         </button>
       </div>
@@ -59,7 +56,7 @@ function RichTextToolbar({ value, onChange, placeholder = "Add description text 
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="w-full rounded-b-xl border border-t-0 border-brand-border bg-white px-4 py-3 text-sm text-brand-text outline-none placeholder:text-brand-muted focus:border-whatsapp focus:ring-2 focus:ring-whatsapp/20"
+        className="w-full rounded-b-md border border-t-0 border-border bg-card px-3 py-2 text-sm text-fg outline-none placeholder:text-muted-fg focus:border-whatsapp focus:ring-2 focus:ring-whatsapp/20"
         rows={2}
       />
     </div>
@@ -81,7 +78,7 @@ function AlignmentControl({
     { key: "right", icon: AlignRight, label: "Right" },
   ];
   return (
-    <div className="mt-1 inline-flex rounded-xl border border-brand-border bg-gray-50 p-1">
+    <div className="mt-1 inline-flex rounded-md border border-border bg-muted p-1">
       {options.map(({ key, icon: Icon, label }) => (
         <button
           key={key}
@@ -89,13 +86,13 @@ function AlignmentControl({
           onClick={() => onChange(key)}
           title={label}
           className={cn(
-            "flex h-8 w-9 items-center justify-center rounded-lg transition-colors",
+            "flex h-7 w-8 items-center justify-center rounded transition-colors",
             value === key
-              ? "bg-white text-whatsapp-deep shadow-sm"
-              : "text-gray-400 hover:text-gray-600"
+              ? "bg-card text-fg shadow-sm"
+              : "text-muted-fg hover:text-fg"
           )}
         >
-          <Icon className="h-4 w-4" />
+          <Icon className="h-3.5 w-3.5" />
         </button>
       ))}
     </div>
@@ -171,30 +168,30 @@ function ImageUploader({
           <img
             src={imageUrl}
             alt="Uploaded preview"
-            className="max-h-40 w-full rounded-xl border border-brand-border object-contain"
+            className="max-h-40 w-full rounded-md border border-border object-contain"
           />
           <button
             type="button"
             onClick={() =>
               onUpdate({ ...field, settings: { ...field.settings, imageUrl: "" } })
             }
-            className="flex items-center gap-1.5 text-sm text-brand-red hover:underline"
+            className="flex items-center gap-1.5 text-xs text-red-600 transition-colors hover:text-red-700 dark:text-red-400"
           >
             <Trash2 className="h-3.5 w-3.5" />
             Remove image
           </button>
         </div>
       ) : (
-        <label className="mt-1 flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-brand-border bg-gray-50 px-4 py-8 text-center transition-colors hover:border-whatsapp hover:bg-whatsapp/5">
+        <label className="mt-1 flex cursor-pointer flex-col items-center justify-center gap-2 rounded-md border border-dashed border-border bg-muted/40 px-4 py-8 text-center transition-colors hover:border-whatsapp hover:bg-whatsapp/5">
           {uploading ? (
-            <Loader2 className="h-6 w-6 animate-spin text-whatsapp" />
+            <Loader2 className="h-5 w-5 animate-spin text-whatsapp" />
           ) : (
-            <Upload className="h-6 w-6 text-gray-400" />
+            <Upload className="h-5 w-5 text-muted-fg" />
           )}
-          <span className="text-sm font-medium text-brand-muted">
-            {uploading ? "Uploading..." : "Click to upload an image"}
+          <span className="text-xs font-medium text-muted-fg">
+            {uploading ? "Uploading…" : "Click to upload an image"}
           </span>
-          <span className="text-xs text-gray-400">PNG, JPG up to 5MB</span>
+          <span className="text-[11px] text-muted-fg">PNG, JPG up to 5MB</span>
           <input
             type="file"
             accept="image/*"
@@ -207,7 +204,7 @@ function ImageUploader({
           />
         </label>
       )}
-      {error && <p className="mt-1 text-sm text-brand-red">{error}</p>}
+      {error && <p className="mt-1 text-xs text-red-600 dark:text-red-400">{error}</p>}
     </div>
   );
 }
@@ -259,20 +256,20 @@ export function OptionsFieldEditor({ field, onUpdate }: OptionsFieldEditorProps)
         <div className="mt-2 space-y-2">
           {options.map((option, index) => (
             <div key={index} className="flex items-center gap-2 group">
-              <button type="button" className="cursor-grab text-gray-300 hover:text-gray-500 opacity-0 group-hover:opacity-100 transition-opacity" title="Drag to reorder">
-                <GripVertical className="h-4 w-4" />
+              <button type="button" className="cursor-grab text-muted-fg/40 opacity-0 transition-opacity group-hover:opacity-100" title="Drag to reorder">
+                <GripVertical className="h-3.5 w-3.5" />
               </button>
               <div className="flex-1">
                 <Input value={option} onChange={(e) => updateOption(index, e.target.value)} className="text-sm" placeholder={`Option ${index + 1}`} />
               </div>
-              <span className="text-[10px] text-gray-300 w-3 text-center font-mono">{index}</span>
-              <button type="button" onClick={() => removeOption(index)} className="opacity-0 group-hover:opacity-100 p-1 text-gray-300 hover:text-red-500 transition-opacity" title="Remove option">
+              <span className="w-3 text-center font-mono text-[10px] text-muted-fg/50">{index}</span>
+              <button type="button" onClick={() => removeOption(index)} className="p-1 text-muted-fg/40 opacity-0 transition-opacity hover:text-red-600 group-hover:opacity-100" title="Remove option">
                 <Trash2 className="h-3.5 w-3.5" />
               </button>
             </div>
           ))}
-          <button type="button" onClick={addOption} className="flex items-center gap-2 text-sm text-brand-muted hover:text-brand-text transition-colors">
-            <Plus className="h-4 w-4" />
+          <button type="button" onClick={addOption} className="flex items-center gap-1.5 text-xs font-medium text-muted-fg transition-colors hover:text-fg">
+            <Plus className="h-3.5 w-3.5" />
             Add option
           </button>
         </div>
@@ -291,7 +288,6 @@ export function StandardFieldEditor({ field, onUpdate }: StandardFieldEditorProp
   const setAlign = (a: Align) =>
     onUpdate({ ...field, settings: { ...field.settings, align: a } });
 
-  // Image is a display-only component: uploader + alignment, no input props
   if (field.type === "image") {
     return (
       <div className="space-y-5">
@@ -333,7 +329,7 @@ export function StandardFieldEditor({ field, onUpdate }: StandardFieldEditorProp
 
       {field.type === "title" && (
         <div>
-          <FieldLabel>Text Style</FieldLabel>
+          <FieldLabel>Text style</FieldLabel>
           <div className="mt-1 flex flex-wrap items-center gap-2">
             <button
               type="button"
@@ -345,25 +341,25 @@ export function StandardFieldEditor({ field, onUpdate }: StandardFieldEditorProp
               }
               title="Bold"
               className={cn(
-                "flex h-8 w-9 items-center justify-center rounded-lg border transition-colors",
+                "flex h-7 w-8 items-center justify-center rounded-md border transition-colors",
                 field.settings?.bold
-                  ? "border-whatsapp bg-whatsapp/10 text-whatsapp-deep"
-                  : "border-brand-border bg-gray-50 text-gray-400 hover:text-gray-600"
+                  ? "border-whatsapp bg-whatsapp/10 text-whatsapp-deep dark:text-whatsapp"
+                  : "border-border bg-muted text-muted-fg hover:text-fg"
               )}
             >
-              <Bold className="h-4 w-4" />
+              <Bold className="h-3.5 w-3.5" />
             </button>
-            <div className="inline-flex rounded-xl border border-brand-border bg-gray-50 p-1">
+            <div className="inline-flex rounded-md border border-border bg-muted p-1">
               {(["normal", "headline"] as const).map((s) => (
                 <button
                   key={s}
                   type="button"
                   onClick={() => onUpdate({ ...field, settings: { ...field.settings, size: s } })}
                   className={cn(
-                    "rounded-lg px-3 py-1.5 text-xs font-semibold capitalize transition-colors",
+                    "rounded px-2.5 py-1 text-[11px] font-semibold capitalize transition-colors",
                     (field.settings?.size ?? "normal") === s
-                      ? "bg-white text-whatsapp-deep shadow-sm"
-                      : "text-gray-400 hover:text-gray-600"
+                      ? "bg-card text-fg shadow-sm"
+                      : "text-muted-fg hover:text-fg"
                   )}
                 >
                   {s}
@@ -387,18 +383,18 @@ export function StandardFieldEditor({ field, onUpdate }: StandardFieldEditorProp
       )}
 
       {field.type !== "title" && (
-        <div className="flex items-center gap-3 rounded-xl border border-brand-border bg-gray-50 px-4 py-3">
+        <label className="flex cursor-pointer items-center gap-2.5 rounded-md border border-border bg-muted/40 px-3 py-2.5">
           <input
             type="checkbox"
             id={`required-${field.id}`}
             checked={field.required}
             onChange={(e) => onUpdate({ ...field, required: e.target.checked })}
-            className="h-4 w-4 accent-whatsapp cursor-pointer"
+            className="h-3.5 w-3.5 accent-whatsapp cursor-pointer"
           />
-          <label htmlFor={`required-${field.id}`} className="text-sm font-medium text-brand-text cursor-pointer">
+          <span className="text-sm text-fg">
             Required field
-          </label>
-        </div>
+          </span>
+        </label>
       )}
     </div>
   );

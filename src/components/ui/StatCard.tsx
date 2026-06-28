@@ -13,18 +13,22 @@ export function StatCard({ title, value, change, icon: Icon, className }: StatCa
   return (
     <div
       className={cn(
-        "rounded-2xl border border-brand-border bg-white p-6 shadow-card transition-all duration-300 hover:-translate-y-0.5 hover:shadow-card-lg",
+        "rounded-lg border border-border bg-card p-5 transition-colors",
         className
       )}
     >
-      <div className="mb-4 flex items-center justify-between">
-        <span className="text-sm font-medium text-brand-muted">{title}</span>
-        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-whatsapp/10 text-whatsapp">
-          <Icon className="h-5 w-5" strokeWidth={1.75} />
+      <div className="mb-3 flex items-center justify-between">
+        <span className="text-xs font-medium uppercase tracking-wide text-muted-fg">
+          {title}
+        </span>
+        <div className="flex h-7 w-7 items-center justify-center rounded-md border border-border text-muted-fg">
+          <Icon className="h-3.5 w-3.5" strokeWidth={2} />
         </div>
       </div>
-      <p className="text-3xl font-bold tracking-tight text-brand-text">{value}</p>
-      {change && <p className="mt-1 text-xs text-brand-muted">{change}</p>}
+      <p className="font-mono text-2xl font-semibold tracking-tight text-fg tabular-nums">
+        {value}
+      </p>
+      {change && <p className="mt-1 text-xs text-muted-fg">{change}</p>}
     </div>
   );
 }

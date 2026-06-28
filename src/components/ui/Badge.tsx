@@ -2,12 +2,20 @@ import { cn } from "@/lib/utils";
 
 type BadgeVariant = "new" | "contacted" | "converted" | "pending" | "default";
 
-const variants: Record<BadgeVariant, string> = {
-  new: "bg-whatsapp/10 text-whatsapp-deep",
-  contacted: "bg-blue-50 text-blue-700",
-  converted: "bg-emerald-50 text-emerald-700",
-  pending: "bg-amber-50 text-amber-700",
-  default: "bg-gray-100 text-brand-muted",
+const dotColor: Record<BadgeVariant, string> = {
+  new: "bg-whatsapp",
+  contacted: "bg-blue-500",
+  converted: "bg-emerald-500",
+  pending: "bg-amber-500",
+  default: "bg-gray-400",
+};
+
+const labelColor: Record<BadgeVariant, string> = {
+  new: "text-whatsapp-deep dark:text-whatsapp",
+  contacted: "text-blue-600 dark:text-blue-400",
+  converted: "text-emerald-600 dark:text-emerald-400",
+  pending: "text-amber-600 dark:text-amber-400",
+  default: "text-muted-fg",
 };
 
 export function Badge({
@@ -22,11 +30,12 @@ export function Badge({
   return (
     <span
       className={cn(
-        "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium capitalize",
-        variants[variant],
+        "inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-2.5 py-0.5 text-xs font-medium capitalize",
+        labelColor[variant],
         className
       )}
     >
+      <span className={cn("h-1.5 w-1.5 rounded-full", dotColor[variant])} />
       {children}
     </span>
   );

@@ -32,20 +32,18 @@ export default async function AnalyticsPage() {
   }
 
   const stats = computeDashboardStats(forms ?? [], submissions as any);
-
-  // Build submissions-per-day array from real data
   const submissionsPerDay = buildSubmissionsPerDay(submissions.map((s) => s.submitted_at));
 
   return (
-    <div className="mx-auto max-w-7xl space-y-8">
+    <div className="space-y-6">
       <div>
-        <h2 className="text-xl font-bold text-brand-text">Analytics</h2>
-        <p className="text-brand-muted">
+        <h2 className="text-lg font-semibold text-fg">Analytics</h2>
+        <p className="text-sm text-muted-fg">
           Monitor your form performance and submission trends
         </p>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard title="Total Forms" value={stats.totalForms} icon={LayoutList} />
         <StatCard title="Total Submissions" value={stats.totalSubmissions} icon={Inbox} />
       </div>
@@ -58,10 +56,9 @@ export default async function AnalyticsPage() {
 function buildSubmissionsPerDay(dates: string[]): number[] {
   if (dates.length === 0) return [];
 
-  // Group by day and return the last 30 days
   const counts = new Map<string, number>();
   for (const d of dates) {
-    const day = d.slice(0, 10); // "YYYY-MM-DD"
+    const day = d.slice(0, 10);
     counts.set(day, (counts.get(day) ?? 0) + 1);
   }
 

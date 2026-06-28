@@ -44,9 +44,9 @@ export function FieldPalette({ onAddField, vertical = false }: FieldPaletteProps
             <button
               key={type}
               onClick={() => onAddField(type)}
-              className="flex items-center gap-2 rounded-xl border border-brand-border bg-brand-bg/30 px-3 py-3 text-left text-sm font-medium transition-all hover:border-whatsapp hover:bg-white active:scale-[0.98]"
+              className="flex items-center gap-2 rounded-md border border-border bg-card px-2.5 py-2.5 text-left text-xs font-medium text-fg transition-colors hover:border-fg/30 hover:bg-muted active:scale-[0.98]"
             >
-              <Icon className="h-4 w-4 shrink-0 text-whatsapp" strokeWidth={1.75} />
+              <Icon className="h-3.5 w-3.5 shrink-0 text-muted-fg" strokeWidth={2} />
               {label}
             </button>
           ))}
@@ -56,18 +56,18 @@ export function FieldPalette({ onAddField, vertical = false }: FieldPaletteProps
   }
 
   return (
-    <aside className="w-full shrink-0 overflow-x-auto border-b border-brand-border bg-white p-3 lg:w-56 lg:overflow-y-auto lg:border-b-0 lg:border-r lg:p-4">
-      <h3 className="mb-3 hidden text-xs font-bold uppercase tracking-wider text-brand-muted lg:mb-4 lg:block">
-        Field Components
+    <aside className="w-full shrink-0 overflow-x-auto border-b border-border bg-card p-3 lg:w-56 lg:overflow-y-auto lg:border-b-0 lg:border-r lg:p-4 scrollbar-thin">
+      <h3 className="mb-3 hidden text-[10px] font-semibold uppercase tracking-wider text-muted-fg lg:block">
+        Field types
       </h3>
-      <div className="flex gap-2 lg:flex-col lg:space-y-2 lg:gap-0">
+      <div className="flex gap-2 lg:flex-col lg:space-y-1.5 lg:gap-0">
         {BUILDER_FIELDS.map(({ type, label, icon: Icon }) => (
           <button
             key={type}
             onClick={() => onAddField(type)}
-            className="flex shrink-0 items-center gap-2 rounded-xl border border-brand-border bg-brand-bg/30 px-3 py-2.5 text-left text-sm font-medium transition-all hover:border-whatsapp hover:bg-white hover:shadow-card lg:w-full lg:gap-3"
+            className="flex shrink-0 items-center gap-2 rounded-md border border-border bg-card px-2.5 py-2 text-left text-xs font-medium text-fg transition-colors hover:border-fg/30 hover:bg-muted lg:w-full"
           >
-            <Icon className="h-4 w-4 text-whatsapp" strokeWidth={1.75} />
+            <Icon className="h-3.5 w-3.5 shrink-0 text-muted-fg" strokeWidth={2} />
             {label}
           </button>
         ))}
