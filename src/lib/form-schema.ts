@@ -30,6 +30,7 @@ export const formFieldSchema = z.object({
       subtitle: z.string().optional(),
       imageUrl: z.string().optional(),
       imageAlt: z.string().optional(),
+      imageSize: z.enum(["fit", "medium", "full"]).optional(),
       align: z.enum(["left", "center", "right"]).optional(),
       bold: z.boolean().optional(),
       size: z.enum(["normal", "headline"]).optional(),
@@ -110,7 +111,7 @@ export function createDefaultField(type: FieldType, orderIndex: number): FormFie
       options: ["Option 1", "Option 2"],
     },
     date: { label: "Preferred date", required: false },
-    image: { label: "Image", required: false, settings: { align: "center" } },
+    image: { label: "Image", required: false, settings: { align: "center", imageSize: "medium" } },
   };
 
   return formFieldSchema.parse({

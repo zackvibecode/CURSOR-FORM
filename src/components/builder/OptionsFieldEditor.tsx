@@ -64,6 +64,7 @@ function RichTextToolbar({
 }
 
 type Align = "left" | "center" | "right";
+type ImageSize = "fit" | "medium" | "full";
 
 function AlignmentControl({
   value,
@@ -93,6 +94,43 @@ function AlignmentControl({
           )}
         >
           <Icon className="h-3.5 w-3.5" />
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function ImageSizeControl({
+  value,
+  onChange,
+}: {
+  value: ImageSize;
+  onChange: (size: ImageSize) => void;
+}) {
+  const options: { key: ImageSize; label: string; description: string }[] = [
+    { key: "fit", label: "Fit", description: "Keep natural ratio" },
+    { key: "medium", label: "Medium", description: "Balanced promo size" },
+    { key: "full", label: "Full", description: "Fill form width" },
+  ];
+
+  return (
+    <div className="mt-2 grid grid-cols-3 gap-1.5">
+      {options.map((option) => (
+        <button
+          key={option.key}
+          type="button"
+          onClick={() => onChange(option.key)}
+          className={cn(
+            "rounded-md border px-2 py-2 text-left transition-colors",
+            value === option.key
+              ? "border-whatsapp bg-whatsapp/10 text-whatsapp-deep dark:text-whatsapp"
+              : "border-border bg-muted/40 text-muted-fg hover:border-fg/30 hover:text-fg"
+          )}
+        >
+          <span className="block text-[11px] font-semibold">{option.label}</span>
+          <span className="mt-0.5 block text-[9px] leading-tight opacity-70">
+            {option.description}
+          </span>
         </button>
       ))}
     </div>
@@ -285,13 +323,20 @@ interface StandardFieldEditorProps {
 
 export function StandardFieldEditor({ field, onUpdate }: StandardFieldEditorProps) {
   const align: Align = field.settings?.align ?? "left";
+  const imageSize: ImageSize = field.settings?.imageSize ?? "medium";
   const setAlign = (a: Align) =>
     onUpdate({ ...field, settings: { ...field.settings, align: a } });
+  const setImageSize = (size: ImageSize) =>
+    onUpdate({ ...field, settings: { ...field.settings, imageSize: size } });
 
   if (field.type === "image") {
     return (
       <div className="space-y-5">
         <ImageUploader field={field} onUpdate={onUpdate} />
+        <div>
+          <FieldLabel>Image size</FieldLabel>
+          <ImageSizeControl value={imageSize} onChange={setImageSize} />
+        </div>
         <div>
           <FieldLabel>Alignment</FieldLabel>
           <AlignmentControl value={field.settings?.align ?? "center"} onChange={setAlign} />

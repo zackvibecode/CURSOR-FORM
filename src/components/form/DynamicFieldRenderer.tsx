@@ -53,6 +53,14 @@ export function DynamicFieldRenderer({
         }
 
         if (field.type === "image") {
+          const imageSize = field.settings?.imageSize ?? "medium";
+          const imageSizeClass =
+            imageSize === "full"
+              ? "w-full max-w-full"
+              : imageSize === "fit"
+                ? "max-h-80 max-w-full"
+                : "max-h-96 w-full max-w-md";
+
           if (!field.settings?.imageUrl) {
             return preview ? (
               <div
@@ -69,7 +77,10 @@ export function DynamicFieldRenderer({
               <img
                 src={field.settings.imageUrl}
                 alt={field.settings.imageAlt ?? field.label ?? "Form image"}
-                className="max-h-80 max-w-full rounded-xl object-contain"
+                className={cn(
+                  "rounded-xl object-contain",
+                  imageSizeClass
+                )}
               />
             </div>
           );
