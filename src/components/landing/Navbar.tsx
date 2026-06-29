@@ -28,7 +28,9 @@ export function Navbar() {
   return (
     <header className="fixed left-1/2 top-4 z-50 w-[calc(100%-2rem)] max-w-7xl -translate-x-1/2">
       <div className="flex h-[64px] items-center justify-between rounded-2xl border border-gray-200 bg-white px-4 shadow-sm sm:px-6 lg:px-8">
-        <BrandLogo priority />
+        <div className="shrink-0">
+          <BrandLogo priority />
+        </div>
 
         <nav className="hidden items-center gap-0 lg:flex">
           <a
@@ -39,7 +41,7 @@ export function Navbar() {
           </a>
           <a
             href="#how-it-works"
-            className="flex h-9 items-center rounded-lg px-2.5 text-[13px] font-medium text-gray-600 transition-colors hover:text-whatsapp-deep"
+            className="flex h-9 items-center whitespace-nowrap rounded-lg px-2.5 text-[13px] font-medium text-gray-600 transition-colors hover:text-whatsapp-deep"
           >
             How it works
           </a>

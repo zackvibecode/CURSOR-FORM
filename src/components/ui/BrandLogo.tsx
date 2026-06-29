@@ -69,7 +69,7 @@ export function BrandLogo({
       href="/"
       aria-label="OneForm home"
       className={cn(
-        "group inline-flex min-w-0 items-center overflow-hidden",
+        "group inline-flex min-w-0 shrink-0 items-center",
         variant === "text" && "gap-2",
         className
       )}
