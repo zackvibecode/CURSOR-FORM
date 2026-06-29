@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { WhatsAppIcon } from "@/components/ui/WhatsAppIcon";
+import { FlagIcon } from "@/components/ui/FlagIcon";
 import { ChevronDown, MessageCircle } from "lucide-react";
 
 export function Hero() {
@@ -55,7 +56,7 @@ export function Hero() {
                   type="button"
                   className="flex items-center gap-1.5 border-r border-gray-200 bg-gray-50 px-3 py-3.5 text-sm text-gray-700"
                 >
-                  <span className="text-lg leading-none">🇲🇾</span>
+                  <span className="text-lg leading-none"><FlagIcon code="MY" className="h-4 w-5" /></span>
                   <span className="font-medium">+60</span>
                   <ChevronDown className="h-4 w-4 text-gray-400" />
                 </button>

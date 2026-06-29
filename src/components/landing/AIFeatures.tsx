@@ -2,13 +2,14 @@ import Image from "next/image";
 import Link from "next/link";
 import { Sparkles, Globe, Repeat, ArrowRight } from "lucide-react";
 import { ScrollReveal } from "@/components/ui/ScrollReveal";
+import { FlagIcon } from "@/components/ui/FlagIcon";
 
 const languages = [
-  { flag: "🇺🇸", name: "English" },
-  { flag: "🇪🇸", name: "Spanish" },
-  { flag: "🇫🇷", name: "French" },
-  { flag: "🇯🇵", name: "Japanese" },
-  { flag: "🇰🇷", name: "Korean" },
+  { code: "US", name: "English" },
+  { code: "ES", name: "Spanish" },
+  { code: "FR", name: "French" },
+  { code: "JP", name: "Japanese" },
+  { code: "KR", name: "Korean" },
 ];
 
 export function AIFeatures() {
@@ -108,7 +109,7 @@ export function AIFeatures() {
                     key={lang.name}
                     className="inline-flex items-center gap-1 rounded-lg border border-gray-100 bg-gray-50 px-2.5 py-1 text-xs font-medium text-gray-600"
                   >
-                    <span>{lang.flag}</span>
+                    <FlagIcon code={lang.code} />
                     {lang.name}
                   </span>
                 ))}
