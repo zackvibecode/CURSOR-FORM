@@ -30,34 +30,34 @@ export function Navbar() {
       <div className="flex h-[64px] items-center justify-between rounded-2xl border border-gray-200 bg-white px-4 shadow-sm sm:px-6 lg:px-8">
         <BrandLogo priority />
 
-        <nav className="hidden items-center gap-0.5 md:flex">
+        <nav className="hidden items-center gap-0 lg:flex">
           <a
             href="#demo-video"
-            className="flex h-9 items-center rounded-lg px-3 text-sm font-medium text-gray-600 transition-colors hover:text-whatsapp-deep"
+            className="flex h-9 items-center rounded-lg px-2.5 text-[13px] font-medium text-gray-600 transition-colors hover:text-whatsapp-deep"
           >
             Demo
           </a>
           <a
             href="#how-it-works"
-            className="flex h-9 items-center rounded-lg px-3 text-sm font-medium text-gray-600 transition-colors hover:text-whatsapp-deep"
+            className="flex h-9 items-center rounded-lg px-2.5 text-[13px] font-medium text-gray-600 transition-colors hover:text-whatsapp-deep"
           >
             How it works
           </a>
           <a
             href="#features"
-            className="flex h-9 items-center rounded-lg px-3 text-sm font-medium text-gray-600 transition-colors hover:text-whatsapp-deep"
+            className="flex h-9 items-center rounded-lg px-2.5 text-[13px] font-medium text-gray-600 transition-colors hover:text-whatsapp-deep"
           >
             Features
           </a>
           <Link
             href="/pricing"
-            className="flex h-9 items-center rounded-lg px-3 text-sm font-medium text-gray-600 transition-colors hover:text-whatsapp-deep"
+            className="flex h-9 items-center rounded-lg px-2.5 text-[13px] font-medium text-gray-600 transition-colors hover:text-whatsapp-deep"
           >
             Pricing
           </Link>
           <a
             href="#templates"
-            className="flex h-9 items-center rounded-lg px-3 text-sm font-medium text-gray-600 transition-colors hover:text-whatsapp-deep"
+            className="flex h-9 items-center rounded-lg px-2.5 text-[13px] font-medium text-gray-600 transition-colors hover:text-whatsapp-deep"
           >
             Templates
           </a>
@@ -65,7 +65,7 @@ export function Navbar() {
           {/* Tools Dropdown */}
           <div className="relative" ref={dropdownRef}>
             <button
-              className="flex h-9 items-center gap-1 rounded-lg px-3 text-sm font-medium text-gray-600 transition-colors hover:text-whatsapp-deep"
+              className="flex h-9 items-center gap-1 rounded-lg px-2.5 text-[13px] font-medium text-gray-600 transition-colors hover:text-whatsapp-deep"
               onClick={() => setToolsOpen(!toolsOpen)}
             >
               Tools
@@ -101,19 +101,19 @@ export function Navbar() {
 
           <Link
             href="/login"
-            className="flex h-9 items-center rounded-lg px-3 text-sm font-medium text-gray-600 transition-colors hover:text-whatsapp-deep"
+            className="flex h-9 items-center rounded-lg px-2.5 text-[13px] font-medium text-gray-600 transition-colors hover:text-whatsapp-deep"
           >
             Login
           </Link>
           <Link href="/signup">
-            <button className="ml-1.5 inline-flex h-9 items-center gap-1.5 rounded-lg bg-whatsapp px-4 text-sm font-semibold text-white shadow-sm transition-all hover:bg-[#0DB849] hover:shadow-md">
-              Create a free form
+            <button className="ml-1 inline-flex h-9 items-center gap-1.5 rounded-lg bg-whatsapp px-3.5 text-[13px] font-semibold text-white shadow-sm transition-all hover:bg-[#0DB849] hover:shadow-md">
+              Get started
             </button>
           </Link>
         </nav>
 
         <button
-          className="rounded-lg p-2 transition-colors hover:bg-gray-50 md:hidden"
+          className="rounded-lg p-2 transition-colors hover:bg-gray-50 lg:hidden"
           onClick={() => setOpen(!open)}
           aria-label="Toggle menu"
         >
@@ -123,7 +123,7 @@ export function Navbar() {
 
       {/* Mobile menu */}
       {open && (
-        <div className="mt-2 rounded-2xl border border-gray-200 bg-white px-4 py-4 shadow-lg md:hidden">
+        <div className="mt-2 rounded-2xl border border-gray-200 bg-white px-4 py-4 shadow-lg lg:hidden">
           <nav className="flex flex-col gap-1">
             <a href="#demo-video" onClick={() => setOpen(false)} className="rounded-lg px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
               Demo Video
@@ -166,7 +166,7 @@ export function Navbar() {
             </Link>
             <Link href="/signup" onClick={() => setOpen(false)}>
               <button className="mt-2 w-full rounded-xl bg-whatsapp py-2.5 text-sm font-semibold text-white shadow-sm">
-                Create a free form
+                Get started
               </button>
             </Link>
           </nav>
