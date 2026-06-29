@@ -13,6 +13,18 @@ function sanitizeWhatsAppText(text: string): string {
     .replace(/[\u2013\u2014]/g, "-");
 }
 
+/** Strip emoji and pictographic characters that render as tofu on some devices.
+ *  Keeps arrows, math symbols, and geometric shapes that are commonly used in text. */
+function stripEmoji(text: string): string {
+  return text
+    .replace(
+      /[\u{1F000}-\u{1FAFF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{1F1E6}-\u{1F1FF}\u{FE00}-\u{FE0F}\u{200D}]/gu,
+      ""
+    )
+    .replace(/ {2,}/g, " ")
+    .trim();
+}
+
 /** Wrap text in WhatsApp bold markers with no extra whitespace inside. */
 function whatsappBold(text: string): string {
   const trimmed = text.trim();
@@ -22,7 +34,7 @@ function whatsappBold(text: string): string {
 
 /** Format a field label for WhatsApp bold, e.g. *Your name:* */
 function formatWhatsAppBoldLabel(label: string): string {
-  const cleanLabel = sanitizeWhatsAppText(label);
+  const cleanLabel = sanitizeWhatsAppText(stripEmoji(label));
 
   if (/:\s*$/.test(cleanLabel)) {
     return whatsappBold(cleanLabel);
@@ -36,7 +48,7 @@ export function buildWhatsAppMessage(
   fields: FormField[],
   answers: Record<string, string>
 ): string {
-  const cleanTitle = sanitizeWhatsAppText(formTitle);
+  const cleanTitle = sanitizeWhatsAppText(stripEmoji(formTitle));
   const lines = [whatsappBold(`New Lead - ${cleanTitle}`), ""];
 
   fields.forEach((field) => {
@@ -45,7 +57,8 @@ export function buildWhatsAppMessage(
     const answer = answers[field.id]?.trim();
     if (!answer) return;
 
-    lines.push(`${formatWhatsAppBoldLabel(field.label)} ${answer}`);
+    const boldAnswer = whatsappBold(sanitizeWhatsAppText(stripEmoji(answer)));
+    lines.push(`${formatWhatsAppBoldLabel(field.label)} ${boldAnswer}`);
   });
 
   return lines.join("\n");
@@ -64,6 +77,9 @@ export function buildWhatsAppMessageFromTemplate(
   answers: Record<string, string>
 ): string | null {
   if (!template || !template.trim()) return null;
+
+  // Strip emoji from template before processing
+  const cleanTemplate = stripEmoji(template);
 
   const normalizeKey = (value: string) =>
     value
@@ -85,30 +101,28 @@ export function buildWhatsAppMessageFromTemplate(
   const labelToAnswer = new Map<string, string>();
   fields.forEach((field) => {
     if (field.type === "title") return;
-    const answer = answers[field.id]?.trim();
-    if (answer) {
-      const label = field.label.trim();
-      addAnswerKey(labelToAnswer, label, answer);
+    const rawAnswer = answers[field.id]?.trim();
+    if (!rawAnswer) return;
+    const answer = sanitizeWhatsAppText(stripEmoji(rawAnswer));
+    const label = field.label.trim();
+    addAnswerKey(labelToAnswer, label, answer);
 
-      const withoutCommonPrefix = label.replace(/^(your|customer|client)\s+/i, "");
-      addAnswerKey(labelToAnswer, withoutCommonPrefix, answer);
+    const withoutCommonPrefix = label.replace(/^(your|customer|client)\s+/i, "");
+    addAnswerKey(labelToAnswer, withoutCommonPrefix, answer);
 
-      // Common form labels often include a suffix, but templates use the short
-      // version (e.g. "Phone:" instead of "Phone number:").
-      addAnswerKey(labelToAnswer, label.replace(/\s+(number|address)$/i, ""), answer);
-      addAnswerKey(labelToAnswer, withoutCommonPrefix.replace(/\s+(number|address)$/i, ""), answer);
+    addAnswerKey(labelToAnswer, label.replace(/\s+(number|address)$/i, ""), answer);
+    addAnswerKey(labelToAnswer, withoutCommonPrefix.replace(/\s+(number|address)$/i, ""), answer);
 
-      if (field.type === "email") addAnswerKey(labelToAnswer, "email", answer);
-      if (field.type === "phone") addAnswerKey(labelToAnswer, "phone", answer);
-      if (field.type === "date") {
-        addAnswerKey(labelToAnswer, "date", answer);
-        addAnswerKey(labelToAnswer, "preferred date", answer);
-      }
-      if (field.type === "textarea") addAnswerKey(labelToAnswer, "message", answer);
+    if (field.type === "email") addAnswerKey(labelToAnswer, "email", answer);
+    if (field.type === "phone") addAnswerKey(labelToAnswer, "phone", answer);
+    if (field.type === "date") {
+      addAnswerKey(labelToAnswer, "date", answer);
+      addAnswerKey(labelToAnswer, "preferred date", answer);
     }
+    if (field.type === "textarea") addAnswerKey(labelToAnswer, "message", answer);
   });
 
-  const withPlaceholders = template.replace(/\{\{\s*([^}]+?)\s*\}\}/g, (_match, rawKey) => {
+  const withPlaceholders = cleanTemplate.replace(/\{\{\s*([^}]+?)\s*\}\}/g, (_match, rawKey) => {
     const key = normalizeKey(String(rawKey));
     return labelToAnswer.get(key) ?? "";
   });
@@ -121,7 +135,7 @@ export function buildWhatsAppMessageFromTemplate(
 
       const [, prefix, rawLabel] = emptyLabelMatch;
       const answer = labelToAnswer.get(normalizeKey(rawLabel));
-      return answer ? `${prefix}${rawLabel}: ${answer}` : line;
+      return answer ? `${prefix}${rawLabel}: *${answer}*` : line;
     })
     .join("\n");
 
