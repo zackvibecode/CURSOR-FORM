@@ -18,6 +18,8 @@ interface UserSettings {
   email_notifications?: boolean;
   whatsapp_notifications?: boolean;
   submission_alerts?: boolean;
+  meta_pixel_id?: string | null;
+  meta_pixel_enabled?: boolean;
 }
 
 const DEFAULT_SETTINGS: UserSettings = {
@@ -30,6 +32,8 @@ const DEFAULT_SETTINGS: UserSettings = {
   email_notifications: true,
   whatsapp_notifications: true,
   submission_alerts: false,
+  meta_pixel_id: "",
+  meta_pixel_enabled: false,
 };
 
 function SectionCard({
@@ -225,6 +229,32 @@ export function SettingsForm({ profileEmail }: { profileEmail: string }) {
               setSettings((s) => ({ ...s, submission_alerts: checked }))
             }
           />
+        </div>
+      </SectionCard>
+
+      <SectionCard title="Meta Pixel Analytics" description="Track form views and submissions with Meta Ads.">
+        <div className="space-y-4">
+          <Toggle
+            id="metaPixelEnabled"
+            label="Enable Meta Pixel tracking"
+            checked={settings.meta_pixel_enabled ?? false}
+            onChange={(checked) =>
+              setSettings((s) => ({ ...s, meta_pixel_enabled: checked }))
+            }
+          />
+          {settings.meta_pixel_enabled && (
+            <div>
+              <Label htmlFor="metaPixelId">Meta Pixel ID</Label>
+              <Input
+                id="metaPixelId"
+                value={settings.meta_pixel_id ?? ""}
+                onChange={(e) =>
+                  setSettings((s) => ({ ...s, meta_pixel_id: e.target.value.trim() }))
+                }
+                placeholder="123456789012345"
+              />
+            </div>
+          )}
         </div>
       </SectionCard>
 

@@ -17,6 +17,7 @@ interface PublicFormProps {
   whatsappTemplate?: string | null;
   onSubmit?: (data: Record<string, string>) => Promise<string | void>;
   preview?: boolean;
+  pixelId?: string;
 }
 
 export function PublicFormView({
@@ -29,6 +30,7 @@ export function PublicFormView({
   whatsappTemplate,
   onSubmit,
   preview = false,
+  pixelId,
 }: PublicFormProps) {
   const [values, setValues] = useState<Record<string, string>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -78,6 +80,14 @@ export function PublicFormView({
         if (assignedPhone) {
           targetPhone = assignedPhone;
         }
+      }
+
+      if (pixelId && typeof window !== "undefined" && window.fbq) {
+        window.fbq("track", "Lead", {
+          content_name: title,
+          content_category: "form_submission",
+          form_id: formId,
+        });
       }
 
       const url = buildWhatsAppUrl(targetPhone, title, fields, values, whatsappTemplate);

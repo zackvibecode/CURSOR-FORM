@@ -30,6 +30,7 @@ export default async function PublicFormPage({
     <PublicFormClient
       form={data.form}
       fields={data.fields.map(mapDbFieldToFormField)}
+      pixelId={data.pixelId}
     />
   );
 }

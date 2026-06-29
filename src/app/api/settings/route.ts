@@ -44,6 +44,8 @@ export async function PUT(request: Request) {
     email_notifications,
     whatsapp_notifications,
     submission_alerts,
+    meta_pixel_id,
+    meta_pixel_enabled,
   } = body;
 
   // Upsert: update if exists, insert if not
@@ -60,6 +62,8 @@ export async function PUT(request: Request) {
         email_notifications,
         whatsapp_notifications,
         submission_alerts,
+        meta_pixel_id,
+        meta_pixel_enabled,
         updated_at: new Date().toISOString(),
       },
       {

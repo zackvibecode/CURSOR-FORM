@@ -1,6 +1,7 @@
 "use client";
 
 import { PublicFormView } from "@/components/form/PublicFormView";
+import { MetaPixel } from "@/components/analytics/MetaPixel";
 import type { DbForm } from "@/lib/database.types";
 import type { FormField } from "@/lib/form-schema";
 import type { CSSProperties } from "react";
@@ -8,6 +9,7 @@ import type { CSSProperties } from "react";
 interface PublicFormClientProps {
   form: DbForm;
   fields: FormField[];
+  pixelId?: string;
 }
 
 const lightFormTheme = {
@@ -19,7 +21,7 @@ const lightFormTheme = {
   "--muted-fg": "#666666",
 } as CSSProperties;
 
-export function PublicFormClient({ form, fields }: PublicFormClientProps) {
+export function PublicFormClient({ form, fields, pixelId }: PublicFormClientProps) {
   const handleSubmit = async (answers: Record<string, string>) => {
     const res = await fetch(`/api/forms/${form.id}/submit`, {
       method: "POST",
@@ -38,6 +40,7 @@ export function PublicFormClient({ form, fields }: PublicFormClientProps) {
 
   return (
     <div className="min-h-screen bg-bg text-fg [color-scheme:light]" style={lightFormTheme}>
+      {pixelId && <MetaPixel pixelId={pixelId} />}
       <main className="px-4 py-10 sm:py-14">
         <div className="mx-auto max-w-lg rounded-xl border border-border bg-card p-6 shadow-sm sm:p-8">
           <PublicFormView
@@ -47,6 +50,7 @@ export function PublicFormClient({ form, fields }: PublicFormClientProps) {
             whatsappNumber={form.whatsapp_number}
             fields={fields}
             formId={form.id}
+            pixelId={pixelId}
             whatsappTemplate={
               (form.settings as { whatsapp_template?: string } | null)?.whatsapp_template
             }
