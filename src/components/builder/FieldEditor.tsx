@@ -60,7 +60,8 @@ export function FieldEditor({
                 className="min-h-[160px] font-mono text-xs"
               />
               <p className="mt-2 text-[11px] text-muted-fg">
-                Customize the message sent to WhatsApp. Use lines like
+                Template auto-updates bila kau tambah, buang, atau rename field.
+                Kau masih boleh edit manual. Use lines like
                 {" "}Name: / Phone: or placeholders like {"{{Your name}}"}.
               </p>
             </div>
@@ -130,8 +131,8 @@ export function FieldEditor({
             className="min-h-[120px] font-mono text-xs"
           />
           <p className="mt-2 text-[11px] text-muted-fg">
-            Lines like Name: and Phone: will auto-fill from submitted answers.
-            You can also use {"{{Field label}}"} placeholders.
+            Template auto-syncs bila kau ubah field. Lines like Name: and Phone:
+            will auto-fill from submitted answers. Kau masih boleh edit manual.
           </p>
         </div>
       )}

@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import type { FormField, FieldType } from "@/lib/form-schema";
 import { createDefaultField } from "@/lib/form-schema";
+import { syncTemplateWithFields } from "@/lib/template-sync";
 import { FieldPalette } from "./FieldPalette";
 import { FormCanvas } from "./FormCanvas";
 import { FieldEditor } from "./FieldEditor";
@@ -72,6 +73,12 @@ export function FormBuilder({ formId, initialData }: FormBuilderProps) {
   const [mobileDrawer, setMobileDrawer] = useState<"add" | "edit" | null>(null);
 
   const selectedField = fields.find((f) => f.id === selectedId) ?? null;
+
+  // Auto-sync WhatsApp template when fields change (add/remove/rename).
+  // Only triggers on fields change, not on manual template edits.
+  useEffect(() => {
+    setWhatsappTemplate((prev) => syncTemplateWithFields(prev, fields));
+  }, [fields]);
 
   const handleAddField = (type: FieldType) => {
     const field = createDefaultField(type, fields.length);
