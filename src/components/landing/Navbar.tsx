@@ -30,34 +30,34 @@ export function Navbar() {
       <div className="flex h-[64px] items-center justify-between rounded-2xl border border-gray-200 bg-white px-4 shadow-sm sm:px-6 lg:px-8">
         <BrandLogo priority />
 
-        <nav className="hidden items-center gap-1 md:flex">
+        <nav className="hidden items-center gap-0.5 md:flex">
           <a
             href="#demo-video"
-            className="rounded-lg px-3 py-2 text-sm font-medium text-gray-600 transition-colors hover:text-whatsapp-deep"
+            className="flex h-9 items-center rounded-lg px-3 text-sm font-medium text-gray-600 transition-colors hover:text-whatsapp-deep"
           >
             Demo
           </a>
           <a
             href="#how-it-works"
-            className="rounded-lg px-3 py-2 text-sm font-medium text-gray-600 transition-colors hover:text-whatsapp-deep"
+            className="flex h-9 items-center rounded-lg px-3 text-sm font-medium text-gray-600 transition-colors hover:text-whatsapp-deep"
           >
             How it works
           </a>
           <a
             href="#features"
-            className="rounded-lg px-3 py-2 text-sm font-medium text-gray-600 transition-colors hover:text-whatsapp-deep"
+            className="flex h-9 items-center rounded-lg px-3 text-sm font-medium text-gray-600 transition-colors hover:text-whatsapp-deep"
           >
             Features
           </a>
           <Link
             href="/pricing"
-            className="rounded-lg px-3 py-2 text-sm font-medium text-gray-600 transition-colors hover:text-whatsapp-deep"
+            className="flex h-9 items-center rounded-lg px-3 text-sm font-medium text-gray-600 transition-colors hover:text-whatsapp-deep"
           >
             Pricing
           </Link>
           <a
             href="#templates"
-            className="rounded-lg px-3 py-2 text-sm font-medium text-gray-600 transition-colors hover:text-whatsapp-deep"
+            className="flex h-9 items-center rounded-lg px-3 text-sm font-medium text-gray-600 transition-colors hover:text-whatsapp-deep"
           >
             Templates
           </a>
@@ -65,7 +65,7 @@ export function Navbar() {
           {/* Tools Dropdown */}
           <div className="relative" ref={dropdownRef}>
             <button
-              className="flex items-center gap-1 rounded-lg px-3 py-2 text-sm font-medium text-gray-600 transition-colors hover:text-whatsapp-deep"
+              className="flex h-9 items-center gap-1 rounded-lg px-3 text-sm font-medium text-gray-600 transition-colors hover:text-whatsapp-deep"
               onClick={() => setToolsOpen(!toolsOpen)}
             >
               Tools
@@ -97,16 +97,16 @@ export function Navbar() {
             )}
           </div>
 
-          <div className="ml-2 h-6 w-px bg-gray-200" />
+          <div className="mx-1.5 h-6 w-px bg-gray-200" />
 
           <Link
             href="/login"
-            className="rounded-lg px-3 py-2 text-sm font-medium text-gray-600 transition-colors hover:text-whatsapp-deep"
+            className="flex h-9 items-center rounded-lg px-3 text-sm font-medium text-gray-600 transition-colors hover:text-whatsapp-deep"
           >
             Login
           </Link>
           <Link href="/signup">
-            <button className="ml-2 inline-flex items-center gap-1.5 rounded-xl bg-whatsapp px-4 py-2 text-sm font-semibold text-white shadow-sm transition-all hover:bg-[#0DB849] hover:shadow-md">
+            <button className="ml-1.5 inline-flex h-9 items-center gap-1.5 rounded-lg bg-whatsapp px-4 text-sm font-semibold text-white shadow-sm transition-all hover:bg-[#0DB849] hover:shadow-md">
               Create a free form
             </button>
           </Link>

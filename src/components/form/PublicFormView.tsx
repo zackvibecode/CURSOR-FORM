@@ -91,6 +91,9 @@ export function PublicFormView({
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <div className="mb-2 text-center">
+        {title && (
+          <h1 className="text-xl font-bold leading-snug text-fg">{title}</h1>
+        )}
         {description && <p className="mt-1 text-sm text-muted-fg">{description}</p>}
       </div>
 

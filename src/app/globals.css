@@ -50,6 +50,8 @@
     @apply bg-bg text-fg antialiased;
     font-feature-settings: "cv11", "ss01";
     font-variation-settings: "opsz" 32;
+    font-family: var(--font-geist-sans), "Segoe UI Emoji", "Apple Color Emoji",
+      "Noto Color Emoji", "Segoe UI Symbol", "Android-Emoji", sans-serif;
   }
 
   ::selection {
