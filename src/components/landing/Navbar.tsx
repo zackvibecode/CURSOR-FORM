@@ -28,7 +28,7 @@ export function Navbar() {
   return (
     <header className="fixed left-1/2 top-4 z-50 w-[calc(100%-2rem)] max-w-7xl -translate-x-1/2">
       <div className="flex h-[64px] items-center justify-between rounded-2xl border border-gray-200 bg-white px-4 shadow-sm sm:px-6 lg:px-8">
-        <div className="shrink-0">
+        <div className="flex shrink-0 items-center">
           <BrandLogo priority />
         </div>
 

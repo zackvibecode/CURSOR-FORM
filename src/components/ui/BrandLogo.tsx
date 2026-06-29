@@ -1,3 +1,5 @@
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
@@ -46,10 +48,10 @@ export function BrandLogo({
   priority?: boolean;
   variant?: "image" | "text";
 }) {
-  const imageHeights = {
-    sm: "h-6",
-    md: "h-7",
-    lg: "h-8",
+  const imageSizes = {
+    sm: "h-6 w-auto",
+    md: "h-7 w-auto",
+    lg: "h-8 w-auto",
   };
 
   const textSizes = {
@@ -89,14 +91,16 @@ export function BrandLogo({
           </span>
         </>
       ) : (
-        <Image
-          src="/oneform-logo.png"
-          alt="One Form"
-          width={LOGO_WIDTH}
-          height={LOGO_HEIGHT}
-          className={cn("max-w-full object-contain", imageHeights[size])}
-          priority={priority}
-        />
+        <div className={cn("relative", imageSizes[size])} style={{ aspectRatio: `${LOGO_WIDTH} / ${LOGO_HEIGHT}` }}>
+          <Image
+            src="/oneform-logo.png"
+            alt="One Form"
+            fill
+            className="object-contain"
+            priority={priority}
+            sizes="200px"
+          />
+        </div>
       )}
     </Link>
   );
