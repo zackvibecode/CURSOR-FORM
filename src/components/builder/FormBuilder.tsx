@@ -386,7 +386,7 @@ export function FormBuilder({ formId, initialData }: FormBuilderProps) {
                     <div>
                       <Label>Form URL slug</Label>
                       <div className="flex items-center gap-2">
-                        <span className="font-mono text-xs text-muted-fg">/f/</span>
+                        <span className="font-mono text-xs text-muted-fg">/</span>
                         <Input
                           value={slug}
                           onChange={(e) => setSlug(slugify(e.target.value))}

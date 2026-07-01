@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { formUpdateBodySchema } from "@/lib/form-schema";
+import { isReservedSlug } from "@/lib/reserved-slugs";
 
 export async function GET(
   _request: Request,
@@ -75,6 +76,10 @@ export async function PUT(
     parsed.data;
 
   if (slug) {
+    if (isReservedSlug(slug)) {
+      return NextResponse.json({ error: "This URL is reserved and cannot be used" }, { status: 400 });
+    }
+
     const { data: existing } = await supabase
       .from("forms")
       .select("id")

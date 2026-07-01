@@ -18,32 +18,34 @@ function normalizeMembers(members: TeamMemberRow[] | null | undefined): TeamMemb
 
 /** Resolve which WhatsApp number receives this submission (team rotator or fallback). */
 export async function resolveSubmissionRecipient(
-  supabase: SupabaseClient,
+  _supabase: SupabaseClient,
   formId: string,
   fallbackPhone: string
 ): Promise<ResolvedRecipient | null> {
-  const { data: recipient, error: recipientError } = await supabase.rpc(
-    "resolve_form_recipient",
-    { p_form_id: formId }
-  );
+  const admin = createAdminClient();
 
-  if (!recipientError && Array.isArray(recipient) && recipient.length > 0) {
-    const row = recipient[0] as { member_name: string | null; member_phone: string | null };
-    if (row?.member_phone?.trim()) {
-      return {
-        phone: row.member_phone.trim(),
-        name: row.member_name?.trim() || null,
-        fromTeam: true,
-      };
+  if (admin) {
+    const { data: recipient, error: recipientError } = await admin.rpc(
+      "resolve_form_recipient",
+      { p_form_id: formId }
+    );
+
+    if (!recipientError && Array.isArray(recipient) && recipient.length > 0) {
+      const row = recipient[0] as { member_name: string | null; member_phone: string | null };
+      if (row?.member_phone?.trim()) {
+        return {
+          phone: row.member_phone.trim(),
+          name: row.member_name?.trim() || null,
+          fromTeam: true,
+        };
+      }
+    }
+
+    if (recipientError) {
+      console.warn("[team-rotator] resolve_form_recipient failed:", recipientError.message);
     }
   }
 
-  if (recipientError) {
-    console.warn("[team-rotator] resolve_form_recipient failed:", recipientError.message);
-  }
-
-  // Server-side fallback: read team settings with service role when RPC returns nothing
-  const admin = createAdminClient();
   if (!admin) {
     return fallbackPhone.trim()
       ? { phone: fallbackPhone.trim(), name: null, fromTeam: false }

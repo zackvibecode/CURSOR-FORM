@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
-import { getFormPublicUrl } from "@/lib/forms";
+import { getFormPublicUrl, getFormPublicPath } from "@/lib/forms";
 import { formatDate } from "@/lib/utils";
 import { cn } from "@/lib/utils";
 import { FORM_TEMPLATES } from "@/lib/templates";
@@ -292,7 +292,7 @@ export function FormList({ forms: initialForms }: FormListProps) {
                           {form.title}
                         </Link>
                         <span className="block max-w-[260px] truncate font-mono text-[11px] text-muted-fg">
-                          /f/{form.slug}
+                          {getFormPublicPath(form.slug)}
                         </span>
                       </td>
                       <td className="px-3 py-3">

@@ -182,9 +182,13 @@ async function checkFormsCrud() {
   if (pub.status === 200 && pubJson.form?.slug === slug) pass("Public form API by slug");
   else fail("Public form API by slug", `status ${pub.status}`);
 
-  const page = await fetch(`${BASE}/f/${slug}`);
-  if (page.status === 200) pass("Public form page /f/slug");
-  else fail("Public form page /f/slug", `status ${page.status}`);
+  const page = await fetch(`${BASE}/${slug}`);
+  if (page.status === 200) pass("Public form page /slug");
+  else fail("Public form page /slug", `status ${page.status}`);
+
+  const legacy = await fetch(`${BASE}/f/${slug}`, { redirect: "manual" });
+  if (legacy.status === 307 || legacy.status === 308) pass("Legacy /f/slug redirects");
+  else fail("Legacy /f/slug redirects", `status ${legacy.status}`);
 
   const submit = await fetch(`${BASE}/api/forms/${formId}/submit`, {
     method: "POST",

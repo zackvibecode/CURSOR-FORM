@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { isReservedSlug } from "./reserved-slugs";
 
 export const FIELD_TYPES = [
   "title",
@@ -40,13 +41,16 @@ export const formFieldSchema = z.object({
 
 export type FormField = z.infer<typeof formFieldSchema>;
 
+const formSlugSchema = z
+  .string()
+  .min(3, "Slug must be at least 3 characters")
+  .regex(/^[a-z0-9-]+$/, "Slug can only contain lowercase letters, numbers, and hyphens")
+  .refine((slug) => !isReservedSlug(slug), "This URL is reserved and cannot be used");
+
 export const formSettingsSchema = z.object({
   title: z.string().min(1, "Form title is required"),
   description: z.string().optional(),
-  slug: z
-    .string()
-    .min(3, "Slug must be at least 3 characters")
-    .regex(/^[a-z0-9-]+$/, "Slug can only contain lowercase letters, numbers, and hyphens"),
+  slug: formSlugSchema,
   whatsapp_number: z
     .string()
     .min(8, "WhatsApp number is required")
@@ -59,11 +63,7 @@ export type FormSettings = z.infer<typeof formSettingsSchema>;
 
 export const formUpdateBodySchema = z.object({
   title: z.string().min(1).optional(),
-  slug: z
-    .string()
-    .min(3)
-    .regex(/^[a-z0-9-]+$/)
-    .optional(),
+  slug: formSlugSchema.optional(),
   whatsapp_number: z
     .string()
     .min(8)

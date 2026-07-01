@@ -39,6 +39,10 @@ export function getAppUrl(path = "") {
   return `${base}${path}`;
 }
 
+export function getFormPublicPath(slug: string) {
+  return `/${slug}`;
+}
+
 export function getFormPublicUrl(slug: string) {
-  return getAppUrl(`/f/${slug}`);
+  return getAppUrl(getFormPublicPath(slug));
 }

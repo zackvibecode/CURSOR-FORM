@@ -48,7 +48,7 @@ Open [http://localhost:3000](http://localhost:3000)
 - Google OAuth login
 - Dashboard to manage forms
 - Drag-and-drop form builder (8+ field types)
-- Public form pages at `/f/[slug]`
+- Public form pages at `/[slug]` (legacy `/f/[slug]` redirects)
 - Submit leads via WhatsApp `wa.me` deep link
 - Preview modal (mobile/desktop)
 - Copy share link
