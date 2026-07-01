@@ -1,22 +1,10 @@
 <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <style>
-    :root {
-      --favicon-bg: #ffffff;
-      --favicon-mark: #111827;
-      --favicon-accent: #10d050;
-    }
-
-    @media (prefers-color-scheme: dark) {
-      :root {
-        --favicon-bg: #0a0a0a;
-        --favicon-mark: #f9fafb;
-      }
-    }
-  </style>
-  <rect width="64" height="64" rx="16" fill="var(--favicon-bg)"/>
-  <path d="M32 7C20.402 7 11 16.402 11 28C11 35.438 14.675 42 20.45 45.938L16.25 56L27.188 51.188C28.675 51.713 30.338 52.063 32 52.063C43.598 52.063 53 42.66 53 31.063C53 19.465 43.598 7 32 7Z" stroke="var(--favicon-mark)" stroke-width="3.5" stroke-linejoin="round"/>
-  <path d="M21 23H43" stroke="var(--favicon-mark)" stroke-width="3" stroke-linecap="round"/>
-  <path d="M21 31H37" stroke="var(--favicon-mark)" stroke-width="3" stroke-linecap="round"/>
-  <path d="M21 39H31" stroke="var(--favicon-mark)" stroke-width="3" stroke-linecap="round"/>
-  <path d="M35 42L39 46L48 33" stroke="var(--favicon-accent)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="32" cy="32" r="32" fill="#ffffff"/>
+  <g transform="translate(8 8)">
+    <path d="M24 2C13.059 2 4 11.059 4 22C4 28.125 6.75 33.5 10.8 36.938L8.25 45L16.875 41.063C18.15 41.438 19.575 41.688 24 41.688C34.941 41.688 44 32.629 44 21.688C44 10.747 34.941 2 24 2Z" stroke="#111827" stroke-width="2.75" stroke-linejoin="round"/>
+    <path d="M14 16H34" stroke="#111827" stroke-width="2.25" stroke-linecap="round"/>
+    <path d="M14 22H29" stroke="#111827" stroke-width="2.25" stroke-linecap="round"/>
+    <path d="M14 28H23" stroke="#111827" stroke-width="2.25" stroke-linecap="round"/>
+    <path d="M25.5 30.5L28.5 33.5L36 24" stroke="#10D050" stroke-width="3.25" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
 </svg>

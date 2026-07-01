@@ -1,0 +1,1 @@
+{"sessionId":"4a0815","runId":"run1","hypothesisId":"A,B","location":"FormBuilder.tsx:handleSave","message":"save payload keys","data":{"payloadKeys":["title","slug","whatsapp_number","cta_text","description","status","fields"],"templateInState":"Hi, I would like to submit my ","templateSentToApi":false},"timestamp":1780147847997}
