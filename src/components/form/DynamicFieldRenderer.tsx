@@ -4,6 +4,8 @@ import type { FormField } from "@/lib/form-schema";
 import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
 import { Label } from "@/components/ui/Label";
+import { OptionLabel } from "@/components/ui/OptionLabel";
+import { formatOptionDisplay } from "@/lib/option-flag";
 import { cn } from "@/lib/utils";
 import { ChevronDown } from "lucide-react";
 
@@ -124,7 +126,9 @@ export function DynamicFieldRenderer({
                         disabled={preview}
                         className="accent-whatsapp"
                       />
-                      <span className="text-sm text-fg">{opt}</span>
+                      <span className="text-sm text-fg">
+                        <OptionLabel option={opt} />
+                      </span>
                     </label>
                   );
                 })}
@@ -143,7 +147,7 @@ export function DynamicFieldRenderer({
                   <option value="">Select an option</option>
                   {(field.options ?? []).map((opt) => (
                     <option key={opt} value={opt}>
-                      {opt}
+                      {formatOptionDisplay(opt)}
                     </option>
                   ))}
                 </select>
@@ -174,7 +178,7 @@ export function DynamicFieldRenderer({
                         disabled={preview}
                         className="accent-whatsapp"
                       />
-                      {opt}
+                      <OptionLabel option={opt} />
                     </label>
                   );
                 })}

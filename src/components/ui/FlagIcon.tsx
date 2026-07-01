@@ -14,7 +14,16 @@ const FLAG_MAP: Record<string, string> = {
   ID: "id",
   TH: "th",
   SG: "sg",
-  AU: "au",
+  VN: "vn",
+  TR: "tr",
+  NZ: "nz",
+  IT: "it",
+  PH: "ph",
+  AE: "ae",
+  SA: "sa",
+  EG: "eg",
+  TW: "tw",
+  HK: "hk",
 };
 
 interface FlagIconProps {
