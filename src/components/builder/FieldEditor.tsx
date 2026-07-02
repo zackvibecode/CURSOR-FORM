@@ -1,10 +1,9 @@
 "use client";
 
 import type { FormField } from "@/lib/form-schema";
-import { Label } from "@/components/ui/Label";
-import { Textarea } from "@/components/ui/Textarea";
 import { ArrowLeft, Trash2 } from "lucide-react";
 import { OptionsFieldEditor, StandardFieldEditor } from "./OptionsFieldEditor";
+import { WhatsAppTemplateEditor } from "./WhatsAppTemplateEditor";
 
 const FIELD_LABELS: Record<string, string> = {
   text: "Text Input",
@@ -22,6 +21,7 @@ const FIELD_LABELS: Record<string, string> = {
 
 interface FieldEditorProps {
   field: FormField | null;
+  fields: FormField[];
   onUpdate: (field: FormField) => void;
   whatsappTemplate?: string;
   onWhatsappTemplateChange?: (value: string) => void;
@@ -32,6 +32,7 @@ interface FieldEditorProps {
 
 export function FieldEditor({
   field,
+  fields,
   onUpdate,
   whatsappTemplate,
   onWhatsappTemplateChange,
@@ -50,21 +51,12 @@ export function FieldEditor({
         </p>
 
         {onWhatsappTemplateChange && (
-          <div className="mt-6 space-y-4">
-            <div>
-              <Label>WhatsApp message template</Label>
-              <Textarea
-                value={whatsappTemplate ?? ""}
-                onChange={(e) => onWhatsappTemplateChange(e.target.value)}
-                placeholder="Hi, I would like to submit my details:&#10;Name: {{name}}&#10;Phone: {{phone}}"
-                className="min-h-[160px] font-mono text-xs"
-              />
-              <p className="mt-2 text-[11px] text-muted-fg">
-                Template auto-updates bila kau tambah, buang, atau rename field.
-                Kau masih boleh edit manual. Use lines like
-                {" "}Name: / Phone: or placeholders like {"{{Your name}}"}.
-              </p>
-            </div>
+          <div className="mt-6">
+            <WhatsAppTemplateEditor
+              value={whatsappTemplate ?? ""}
+              onChange={onWhatsappTemplateChange}
+              fields={fields}
+            />
           </div>
         )}
       </aside>
@@ -124,16 +116,12 @@ export function FieldEditor({
 
       {onWhatsappTemplateChange && (
         <div className="mt-6 border-t border-border pt-4">
-          <Label>WhatsApp message template</Label>
-          <Textarea
+          <WhatsAppTemplateEditor
             value={whatsappTemplate ?? ""}
-            onChange={(e) => onWhatsappTemplateChange(e.target.value)}
-            className="min-h-[120px] font-mono text-xs"
+            onChange={onWhatsappTemplateChange}
+            fields={fields}
+            compact
           />
-          <p className="mt-2 text-[11px] text-muted-fg">
-            Template auto-syncs bila kau ubah field. Lines like Name: and Phone:
-            will auto-fill from submitted answers. Kau masih boleh edit manual.
-          </p>
         </div>
       )}
     </aside>

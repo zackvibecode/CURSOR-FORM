@@ -274,6 +274,7 @@ export function FormBuilder({ formId, initialData }: FormBuilderProps) {
           <div className="hidden lg:flex">
             <FieldEditor
               field={selectedField}
+              fields={fields}
               onUpdate={handleUpdateField}
               whatsappTemplate={whatsappTemplate}
               onWhatsappTemplateChange={setWhatsappTemplate}
@@ -325,6 +326,7 @@ export function FormBuilder({ formId, initialData }: FormBuilderProps) {
                   <FieldEditor
                     drawer
                     field={selectedField}
+                    fields={fields}
                     onUpdate={handleUpdateField}
                     whatsappTemplate={whatsappTemplate}
                     onWhatsappTemplateChange={setWhatsappTemplate}
