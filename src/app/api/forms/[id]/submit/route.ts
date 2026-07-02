@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { mapDbFieldToFormField } from "@/lib/forms";
 import { buildAnswersSchema } from "@/lib/form-schema";
-import { checkSubmissionLimit } from "@/lib/check-limits";
+import { checkSubmissionLimitForOwner } from "@/lib/check-limits";
 import { resolveSubmissionRecipient } from "@/lib/resolve-recipient";
 import { rateLimit, ipFromRequest } from "@/lib/rate-limit";
 import { headers } from "next/headers";
@@ -36,13 +36,23 @@ export async function POST(
     );
   }
 
+  let body: Record<string, string>;
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+  }
+
   const supabase = await createClient();
 
-  const { data: form } = await supabase
-    .from("forms")
-    .select("id, status, whatsapp_number, user_id")
-    .eq("id", id)
-    .single();
+  const [{ data: form }, { data: fields }] = await Promise.all([
+    supabase
+      .from("forms")
+      .select("id, status, whatsapp_number, user_id")
+      .eq("id", id)
+      .single(),
+    supabase.from("form_fields").select("*").eq("form_id", id).order("order_index"),
+  ]);
 
   if (!form) {
     return NextResponse.json({ error: "Form not found" }, { status: 404 });
@@ -52,8 +62,23 @@ export async function POST(
     return NextResponse.json({ error: "Form is not accepting submissions" }, { status: 403 });
   }
 
-  // Check submission limit
-  const limitCheck = await checkSubmissionLimit(id);
+  const parsedFields = (fields ?? []).map(mapDbFieldToFormField);
+  const answersSchema = buildAnswersSchema(parsedFields);
+  const result = answersSchema.safeParse(body);
+
+  if (!result.success) {
+    const errors = result.error.issues.map((issue) => ({
+      field: issue.path[0],
+      message: issue.message,
+    }));
+    return NextResponse.json({ error: "Validation failed", details: errors }, { status: 400 });
+  }
+
+  const [limitCheck, resolved] = await Promise.all([
+    checkSubmissionLimitForOwner(form.user_id, id),
+    resolveSubmissionRecipient(supabase, id, form.whatsapp_number?.trim() ?? ""),
+  ]);
+
   if (!limitCheck.allowed) {
     return NextResponse.json(
       {
@@ -64,14 +89,6 @@ export async function POST(
       { status: 403 }
     );
   }
-
-  // Team rotator: round-robin across team members when distribute mode is on.
-  // Never silently fall back to the main form number when distribute is configured.
-  const resolved = await resolveSubmissionRecipient(
-    supabase,
-    id,
-    form.whatsapp_number?.trim() ?? ""
-  );
 
   if (!resolved?.phone) {
     return NextResponse.json(
@@ -86,32 +103,6 @@ export async function POST(
 
   const assignedPhone = resolved.phone;
   const assignedName = resolved.name;
-
-  // Fetch form fields & build validation schema
-  const { data: fields } = await supabase
-    .from("form_fields")
-    .select("*")
-    .eq("form_id", id)
-    .order("order_index");
-
-  const parsedFields = (fields ?? []).map(mapDbFieldToFormField);
-  const answersSchema = buildAnswersSchema(parsedFields);
-
-  let body;
-  try {
-    body = await request.json();
-  } catch {
-    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
-  }
-
-  const result = answersSchema.safeParse(body);
-  if (!result.success) {
-    const errors = result.error.issues.map((issue) => ({
-      field: issue.path[0],
-      message: issue.message,
-    }));
-    return NextResponse.json({ error: "Validation failed", details: errors }, { status: 400 });
-  }
 
   const { error: insertError } = await supabase.from("submissions").insert({
     form_id: id,

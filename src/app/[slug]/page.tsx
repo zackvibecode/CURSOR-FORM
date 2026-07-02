@@ -37,6 +37,7 @@ export default async function PublicFormPage({
       form={data.form}
       fields={data.fields.map(mapDbFieldToFormField)}
       pixelId={data.pixelId}
+      usesTeamRouting={data.usesTeamRouting}
     />
   );
 }

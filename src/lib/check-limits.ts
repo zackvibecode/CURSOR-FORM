@@ -51,28 +51,18 @@ export async function checkFormLimit(userId: string): Promise<LimitCheckResult> 
   };
 }
 
-export async function checkSubmissionLimit(formId: string): Promise<LimitCheckResult> {
-  const supabase = await createSupabaseClient();
-
-  // Get the form owner's user_id
-  const { data: form } = await supabase
-    .from("forms")
-    .select("user_id")
-    .eq("id", formId)
-    .single();
-
-  if (!form) {
-    return { allowed: false, remaining: 0, max: 0, plan: "free" };
-  }
-
-  const plan = await getUserPlan(form.user_id);
+export async function checkSubmissionLimitForOwner(
+  userId: string,
+  formId: string
+): Promise<LimitCheckResult> {
+  const plan = await getUserPlan(userId);
   const limits = getPlanLimits(plan);
 
   if (limits.maxSubmissionsPerMonth === Infinity) {
     return { allowed: true, remaining: Infinity, max: Infinity, plan };
   }
 
-  // Count this month's submissions for this form
+  const supabase = await createSupabaseClient();
   const now = new Date();
   const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
 
@@ -96,4 +86,21 @@ export async function checkSubmissionLimit(formId: string): Promise<LimitCheckRe
     max,
     plan,
   };
+}
+
+export async function checkSubmissionLimit(formId: string): Promise<LimitCheckResult> {
+  const supabase = await createSupabaseClient();
+
+  // Get the form owner's user_id
+  const { data: form } = await supabase
+    .from("forms")
+    .select("user_id")
+    .eq("id", formId)
+    .single();
+
+  if (!form) {
+    return { allowed: false, remaining: 0, max: 0, plan: "free" };
+  }
+
+  return checkSubmissionLimitForOwner(form.user_id, formId);
 }

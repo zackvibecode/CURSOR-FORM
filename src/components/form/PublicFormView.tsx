@@ -4,7 +4,6 @@ import type { FormField } from "@/lib/form-schema";
 import { buildWhatsAppUrl } from "@/lib/whatsapp";
 import { DynamicFieldRenderer } from "@/components/form/DynamicFieldRenderer";
 import { Button } from "@/components/ui/Button";
-import { WhatsAppIcon } from "@/components/ui/WhatsAppIcon";
 import { useState } from "react";
 
 interface PublicFormProps {
@@ -18,6 +17,29 @@ interface PublicFormProps {
   onSubmit?: (data: Record<string, string>) => Promise<string | void>;
   preview?: boolean;
   pixelId?: string;
+  usesTeamRouting?: boolean;
+}
+
+function trackLead(pixelId: string | undefined, title: string, formId: string) {
+  if (!pixelId || typeof window === "undefined" || !window.fbq) return;
+  window.fbq("track", "Lead", {
+    content_name: title,
+    content_category: "form_submission",
+    form_id: formId,
+  });
+}
+
+function saveSubmissionInBackground(formId: string, values: Record<string, string>) {
+  void fetch(`/api/forms/${formId}/submit`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(values),
+    keepalive: true,
+  });
+}
+
+function openWhatsApp(url: string) {
+  window.location.replace(url);
 }
 
 export function PublicFormView({
@@ -31,6 +53,7 @@ export function PublicFormView({
   onSubmit,
   preview = false,
   pixelId,
+  usesTeamRouting = false,
 }: PublicFormProps) {
   const [values, setValues] = useState<Record<string, string>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -70,9 +93,23 @@ export function PublicFormView({
 
     if (preview) return;
 
-    setSubmitting(true);
-
     try {
+      if (!usesTeamRouting) {
+        const url = buildWhatsAppUrl(
+          whatsappNumber,
+          title,
+          fields,
+          values,
+          whatsappTemplate
+        );
+        trackLead(pixelId, title, formId);
+        saveSubmissionInBackground(formId, values);
+        openWhatsApp(url);
+        return;
+      }
+
+      setSubmitting(true);
+
       let targetPhone = whatsappNumber;
 
       if (onSubmit) {
@@ -82,17 +119,10 @@ export function PublicFormView({
         }
       }
 
-      if (pixelId && typeof window !== "undefined" && window.fbq) {
-        window.fbq("track", "Lead", {
-          content_name: title,
-          content_category: "form_submission",
-          form_id: formId,
-        });
-      }
-
       const url = buildWhatsAppUrl(targetPhone, title, fields, values, whatsappTemplate);
-      window.location.href = url;
-    } catch (err) {
+      trackLead(pixelId, title, formId);
+      openWhatsApp(url);
+    } catch {
       setErrors({ _form: "Submission failed. Please try again." });
       setSubmitting(false);
     }

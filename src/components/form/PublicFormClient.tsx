@@ -10,6 +10,7 @@ interface PublicFormClientProps {
   form: DbForm;
   fields: FormField[];
   pixelId?: string;
+  usesTeamRouting?: boolean;
 }
 
 const lightFormTheme = {
@@ -21,7 +22,12 @@ const lightFormTheme = {
   "--muted-fg": "#666666",
 } as CSSProperties;
 
-export function PublicFormClient({ form, fields, pixelId }: PublicFormClientProps) {
+export function PublicFormClient({
+  form,
+  fields,
+  pixelId,
+  usesTeamRouting = false,
+}: PublicFormClientProps) {
   const handleSubmit = async (answers: Record<string, string>) => {
     const res = await fetch(`/api/forms/${form.id}/submit`, {
       method: "POST",
@@ -54,7 +60,8 @@ export function PublicFormClient({ form, fields, pixelId }: PublicFormClientProp
             whatsappTemplate={
               (form.settings as { whatsapp_template?: string } | null)?.whatsapp_template
             }
-            onSubmit={handleSubmit}
+            usesTeamRouting={usesTeamRouting}
+            onSubmit={usesTeamRouting ? handleSubmit : undefined}
           />
         </div>
       </main>
