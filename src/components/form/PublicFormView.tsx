@@ -2,6 +2,7 @@
 
 import type { FormField } from "@/lib/form-schema";
 import { buildWhatsAppUrl } from "@/lib/whatsapp";
+import { trackFormSubmit } from "@/lib/meta-pixel";
 import { DynamicFieldRenderer } from "@/components/form/DynamicFieldRenderer";
 import { Button } from "@/components/ui/Button";
 import { useState } from "react";
@@ -18,15 +19,6 @@ interface PublicFormProps {
   preview?: boolean;
   pixelId?: string;
   usesTeamRouting?: boolean;
-}
-
-function trackLead(pixelId: string | undefined, title: string, formId: string) {
-  if (!pixelId || typeof window === "undefined" || !window.fbq) return;
-  window.fbq("track", "Lead", {
-    content_name: title,
-    content_category: "form_submission",
-    form_id: formId,
-  });
 }
 
 function saveSubmissionInBackground(formId: string, values: Record<string, string>) {
@@ -102,7 +94,7 @@ export function PublicFormView({
           values,
           whatsappTemplate
         );
-        trackLead(pixelId, title, formId);
+        trackFormSubmit(pixelId, title, formId);
         saveSubmissionInBackground(formId, values);
         openWhatsApp(url);
         return;
@@ -120,7 +112,7 @@ export function PublicFormView({
       }
 
       const url = buildWhatsAppUrl(targetPhone, title, fields, values, whatsappTemplate);
-      trackLead(pixelId, title, formId);
+      trackFormSubmit(pixelId, title, formId);
       openWhatsApp(url);
     } catch {
       setErrors({ _form: "Submission failed. Please try again." });
