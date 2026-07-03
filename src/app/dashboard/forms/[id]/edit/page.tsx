@@ -2,6 +2,9 @@ import { redirect, notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { FormBuilder } from "@/components/builder/FormBuilder";
 import { mapDbFieldToFormField } from "@/lib/forms";
+import { getWhatsappTemplateFromForm } from "@/lib/form-settings";
+
+export const dynamic = "force-dynamic";
 
 export default async function EditFormPage({
   params,
@@ -46,8 +49,7 @@ export default async function EditFormPage({
         description: form.description ?? "",
         status: form.status,
         fields: (fields ?? []).map(mapDbFieldToFormField),
-        whatsappTemplate:
-          (form.settings as { whatsapp_template?: string } | null)?.whatsapp_template,
+        whatsappTemplate: getWhatsappTemplateFromForm(form),
       }}
     />
   );

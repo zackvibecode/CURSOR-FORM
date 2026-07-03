@@ -4,6 +4,7 @@ import { PublicFormView } from "@/components/form/PublicFormView";
 import { MetaPixel } from "@/components/analytics/MetaPixel";
 import type { DbForm } from "@/lib/database.types";
 import type { FormField } from "@/lib/form-schema";
+import { getWhatsappTemplateFromForm } from "@/lib/form-settings";
 import type { CSSProperties } from "react";
 
 interface PublicFormClientProps {
@@ -57,9 +58,7 @@ export function PublicFormClient({
             fields={fields}
             formId={form.id}
             pixelId={pixelId}
-            whatsappTemplate={
-              (form.settings as { whatsapp_template?: string } | null)?.whatsapp_template
-            }
+            whatsappTemplate={getWhatsappTemplateFromForm(form)}
             usesTeamRouting={usesTeamRouting}
             onSubmit={usesTeamRouting ? handleSubmit : undefined}
           />

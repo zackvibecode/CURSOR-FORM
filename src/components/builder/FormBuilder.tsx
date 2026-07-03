@@ -1,9 +1,14 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import type { FormField, FieldType } from "@/lib/form-schema";
 import { createDefaultField } from "@/lib/form-schema";
 import { syncTemplateWithFields } from "@/lib/template-sync";
+import {
+  fieldsStructureKey,
+  getInitialWhatsappTemplate,
+  getWhatsappTemplateFromForm,
+} from "@/lib/form-settings";
 import { FieldPalette } from "./FieldPalette";
 import { FormCanvas } from "./FormCanvas";
 import { FieldEditor } from "./FieldEditor";
@@ -64,19 +69,21 @@ export function FormBuilder({ formId, initialData }: FormBuilderProps) {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
   const [copied, setCopied] = useState(false);
-  const [whatsappTemplate, setWhatsappTemplate] = useState(
-    initialData.whatsappTemplate ??
-      "Hi, I would like to submit my details:\nName:\nPhone:\nEmail:\nService:\nQuantity:\nPreferred Date:\nMessage:"
+  const [whatsappTemplate, setWhatsappTemplate] = useState(() =>
+    getInitialWhatsappTemplate(initialData.whatsappTemplate, initialData.fields)
   );
   const [confirmModal, setConfirmModal] = useState(false);
   const [confirmAction, setConfirmAction] = useState<"save" | "publish" | null>(null);
   const [mobileDrawer, setMobileDrawer] = useState<"add" | "edit" | null>(null);
+  const lastSyncedFieldsKey = useRef(fieldsStructureKey(initialData.fields));
 
   const selectedField = fields.find((f) => f.id === selectedId) ?? null;
 
-  // Auto-sync WhatsApp template when fields change (add/remove/rename).
-  // Only triggers on fields change, not on manual template edits.
+  // Sync template only when fields are added, removed, or renamed — not on first load.
   useEffect(() => {
+    const nextKey = fieldsStructureKey(fields);
+    if (nextKey === lastSyncedFieldsKey.current) return;
+    lastSyncedFieldsKey.current = nextKey;
     setWhatsappTemplate((prev) => syncTemplateWithFields(prev, fields));
   }, [fields]);
 
@@ -121,6 +128,12 @@ export function FormBuilder({ formId, initialData }: FormBuilderProps) {
         }
 
         if (publish) setStatus("published");
+
+        const savedTemplate = getWhatsappTemplateFromForm(data.form ?? {});
+        if (savedTemplate) {
+          setWhatsappTemplate(savedTemplate);
+        }
+
         toast(publish ? "Form published!" : "Saved successfully", "success");
         setSaving(false);
         setTimeout(() => setMessage(""), 3000);

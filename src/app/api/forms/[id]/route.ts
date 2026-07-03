@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { formUpdateBodySchema } from "@/lib/form-schema";
 import { isReservedSlug } from "@/lib/reserved-slugs";
+import { mergeFormSettings } from "@/lib/form-settings";
 
 export async function GET(
   _request: Request,
@@ -53,7 +54,7 @@ export async function PUT(
 
   const { data: existingForm } = await supabase
     .from("forms")
-    .select("id")
+    .select("id, settings")
     .eq("id", id)
     .eq("user_id", user.id)
     .single();
@@ -92,6 +93,8 @@ export async function PUT(
     }
   }
 
+  const mergedSettings = mergeFormSettings(existingForm.settings, settings);
+
   const { data: form, error } = await supabase
     .from("forms")
     .update({
@@ -101,7 +104,7 @@ export async function PUT(
       cta_text,
       description,
       status,
-      ...(settings !== undefined ? { settings } : {}),
+      ...(mergedSettings !== undefined ? { settings: mergedSettings } : {}),
     })
     .eq("id", id)
     .eq("user_id", user.id)
