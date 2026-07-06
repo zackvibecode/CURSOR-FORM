@@ -69,11 +69,6 @@ export function PublicFormView({
     setRoutingSnapshot(readTeamRoutingSnapshot(formId, teamRoutingSnapshot));
   }, [formId, teamRoutingSnapshot]);
 
-  useEffect(() => {
-    if (preview) return;
-    void fetch(`/api/forms/${formId}/submit`, { method: "HEAD" }).catch(() => {});
-  }, [formId, preview]);
-
   const handleChange = (fieldId: string, value: string) => {
     setValues((prev) => ({ ...prev, [fieldId]: value }));
     setErrors((prev) => {

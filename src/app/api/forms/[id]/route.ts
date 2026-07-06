@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { revalidateTag } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { formUpdateBodySchema } from "@/lib/form-schema";
 import { isReservedSlug } from "@/lib/reserved-slugs";
@@ -148,6 +149,10 @@ export async function PUT(
     .select("*")
     .eq("form_id", id)
     .order("order_index");
+
+  if (status === "published" || existingForm) {
+    revalidateTag("published-forms");
+  }
 
   return NextResponse.json({ form, fields: updatedFields ?? [] });
 }

@@ -1,11 +1,28 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import type { Metadata } from "next";
 import { getPublishedFormBySlug } from "@/lib/public-form";
 import { mapDbFieldToFormField } from "@/lib/forms";
 import { isReservedSlug } from "@/lib/reserved-slugs";
 import { PublicFormClient } from "@/components/form/PublicFormClient";
 
-export const revalidate = 60;
+export const revalidate = 120;
+
+export async function generateMetadata({
+  params,
+}: {
+  params: { slug: string };
+}): Promise<Metadata> {
+  const data = await getPublishedFormBySlug(params.slug);
+  if (!data) {
+    return { title: "Form not found" };
+  }
+
+  return {
+    title: data.form.title,
+    description: data.form.description || `Fill out ${data.form.title}`,
+  };
+}
 
 export default async function PublicFormPage({
   params,
