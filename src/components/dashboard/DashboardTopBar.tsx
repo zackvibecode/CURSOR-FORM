@@ -3,6 +3,7 @@
 import { usePathname, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { LogOut, Menu, Settings, Search, ChevronRight } from "lucide-react";
+import { SubmissionNotificationBell } from "./SubmissionNotificationBell";
 import { useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 
@@ -108,6 +109,8 @@ export function DashboardTopBar({ userName, onMenuClick }: DashboardTopBarProps)
             /
           </kbd>
         </div>
+
+        <SubmissionNotificationBell />
 
         {/* Avatar dropdown */}
         <div className="relative" ref={menuRef}>

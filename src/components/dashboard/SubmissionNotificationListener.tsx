@@ -12,7 +12,7 @@ interface SubmissionNotificationListenerProps {
 export function SubmissionNotificationListener({
   userId,
 }: SubmissionNotificationListenerProps) {
-  const { incrementUnread } = useSubmissionNotifications();
+  const { addNotification } = useSubmissionNotifications();
   const [enabled, setEnabled] = useState(false);
 
   useEffect(() => {
@@ -64,7 +64,10 @@ export function SubmissionNotificationListener({
 
           if (!form) return;
 
-          incrementUnread();
+          addNotification({
+            formId,
+            formTitle: form.title,
+          });
           toast(`New lead — ${form.title}`, "success");
         }
       )
@@ -73,7 +76,7 @@ export function SubmissionNotificationListener({
     return () => {
       void supabase.removeChannel(channel);
     };
-  }, [enabled, userId, incrementUnread]);
+  }, [enabled, userId, addNotification]);
 
   return null;
 }
