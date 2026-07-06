@@ -120,7 +120,9 @@ export function PublicFormView({
     setPendingInstant(setSubmitting, true);
     trackFormSubmit(pixelId, title, formId);
     saveSubmissionInBackground(formId, values);
-    openWhatsApp(url);
+
+    // Give Meta Pixel time to send the Lead event before navigating to WhatsApp.
+    window.setTimeout(() => openWhatsApp(url), 350);
   };
 
   return (
