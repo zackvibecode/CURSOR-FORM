@@ -6,7 +6,7 @@ import { checkSubmissionLimitForOwner } from "@/lib/check-limits";
 import { resolveSubmissionRecipient } from "@/lib/resolve-recipient";
 import { rateLimit, ipFromRequest } from "@/lib/rate-limit";
 import {
-  dispatchSubmissionNotifications,
+  scheduleSubmissionNotifications,
   loadOwnerNotificationSettings,
 } from "@/lib/notifications/dispatch";
 import { headers } from "next/headers";
@@ -78,9 +78,10 @@ export async function POST(
     return NextResponse.json({ error: "Validation failed", details: errors }, { status: 400 });
   }
 
-  const [limitCheck, resolved] = await Promise.all([
+  const [limitCheck, resolved, ownerSettings] = await Promise.all([
     checkSubmissionLimitForOwner(form.user_id, id),
     resolveSubmissionRecipient(supabase, id, form.whatsapp_number?.trim() ?? ""),
+    loadOwnerNotificationSettings(form.user_id),
   ]);
 
   if (!limitCheck.allowed) {
@@ -120,9 +121,8 @@ export async function POST(
     return NextResponse.json({ error: insertError.message }, { status: 500 });
   }
 
-  const ownerSettings = await loadOwnerNotificationSettings(form.user_id);
   if (ownerSettings) {
-    await dispatchSubmissionNotifications({
+    scheduleSubmissionNotifications({
       form: {
         id: form.id,
         title: form.title,

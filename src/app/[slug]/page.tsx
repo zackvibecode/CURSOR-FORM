@@ -5,6 +5,8 @@ import { mapDbFieldToFormField } from "@/lib/forms";
 import { isReservedSlug } from "@/lib/reserved-slugs";
 import { PublicFormClient } from "@/components/form/PublicFormClient";
 
+export const revalidate = 60;
+
 export default async function PublicFormPage({
   params,
 }: {

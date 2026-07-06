@@ -1,3 +1,4 @@
+import { waitUntil } from "@vercel/functions";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { buildSubmissionNotificationPayload } from "./format-submission";
 import { sendN8nWebhook } from "./n8n";
@@ -95,10 +96,21 @@ export async function dispatchSubmissionNotifications(
   await Promise.allSettled(tasks);
 }
 
+export function scheduleSubmissionNotifications(input: DispatchNotificationInput): void {
+  const task = dispatchSubmissionNotifications(input).catch((error) => {
+    logNotificationError("dispatch", error);
+  });
+
+  if (process.env.VERCEL) {
+    waitUntil(task);
+    return;
+  }
+
+  void task;
+}
+
 export function dispatchSubmissionNotificationsInBackground(
   input: DispatchNotificationInput
 ): void {
-  void dispatchSubmissionNotifications(input).catch((error) => {
-    logNotificationError("dispatch", error);
-  });
+  scheduleSubmissionNotifications(input);
 }
