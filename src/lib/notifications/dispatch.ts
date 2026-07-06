@@ -3,7 +3,6 @@ import { buildSubmissionNotificationPayload } from "./format-submission";
 import { sendN8nWebhook } from "./n8n";
 import { sendSubmissionEmail } from "./resend";
 import { sendTelegramNotification } from "./telegram";
-import { debugSessionLog } from "@/lib/debug-session-log";
 import type { DispatchNotificationInput, NotificationOwnerSettings } from "./types";
 
 function logNotificationError(channel: string, error: unknown) {
@@ -82,14 +81,6 @@ export async function dispatchSubmissionNotifications(
     owner.telegram_bot_token?.trim() &&
     owner.telegram_chat_id?.trim()
   ) {
-    // #region agent log
-    debugSessionLog(
-      "dispatch.ts:telegram-queue",
-      "telegram task queued",
-      { chatIdLen: owner.telegram_chat_id.trim().length },
-      "H4"
-    );
-    // #endregion
     tasks.push(
       sendTelegramNotification({
         botToken: owner.telegram_bot_token.trim(),
@@ -102,14 +93,6 @@ export async function dispatchSubmissionNotifications(
   }
 
   await Promise.allSettled(tasks);
-  // #region agent log
-  debugSessionLog(
-    "dispatch.ts:complete",
-    "all notification tasks settled",
-    { taskCount: tasks.length },
-    "H1"
-  );
-  // #endregion
 }
 
 export function dispatchSubmissionNotificationsInBackground(

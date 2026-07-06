@@ -1,5 +1,4 @@
 import type { SubmissionNotificationPayload } from "./types";
-import { debugSessionLog } from "@/lib/debug-session-log";
 
 interface SendTelegramNotificationInput {
   botToken: string;
@@ -26,10 +25,6 @@ export async function sendTelegramNotification({
     `[Open dashboard](${payload.dashboard_url})`,
   ].join("\n");
 
-  // #region agent log
-  debugSessionLog("telegram.ts:send-start", "calling Telegram API", {}, "H1");
-  // #endregion
-  const sendStart = Date.now();
   const response = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -40,15 +35,6 @@ export async function sendTelegramNotification({
       disable_web_page_preview: true,
     }),
   });
-
-  // #region agent log
-  debugSessionLog(
-    "telegram.ts:send-end",
-    "Telegram API responded",
-    { ok: response.ok, status: response.status, durationMs: Date.now() - sendStart },
-    "H1"
-  );
-  // #endregion
 
   if (!response.ok) {
     const body = await response.text().catch(() => "");
