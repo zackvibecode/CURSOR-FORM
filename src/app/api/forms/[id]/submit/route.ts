@@ -1,14 +1,11 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { mapDbFieldToFormField } from "@/lib/forms";
 import { buildAnswersSchema } from "@/lib/form-schema";
 import { checkSubmissionLimitForOwner } from "@/lib/check-limits";
 import { resolveSubmissionRecipient } from "@/lib/resolve-recipient";
 import { rateLimit, ipFromRequest } from "@/lib/rate-limit";
-import {
-  scheduleSubmissionNotifications,
-  loadOwnerNotificationSettings,
-} from "@/lib/notifications/dispatch";
+import { scheduleSubmissionNotificationsForOwner } from "@/lib/notifications/dispatch";
 import { headers } from "next/headers";
 
 function getIpHash(): string | null {
@@ -23,6 +20,13 @@ function getIpHash(): string | null {
     hash |= 0;
   }
   return hash.toString(36);
+}
+
+const FIELD_COLUMNS =
+  "id, type, label, placeholder, required, options, order_index, settings";
+
+export async function HEAD() {
+  return new NextResponse(null, { status: 204 });
 }
 
 export async function POST(
@@ -47,15 +51,22 @@ export async function POST(
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
 
-  const supabase = await createClient();
+  const admin = createAdminClient();
+  if (!admin) {
+    return NextResponse.json({ error: "Server configuration error" }, { status: 500 });
+  }
 
   const [{ data: form }, { data: fields }] = await Promise.all([
-    supabase
+    admin
       .from("forms")
       .select("id, status, whatsapp_number, user_id, title, slug")
       .eq("id", id)
       .single(),
-    supabase.from("form_fields").select("*").eq("form_id", id).order("order_index"),
+    admin
+      .from("form_fields")
+      .select(FIELD_COLUMNS)
+      .eq("form_id", id)
+      .order("order_index"),
   ]);
 
   if (!form) {
@@ -66,7 +77,9 @@ export async function POST(
     return NextResponse.json({ error: "Form is not accepting submissions" }, { status: 403 });
   }
 
-  const parsedFields = (fields ?? []).map(mapDbFieldToFormField);
+  const parsedFields = (fields ?? []).map((row) =>
+    mapDbFieldToFormField(row as Parameters<typeof mapDbFieldToFormField>[0])
+  );
   const answersSchema = buildAnswersSchema(parsedFields);
   const result = answersSchema.safeParse(body);
 
@@ -78,10 +91,9 @@ export async function POST(
     return NextResponse.json({ error: "Validation failed", details: errors }, { status: 400 });
   }
 
-  const [limitCheck, resolved, ownerSettings] = await Promise.all([
-    checkSubmissionLimitForOwner(form.user_id, id),
-    resolveSubmissionRecipient(supabase, id, form.whatsapp_number?.trim() ?? ""),
-    loadOwnerNotificationSettings(form.user_id),
+  const [limitCheck, resolved] = await Promise.all([
+    checkSubmissionLimitForOwner(form.user_id, id, admin),
+    resolveSubmissionRecipient(admin, id, form.whatsapp_number?.trim() ?? ""),
   ]);
 
   if (!limitCheck.allowed) {
@@ -109,7 +121,7 @@ export async function POST(
   const assignedPhone = resolved.phone;
   const assignedName = resolved.name;
 
-  const { error: insertError } = await supabase.from("submissions").insert({
+  const { error: insertError } = await admin.from("submissions").insert({
     form_id: id,
     data: result.data,
     ip_hash: getIpHash(),
@@ -121,21 +133,19 @@ export async function POST(
     return NextResponse.json({ error: insertError.message }, { status: 500 });
   }
 
-  if (ownerSettings) {
-    scheduleSubmissionNotifications({
-      form: {
-        id: form.id,
-        title: form.title,
-        slug: form.slug,
-        user_id: form.user_id,
-      },
-      fields: parsedFields,
-      answers: result.data,
-      assignedPhone,
-      assignedName,
-      owner: ownerSettings,
-    });
-  }
+  scheduleSubmissionNotificationsForOwner({
+    userId: form.user_id,
+    form: {
+      id: form.id,
+      title: form.title,
+      slug: form.slug,
+      user_id: form.user_id,
+    },
+    fields: parsedFields,
+    answers: result.data,
+    assignedPhone,
+    assignedName,
+  });
 
   return NextResponse.json({
     success: true,

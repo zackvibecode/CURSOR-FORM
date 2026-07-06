@@ -4,9 +4,16 @@ import type { FormField } from "@/lib/form-schema";
 import { buildWhatsAppUrl } from "@/lib/whatsapp";
 import { trackFormSubmit } from "@/lib/meta-pixel";
 import { setPendingInstant } from "@/lib/instant-pending";
+import {
+  advanceTeamRoutingSnapshot,
+  peekNextTeamRecipient,
+  readTeamRoutingSnapshot,
+  writeTeamRoutingSnapshot,
+  type TeamRoutingSnapshot,
+} from "@/lib/team-routing-client";
 import { DynamicFieldRenderer } from "@/components/form/DynamicFieldRenderer";
 import { Button } from "@/components/ui/Button";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 interface PublicFormProps {
   title: string;
@@ -16,10 +23,10 @@ interface PublicFormProps {
   fields: FormField[];
   formId: string;
   whatsappTemplate?: string | null;
-  onSubmit?: (data: Record<string, string>) => Promise<string | void>;
   preview?: boolean;
   pixelId?: string;
   usesTeamRouting?: boolean;
+  teamRoutingSnapshot?: TeamRoutingSnapshot | null;
 }
 
 function openWhatsApp(url: string) {
@@ -33,7 +40,7 @@ function saveSubmissionInBackground(formId: string, values: Record<string, strin
     body: JSON.stringify(values),
     keepalive: true,
   }).catch(() => {
-    // Navigation may cancel the request; keepalive improves delivery on supported browsers.
+    // keepalive helps the request finish during navigation
   });
 }
 
@@ -45,14 +52,27 @@ export function PublicFormView({
   fields,
   formId,
   whatsappTemplate,
-  onSubmit,
   preview = false,
   pixelId,
   usesTeamRouting = false,
+  teamRoutingSnapshot = null,
 }: PublicFormProps) {
   const [values, setValues] = useState<Record<string, string>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
+  const [routingSnapshot, setRoutingSnapshot] = useState<TeamRoutingSnapshot | null>(
+    teamRoutingSnapshot
+  );
+
+  useEffect(() => {
+    if (!teamRoutingSnapshot) return;
+    setRoutingSnapshot(readTeamRoutingSnapshot(formId, teamRoutingSnapshot));
+  }, [formId, teamRoutingSnapshot]);
+
+  useEffect(() => {
+    if (preview) return;
+    void fetch(`/api/forms/${formId}/submit`, { method: "HEAD" }).catch(() => {});
+  }, [formId, preview]);
 
   const handleChange = (fieldId: string, value: string) => {
     setValues((prev) => ({ ...prev, [fieldId]: value }));
@@ -63,7 +83,7 @@ export function PublicFormView({
     });
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setErrors({});
 
@@ -88,40 +108,24 @@ export function PublicFormView({
 
     if (preview) return;
 
-    try {
-      if (!usesTeamRouting) {
-        const url = buildWhatsAppUrl(
-          whatsappNumber,
-          title,
-          fields,
-          values,
-          whatsappTemplate
-        );
-        setPendingInstant(setSubmitting, true);
-        trackFormSubmit(pixelId, title, formId);
-        saveSubmissionInBackground(formId, values);
-        openWhatsApp(url);
-        return;
+    let targetPhone = whatsappNumber;
+
+    if (usesTeamRouting && routingSnapshot) {
+      const nextRecipient = peekNextTeamRecipient(routingSnapshot);
+      if (nextRecipient?.phone) {
+        targetPhone = nextRecipient.phone;
+        const advanced = advanceTeamRoutingSnapshot(routingSnapshot);
+        setRoutingSnapshot(advanced);
+        writeTeamRoutingSnapshot(formId, advanced);
       }
-
-      setPendingInstant(setSubmitting, true);
-
-      let targetPhone = whatsappNumber;
-
-      if (onSubmit) {
-        const assignedPhone = await onSubmit(values);
-        if (assignedPhone) {
-          targetPhone = assignedPhone;
-        }
-      }
-
-      const url = buildWhatsAppUrl(targetPhone, title, fields, values, whatsappTemplate);
-      trackFormSubmit(pixelId, title, formId);
-      openWhatsApp(url);
-    } catch {
-      setSubmitting(false);
-      setErrors({ _form: "Submission failed. Please try again." });
     }
+
+    const url = buildWhatsAppUrl(targetPhone, title, fields, values, whatsappTemplate);
+
+    setPendingInstant(setSubmitting, true);
+    trackFormSubmit(pixelId, title, formId);
+    saveSubmissionInBackground(formId, values);
+    openWhatsApp(url);
   };
 
   return (

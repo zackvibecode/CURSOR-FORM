@@ -1,5 +1,4 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { createAdminClient } from "@/lib/supabase/admin";
 
 export interface ResolvedRecipient {
   phone: string;
@@ -18,38 +17,34 @@ function normalizeMembers(members: TeamMemberRow[] | null | undefined): TeamMemb
 
 /** Resolve which WhatsApp number receives this submission (team rotator or fallback). */
 export async function resolveSubmissionRecipient(
-  _supabase: SupabaseClient,
+  admin: SupabaseClient | null,
   formId: string,
   fallbackPhone: string
 ): Promise<ResolvedRecipient | null> {
-  const admin = createAdminClient();
-
-  if (admin) {
-    const { data: recipient, error: recipientError } = await admin.rpc(
-      "resolve_form_recipient",
-      { p_form_id: formId }
-    );
-
-    if (!recipientError && Array.isArray(recipient) && recipient.length > 0) {
-      const row = recipient[0] as { member_name: string | null; member_phone: string | null };
-      if (row?.member_phone?.trim()) {
-        return {
-          phone: row.member_phone.trim(),
-          name: row.member_name?.trim() || null,
-          fromTeam: true,
-        };
-      }
-    }
-
-    if (recipientError) {
-      console.warn("[team-rotator] resolve_form_recipient failed:", recipientError.message);
-    }
-  }
-
   if (!admin) {
     return fallbackPhone.trim()
       ? { phone: fallbackPhone.trim(), name: null, fromTeam: false }
       : null;
+  }
+
+  const { data: recipient, error: recipientError } = await admin.rpc(
+    "resolve_form_recipient",
+    { p_form_id: formId }
+  );
+
+  if (!recipientError && Array.isArray(recipient) && recipient.length > 0) {
+    const row = recipient[0] as { member_name: string | null; member_phone: string | null };
+    if (row?.member_phone?.trim()) {
+      return {
+        phone: row.member_phone.trim(),
+        name: row.member_name?.trim() || null,
+        fromTeam: true,
+      };
+    }
+  }
+
+  if (recipientError) {
+    console.warn("[team-rotator] resolve_form_recipient failed:", recipientError.message);
   }
 
   const { data: settings } = await admin

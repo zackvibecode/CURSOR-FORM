@@ -1,4 +1,6 @@
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { createClient as createSupabaseClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { getPlanLimits, type PlanName } from "@/lib/plan-limits";
 
 export interface LimitCheckResult {
@@ -8,10 +10,10 @@ export interface LimitCheckResult {
   plan: PlanName;
 }
 
-async function getUserPlan(userId: string): Promise<PlanName> {
-  const supabase = await createSupabaseClient();
+async function getUserPlan(userId: string, supabase?: SupabaseClient | null): Promise<PlanName> {
+  const client = supabase ?? (await createSupabaseClient());
 
-  const { data: subscription } = await supabase
+  const { data: subscription } = await client
     .from("subscriptions")
     .select("plan, status")
     .eq("user_id", userId)
@@ -53,20 +55,25 @@ export async function checkFormLimit(userId: string): Promise<LimitCheckResult> 
 
 export async function checkSubmissionLimitForOwner(
   userId: string,
-  formId: string
+  formId: string,
+  supabase?: SupabaseClient | null
 ): Promise<LimitCheckResult> {
-  const plan = await getUserPlan(userId);
+  const admin = supabase ?? createAdminClient();
+  const plan = await getUserPlan(userId, admin);
   const limits = getPlanLimits(plan);
 
   if (limits.maxSubmissionsPerMonth === Infinity) {
     return { allowed: true, remaining: Infinity, max: Infinity, plan };
   }
 
-  const supabase = await createSupabaseClient();
+  if (!admin) {
+    return { allowed: false, remaining: 0, max: limits.maxSubmissionsPerMonth, plan };
+  }
+
   const now = new Date();
   const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
 
-  const { count, error } = await supabase
+  const { count, error } = await admin
     .from("submissions")
     .select("*", { count: "exact", head: true })
     .eq("form_id", formId)

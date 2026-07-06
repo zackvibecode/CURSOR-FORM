@@ -1,12 +1,14 @@
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { DbForm, DbFormField } from "@/lib/database.types";
+import type { TeamRoutingSnapshot } from "@/lib/team-routing-client";
 
 export interface PublishedFormData {
   form: DbForm;
   fields: DbFormField[];
   pixelId?: string;
   usesTeamRouting: boolean;
+  teamRoutingSnapshot: TeamRoutingSnapshot | null;
 }
 
 function formUsesTeamRouting(
@@ -61,18 +63,30 @@ export async function getPublishedFormBySlug(slug: string): Promise<PublishedFor
     admin
       ? admin
           .from("form_team_settings")
-          .select("distribution_mode, team_members")
+          .select("distribution_mode, team_members, last_assigned_index")
           .eq("form_id", form.id)
           .maybeSingle()
       : Promise.resolve({ data: null }),
   ]);
 
   const pixelId = ownerSettings?.meta_pixel_enabled ? ownerSettings.meta_pixel_id : undefined;
+  const usesTeamRouting = formUsesTeamRouting(teamSettingsResult.data);
+  const teamRoutingSnapshot =
+    usesTeamRouting && teamSettingsResult.data
+      ? {
+          distribution_mode: teamSettingsResult.data.distribution_mode,
+          team_members: (Array.isArray(teamSettingsResult.data.team_members)
+            ? teamSettingsResult.data.team_members
+            : []) as TeamRoutingSnapshot["team_members"],
+          last_assigned_index: teamSettingsResult.data.last_assigned_index ?? 0,
+        }
+      : null;
 
   return {
     form,
     fields: fields ?? [],
     pixelId,
-    usesTeamRouting: formUsesTeamRouting(teamSettingsResult.data),
+    usesTeamRouting,
+    teamRoutingSnapshot,
   };
 }

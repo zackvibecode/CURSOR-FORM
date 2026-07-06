@@ -6,6 +6,10 @@ import { sendSubmissionEmail } from "./resend";
 import { sendTelegramNotification } from "./telegram";
 import type { DispatchNotificationInput, NotificationOwnerSettings } from "./types";
 
+type SubmissionNotificationJob = Omit<DispatchNotificationInput, "owner"> & {
+  userId: string;
+};
+
 function logNotificationError(channel: string, error: unknown) {
   console.error(`[notifications:${channel}]`, error);
 }
@@ -98,6 +102,30 @@ export async function dispatchSubmissionNotifications(
 
 export function scheduleSubmissionNotifications(input: DispatchNotificationInput): void {
   const task = dispatchSubmissionNotifications(input).catch((error) => {
+    logNotificationError("dispatch", error);
+  });
+
+  if (process.env.VERCEL) {
+    waitUntil(task);
+    return;
+  }
+
+  void task;
+}
+
+export function scheduleSubmissionNotificationsForOwner(job: SubmissionNotificationJob): void {
+  const task = (async () => {
+    const owner = await loadOwnerNotificationSettings(job.userId);
+    if (!owner) return;
+    await dispatchSubmissionNotifications({
+      form: job.form,
+      fields: job.fields,
+      answers: job.answers,
+      assignedPhone: job.assignedPhone,
+      assignedName: job.assignedName,
+      owner,
+    });
+  })().catch((error) => {
     logNotificationError("dispatch", error);
   });
 

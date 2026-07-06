@@ -5,6 +5,7 @@ import { MetaPixel } from "@/components/analytics/MetaPixel";
 import type { DbForm } from "@/lib/database.types";
 import type { FormField } from "@/lib/form-schema";
 import { getWhatsappTemplateFromForm } from "@/lib/form-settings";
+import type { TeamRoutingSnapshot } from "@/lib/team-routing-client";
 import type { CSSProperties } from "react";
 
 interface PublicFormClientProps {
@@ -12,6 +13,7 @@ interface PublicFormClientProps {
   fields: FormField[];
   pixelId?: string;
   usesTeamRouting?: boolean;
+  teamRoutingSnapshot?: TeamRoutingSnapshot | null;
 }
 
 const lightFormTheme = {
@@ -28,23 +30,8 @@ export function PublicFormClient({
   fields,
   pixelId,
   usesTeamRouting = false,
+  teamRoutingSnapshot = null,
 }: PublicFormClientProps) {
-  const handleSubmit = async (answers: Record<string, string>) => {
-    const res = await fetch(`/api/forms/${form.id}/submit`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(answers),
-    });
-
-    const data = await res.json();
-
-    if (!res.ok) {
-      throw new Error(data.error ?? "Submission failed");
-    }
-
-    return data.whatsapp_number as string | undefined;
-  };
-
   return (
     <div className="min-h-screen bg-bg text-fg [color-scheme:light]" style={lightFormTheme}>
       {pixelId && <MetaPixel pixelId={pixelId} />}
@@ -60,7 +47,7 @@ export function PublicFormClient({
             pixelId={pixelId}
             whatsappTemplate={getWhatsappTemplateFromForm(form)}
             usesTeamRouting={usesTeamRouting}
-            onSubmit={usesTeamRouting ? handleSubmit : undefined}
+            teamRoutingSnapshot={teamRoutingSnapshot}
           />
         </div>
       </main>
