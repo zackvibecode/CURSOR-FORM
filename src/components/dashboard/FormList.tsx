@@ -12,14 +12,14 @@ import { CreateFormButton } from "./DashboardHeader";
 import {
   Edit,
   Trash2,
-  Copy,
   Check,
-  ExternalLink,
   FileText,
   Loader2,
   Pin,
   Plus,
   Search,
+  Share2,
+  Copy,
 } from "lucide-react";
 import { toast } from "@/components/ui/Toast";
 import { useEffect, useMemo, useState } from "react";
@@ -39,6 +39,12 @@ interface FormRow {
 interface FormListProps {
   forms: FormRow[];
 }
+
+const formActionBtnClass =
+  "inline-flex items-center gap-1.5 rounded-md border border-border bg-card px-2.5 py-1.5 text-xs font-medium text-fg transition-colors hover:bg-muted";
+
+const formShareBtnClass =
+  "inline-flex items-center gap-1.5 rounded-md border border-border bg-card px-3 py-1.5 text-xs font-medium text-fg transition-colors hover:border-whatsapp/40 hover:bg-whatsapp/5 hover:text-whatsapp-deep dark:hover:text-whatsapp";
 
 function StatusPill({ status }: { status: "draft" | "published" }) {
   return (
@@ -67,6 +73,7 @@ export function FormList({ forms: initialForms }: FormListProps) {
   const [templateOpen, setTemplateOpen] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [duplicatingId, setDuplicatingId] = useState<string | null>(null);
   const [creatingTemplateId, setCreatingTemplateId] = useState<string | null>(null);
   const [error, setError] = useState("");
   const [pinnedIds, setPinnedIds] = useState<string[]>([]);
@@ -137,7 +144,32 @@ export function FormList({ forms: initialForms }: FormListProps) {
   const handleCopy = async (slug: string, id: string) => {
     await navigator.clipboard.writeText(getFormPublicUrl(slug));
     setCopiedId(id);
+    toast("Form link copied", "success");
     setTimeout(() => setCopiedId(null), 2000);
+  };
+
+  const handleDuplicate = async (id: string) => {
+    setDuplicatingId(id);
+    setError("");
+
+    try {
+      const res = await fetch(`/api/forms/${id}/duplicate`, { method: "POST" });
+      const data = await res.json();
+
+      if (!res.ok || !data.form) {
+        setError(data.message ?? data.error ?? "Failed to duplicate form.");
+        return;
+      }
+
+      setForms((prev) => [data.form, ...prev]);
+      toast("Form duplicated", "success");
+      router.push(`/dashboard/forms/${data.form.id}/edit`);
+      router.refresh();
+    } catch {
+      setError("Network error. Please try again.");
+    } finally {
+      setDuplicatingId(null);
+    }
   };
 
   const handleTemplateCreate = async (templateId: string) => {
@@ -305,41 +337,54 @@ export function FormList({ forms: initialForms }: FormListProps) {
                         {formatDate(form.updated_at)}
                       </td>
                       <td className="px-3 py-3">
-                        <div className="flex items-center justify-end gap-0.5 opacity-60 transition-opacity group-hover:opacity-100">
+                        <div className="flex flex-wrap items-center justify-end gap-2">
                           <Link
                             href={`/dashboard/forms/${form.id}/edit`}
-                            className="rounded-md p-1.5 text-muted-fg transition-colors hover:bg-muted hover:text-fg"
-                            title="Edit"
+                            className={formActionBtnClass}
+                            title="Edit form"
                           >
-                            <Edit className="h-3.5 w-3.5" />
+                            <Edit className="h-3.5 w-3.5 shrink-0" />
+                            Edit
                           </Link>
 
+                          <button
+                            type="button"
+                            onClick={() => handleDuplicate(form.id)}
+                            disabled={duplicatingId === form.id}
+                            className={cn(formActionBtnClass, "disabled:opacity-50")}
+                            title="Duplicate form"
+                          >
+                            {duplicatingId === form.id ? (
+                              <Loader2 className="h-3.5 w-3.5 shrink-0 animate-spin" />
+                            ) : (
+                              <Copy className="h-3.5 w-3.5 shrink-0" />
+                            )}
+                            Duplicate
+                          </button>
+
                           {form.status === "published" && (
-                            <>
-                              <button
-                                onClick={() => handleCopy(form.slug, form.id)}
-                                className="rounded-md p-1.5 text-muted-fg transition-colors hover:bg-muted hover:text-fg"
-                                title="Copy link"
-                              >
-                                {copiedId === form.id ? (
-                                  <Check className="h-3.5 w-3.5 text-whatsapp" />
-                                ) : (
-                                  <Copy className="h-3.5 w-3.5" />
-                                )}
-                              </button>
-                              <a
-                                href={getFormPublicUrl(form.slug)}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="rounded-md p-1.5 text-muted-fg transition-colors hover:bg-muted hover:text-fg"
-                                title="Open"
-                              >
-                                <ExternalLink className="h-3.5 w-3.5" />
-                              </a>
-                            </>
+                            <button
+                              type="button"
+                              onClick={() => handleCopy(form.slug, form.id)}
+                              className={formShareBtnClass}
+                              title="Copy form link"
+                            >
+                              {copiedId === form.id ? (
+                                <>
+                                  <Check className="h-4 w-4 shrink-0 text-whatsapp" />
+                                  Copied
+                                </>
+                              ) : (
+                                <>
+                                  <Share2 className="h-4 w-4 shrink-0" />
+                                  Share
+                                </>
+                              )}
+                            </button>
                           )}
 
                           <button
+                            type="button"
                             onClick={() => handleDelete(form.id)}
                             disabled={deletingId === form.id}
                             className="rounded-md p-1.5 text-muted-fg transition-colors hover:bg-red-500/10 hover:text-red-600 disabled:opacity-50"
