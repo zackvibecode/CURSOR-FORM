@@ -6,9 +6,10 @@ import { checkSubmissionLimitForOwner } from "@/lib/check-limits";
 import { resolveSubmissionRecipient } from "@/lib/resolve-recipient";
 import { rateLimit, ipFromRequest } from "@/lib/rate-limit";
 import {
-  dispatchSubmissionNotificationsInBackground,
+  dispatchSubmissionNotifications,
   loadOwnerNotificationSettings,
 } from "@/lib/notifications/dispatch";
+import { debugSessionLog } from "@/lib/debug-session-log";
 import { headers } from "next/headers";
 
 function getIpHash(): string | null {
@@ -122,7 +123,20 @@ export async function POST(
 
   const ownerSettings = await loadOwnerNotificationSettings(form.user_id);
   if (ownerSettings) {
-    dispatchSubmissionNotificationsInBackground({
+    // #region agent log
+    debugSessionLog(
+      "submit/route.ts:dispatch-start",
+      "awaiting notification dispatch",
+      {
+        telegram: ownerSettings.telegram_notifications,
+        hasTelegramToken: !!ownerSettings.telegram_bot_token?.trim(),
+        hasTelegramChat: !!ownerSettings.telegram_chat_id?.trim(),
+      },
+      "H1"
+    );
+    // #endregion
+    const dispatchStart = Date.now();
+    await dispatchSubmissionNotifications({
       form: {
         id: form.id,
         title: form.title,
@@ -135,7 +149,19 @@ export async function POST(
       assignedName,
       owner: ownerSettings,
     });
+    // #region agent log
+    debugSessionLog(
+      "submit/route.ts:dispatch-end",
+      "notification dispatch finished",
+      { durationMs: Date.now() - dispatchStart },
+      "H1"
+    );
+    // #endregion
   }
+
+  // #region agent log
+  debugSessionLog("submit/route.ts:response", "returning submit response", { formId: id }, "H1");
+  // #endregion
 
   return NextResponse.json({
     success: true,
