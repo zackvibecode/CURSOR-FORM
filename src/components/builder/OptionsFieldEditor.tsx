@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 import { Input } from "@/components/ui/Input";
 import { Label } from "@/components/ui/Label";
 import { cn } from "@/lib/utils";
+import { buildYouTubeEmbedUrl, parseYouTubeVideoId } from "@/lib/youtube";
 import {
   GripVertical,
   Trash2,
@@ -337,6 +338,67 @@ export function StandardFieldEditor({ field, onUpdate }: StandardFieldEditorProp
           <FieldLabel>Image size</FieldLabel>
           <ImageSizeControl value={imageSize} onChange={setImageSize} />
         </div>
+        <div>
+          <FieldLabel>Alignment</FieldLabel>
+          <AlignmentControl value={field.settings?.align ?? "center"} onChange={setAlign} />
+        </div>
+      </div>
+    );
+  }
+
+  if (field.type === "youtube") {
+    const videoId = parseYouTubeVideoId(field.settings?.videoUrl);
+    const autoplay = field.settings?.autoplay !== false;
+
+    return (
+      <div className="space-y-5">
+        <div>
+          <FieldLabel>YouTube link</FieldLabel>
+          <Input
+            value={field.settings?.videoUrl ?? ""}
+            onChange={(e) =>
+              onUpdate({
+                ...field,
+                settings: { ...field.settings, videoUrl: e.target.value },
+              })
+            }
+            placeholder="https://www.youtube.com/watch?v=..."
+            className="mt-1"
+          />
+          {field.settings?.videoUrl && !videoId && (
+            <p className="mt-1 text-xs text-red-600 dark:text-red-400">
+              Enter a valid YouTube URL or video ID
+            </p>
+          )}
+        </div>
+
+        <label className="flex cursor-pointer items-center gap-2.5 rounded-md border border-border bg-muted/40 px-3 py-2.5">
+          <input
+            type="checkbox"
+            checked={autoplay}
+            onChange={(e) =>
+              onUpdate({
+                ...field,
+                settings: { ...field.settings, autoplay: e.target.checked },
+              })
+            }
+            className="h-3.5 w-3.5 cursor-pointer accent-whatsapp"
+          />
+          <span className="text-sm text-fg">Autoplay when form opens (muted)</span>
+        </label>
+
+        {videoId && (
+          <div className="overflow-hidden rounded-xl border border-border">
+            <iframe
+              src={buildYouTubeEmbedUrl(videoId, { autoplay: false })}
+              title="YouTube preview"
+              allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              allowFullScreen
+              className="aspect-video w-full"
+            />
+          </div>
+        )}
+
         <div>
           <FieldLabel>Alignment</FieldLabel>
           <AlignmentControl value={field.settings?.align ?? "center"} onChange={setAlign} />

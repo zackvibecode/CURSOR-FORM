@@ -6,6 +6,7 @@ import { Textarea } from "@/components/ui/Textarea";
 import { Label } from "@/components/ui/Label";
 import { OptionLabel } from "@/components/ui/OptionLabel";
 import { formatOptionDisplay } from "@/lib/option-flag";
+import { buildYouTubeEmbedUrl, parseYouTubeVideoId } from "@/lib/youtube";
 import { cn } from "@/lib/utils";
 import { ChevronDown } from "lucide-react";
 
@@ -84,6 +85,36 @@ export function DynamicFieldRenderer({
                   imageSizeClass
                 )}
               />
+            </div>
+          );
+        }
+
+        if (field.type === "youtube") {
+          const videoId = parseYouTubeVideoId(field.settings?.videoUrl);
+          const autoplay = field.settings?.autoplay !== false;
+
+          if (!videoId) {
+            return preview ? (
+              <div
+                key={field.id}
+                className="flex items-center justify-center rounded-md border border-dashed border-border py-10 text-sm text-muted-fg"
+              >
+                Add a YouTube link in field settings
+              </div>
+            ) : null;
+          }
+
+          return (
+            <div key={field.id} className={cn("flex w-full", justifyClass)}>
+              <div className="aspect-video w-full max-w-xl overflow-hidden rounded-xl border border-border bg-black shadow-sm">
+                <iframe
+                  src={buildYouTubeEmbedUrl(videoId, { autoplay, mute: autoplay })}
+                  title={field.label || "YouTube video"}
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                  allowFullScreen
+                  className="h-full w-full"
+                />
+              </div>
             </div>
           );
         }

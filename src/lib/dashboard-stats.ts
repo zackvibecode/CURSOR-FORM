@@ -34,7 +34,7 @@ function extractAllAnswers(
 ): { label: string; value: string }[] {
   const result: { label: string; value: string }[] = [];
   for (const [fieldId, { label, type }] of Array.from(fieldMap.entries())) {
-    if (type === "title" || type === "image") continue;
+    if (type === "title" || type === "image" || type === "youtube") continue;
     const raw = data[fieldId];
     let value = "";
     if (typeof raw === "string") value = raw;

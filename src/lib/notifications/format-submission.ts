@@ -10,7 +10,7 @@ export function buildSubmissionAnswerLines(
   const lines: SubmissionAnswerLine[] = [];
 
   fields.forEach((field) => {
-    if (field.type === "title" || field.type === "image") return;
+    if (field.type === "title" || field.type === "image" || field.type === "youtube") return;
     const value = answers[field.id]?.trim();
     if (!value) return;
     lines.push({ label: field.label, value });

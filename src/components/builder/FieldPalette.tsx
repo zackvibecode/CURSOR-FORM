@@ -13,6 +13,7 @@ import {
   ListChecks,
   Heading,
   Image as ImageIcon,
+  Youtube,
   type LucideIcon,
 } from "lucide-react";
 
@@ -28,6 +29,7 @@ const BUILDER_FIELDS: { type: FieldType; label: string; icon: LucideIcon }[] = [
   { type: "date", label: "Date Picker", icon: Calendar },
   { type: "title", label: "Title / Heading", icon: Heading },
   { type: "image", label: "Image", icon: ImageIcon },
+  { type: "youtube", label: "YouTube Video", icon: Youtube },
 ];
 
 interface FieldPaletteProps {

@@ -52,7 +52,7 @@ export function buildWhatsAppMessage(
   const lines = [whatsappBold(`New Lead - ${cleanTitle}`), ""];
 
   fields.forEach((field) => {
-    if (field.type === "title") return;
+    if (field.type === "title" || field.type === "image" || field.type === "youtube") return;
 
     const answer = answers[field.id]?.trim();
     if (!answer) return;
@@ -100,7 +100,7 @@ export function buildWhatsAppMessageFromTemplate(
   // {{Your name}} placeholders or plain lines like "Name:" / "Phone:".
   const labelToAnswer = new Map<string, string>();
   fields.forEach((field) => {
-    if (field.type === "title") return;
+    if (field.type === "title" || field.type === "image" || field.type === "youtube") return;
     const rawAnswer = answers[field.id]?.trim();
     if (!rawAnswer) return;
     const answer = sanitizeWhatsAppText(stripEmoji(rawAnswer));

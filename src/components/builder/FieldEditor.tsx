@@ -17,6 +17,7 @@ const FIELD_LABELS: Record<string, string> = {
   checkbox: "Checkbox",
   title: "Title",
   image: "Image",
+  youtube: "YouTube Video",
 };
 
 interface FieldEditorProps {

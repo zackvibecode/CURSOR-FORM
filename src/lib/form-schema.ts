@@ -13,6 +13,7 @@ export const FIELD_TYPES = [
   "checkbox",
   "date",
   "image",
+  "youtube",
 ] as const;
 
 export const FORM_FIELD_TYPES = FIELD_TYPES;
@@ -32,6 +33,8 @@ export const formFieldSchema = z.object({
       imageUrl: z.string().optional(),
       imageAlt: z.string().optional(),
       imageSize: z.enum(["fit", "medium", "full"]).optional(),
+      videoUrl: z.string().optional(),
+      autoplay: z.boolean().optional(),
       align: z.enum(["left", "center", "right"]).optional(),
       bold: z.boolean().optional(),
       size: z.enum(["normal", "headline"]).optional(),
@@ -112,6 +115,11 @@ export function createDefaultField(type: FieldType, orderIndex: number): FormFie
     },
     date: { label: "Preferred date", required: false },
     image: { label: "Image", required: false, settings: { align: "center", imageSize: "medium" } },
+    youtube: {
+      label: "Video",
+      required: false,
+      settings: { align: "center", autoplay: true, videoUrl: "" },
+    },
   };
 
   return formFieldSchema.parse({
@@ -126,7 +134,7 @@ export function buildAnswersSchema(fields: FormField[]) {
   const shape: Record<string, z.ZodTypeAny> = {};
 
   fields.forEach((field) => {
-    if (field.type === "title") return;
+    if (field.type === "title" || field.type === "image" || field.type === "youtube") return;
 
     let schema: z.ZodTypeAny = z.string();
     let isOptionsField = false;
