@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "dev:clean": "taskkill /F /IM node.exe 2>NUL & next dev",
+    "dev:clean": "taskkill /F /IM node.exe 2>NUL & if exist .next rmdir /s /q .next & next dev",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",

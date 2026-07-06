@@ -21,17 +21,30 @@ interface PublicFormProps {
   usesTeamRouting?: boolean;
 }
 
-function saveSubmissionInBackground(formId: string, values: Record<string, string>) {
-  void fetch(`/api/forms/${formId}/submit`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(values),
-    keepalive: true,
-  });
-}
-
 function openWhatsApp(url: string) {
   window.location.replace(url);
+}
+
+async function submitFormThenOpenWhatsApp(
+  formId: string,
+  values: Record<string, string>,
+  whatsappUrl: string
+): Promise<void> {
+  try {
+    const res = await fetch(`/api/forms/${formId}/submit`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(values),
+    });
+
+    if (!res.ok) {
+      console.warn("[PublicFormView] submit failed before WhatsApp redirect", res.status);
+    }
+  } catch {
+    // Still open WhatsApp so the lead is not lost if the network blips.
+  }
+
+  openWhatsApp(whatsappUrl);
 }
 
 export function PublicFormView({
@@ -95,8 +108,8 @@ export function PublicFormView({
           whatsappTemplate
         );
         trackFormSubmit(pixelId, title, formId);
-        saveSubmissionInBackground(formId, values);
-        openWhatsApp(url);
+        setSubmitting(true);
+        await submitFormThenOpenWhatsApp(formId, values, url);
         return;
       }
 
