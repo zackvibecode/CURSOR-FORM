@@ -3,6 +3,7 @@
 import type { FormField } from "@/lib/form-schema";
 import { buildWhatsAppUrl } from "@/lib/whatsapp";
 import { trackFormSubmit } from "@/lib/meta-pixel";
+import { setPendingInstant } from "@/lib/instant-pending";
 import { DynamicFieldRenderer } from "@/components/form/DynamicFieldRenderer";
 import { Button } from "@/components/ui/Button";
 import { useState } from "react";
@@ -25,26 +26,15 @@ function openWhatsApp(url: string) {
   window.location.replace(url);
 }
 
-async function submitFormThenOpenWhatsApp(
-  formId: string,
-  values: Record<string, string>,
-  whatsappUrl: string
-): Promise<void> {
-  try {
-    const res = await fetch(`/api/forms/${formId}/submit`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(values),
-    });
-
-    if (!res.ok) {
-      console.warn("[PublicFormView] submit failed before WhatsApp redirect", res.status);
-    }
-  } catch {
-    // Still open WhatsApp so the lead is not lost if the network blips.
-  }
-
-  openWhatsApp(whatsappUrl);
+function saveSubmissionInBackground(formId: string, values: Record<string, string>) {
+  void fetch(`/api/forms/${formId}/submit`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(values),
+    keepalive: true,
+  }).catch(() => {
+    // Navigation may cancel the request; keepalive improves delivery on supported browsers.
+  });
 }
 
 export function PublicFormView({
@@ -107,13 +97,14 @@ export function PublicFormView({
           values,
           whatsappTemplate
         );
+        setPendingInstant(setSubmitting, true);
         trackFormSubmit(pixelId, title, formId);
-        setSubmitting(true);
-        await submitFormThenOpenWhatsApp(formId, values, url);
+        saveSubmissionInBackground(formId, values);
+        openWhatsApp(url);
         return;
       }
 
-      setSubmitting(true);
+      setPendingInstant(setSubmitting, true);
 
       let targetPhone = whatsappNumber;
 
@@ -128,8 +119,8 @@ export function PublicFormView({
       trackFormSubmit(pixelId, title, formId);
       openWhatsApp(url);
     } catch {
-      setErrors({ _form: "Submission failed. Please try again." });
       setSubmitting(false);
+      setErrors({ _form: "Submission failed. Please try again." });
     }
   };
 

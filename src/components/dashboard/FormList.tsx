@@ -23,6 +23,7 @@ import {
   ExternalLink,
 } from "lucide-react";
 import { toast } from "@/components/ui/Toast";
+import { setPendingInstant } from "@/lib/instant-pending";
 import { useEffect, useMemo, useState } from "react";
 
 const MAX_PINNED = 5;
@@ -43,10 +44,10 @@ interface FormListProps {
 }
 
 const formActionBtnClass =
-  "inline-flex items-center gap-1.5 rounded-md border border-border bg-card px-2.5 py-1.5 text-xs font-medium text-fg transition-colors hover:bg-muted";
+  "inline-flex items-center gap-1.5 rounded-md border border-border bg-card px-2.5 py-1.5 text-xs font-medium text-fg touch-manipulation select-none transition-[transform,color,background-color,border-color] duration-75 active:scale-[0.98] hover:bg-muted";
 
 const formShareBtnClass =
-  "inline-flex items-center gap-1.5 rounded-md border border-border bg-card px-3 py-1.5 text-xs font-medium text-fg transition-colors hover:border-whatsapp/40 hover:bg-whatsapp/5 hover:text-whatsapp-deep dark:hover:text-whatsapp";
+  "inline-flex items-center gap-1.5 rounded-md border border-border bg-card px-3 py-1.5 text-xs font-medium text-fg touch-manipulation select-none transition-[transform,color,background-color,border-color] duration-75 active:scale-[0.98] hover:border-whatsapp/40 hover:bg-whatsapp/5 hover:text-whatsapp-deep dark:hover:text-whatsapp";
 
 function StatusPill({ status }: { status: "draft" | "published" }) {
   return (
@@ -166,7 +167,7 @@ export function FormList({ forms: initialForms }: FormListProps) {
   };
 
   const handleDuplicate = async (id: string) => {
-    setDuplicatingId(id);
+    setPendingInstant(setDuplicatingId, id);
     setError("");
 
     try {

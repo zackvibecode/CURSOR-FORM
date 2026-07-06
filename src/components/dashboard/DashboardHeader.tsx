@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { Plus, Loader2 } from "lucide-react";
 import { useState } from "react";
+import { setPendingInstant } from "@/lib/instant-pending";
 
 export function CreateFormButton({
   templateId,
@@ -22,7 +23,7 @@ export function CreateFormButton({
   const handleCreate = async () => {
     if (loading) return;
 
-    setLoading(true);
+    setPendingInstant(setLoading, true);
 
     try {
       const res = await fetch("/api/forms", {

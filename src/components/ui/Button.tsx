@@ -24,7 +24,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       <button
         ref={ref}
         className={cn(
-          "inline-flex items-center justify-center gap-2 rounded-md font-medium transition-colors duration-150 disabled:cursor-not-allowed disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-whatsapp/40 focus-visible:ring-offset-1 focus-visible:ring-offset-bg",
+          "inline-flex items-center justify-center gap-2 rounded-md font-medium touch-manipulation select-none transition-[transform,color,background-color,filter,border-color] duration-75 active:scale-[0.98] active:brightness-95 disabled:cursor-not-allowed disabled:opacity-50 disabled:active:scale-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-whatsapp/40 focus-visible:ring-offset-1 focus-visible:ring-offset-bg",
           {
             // Vercel primary: black on light, white on dark
             "bg-fg text-bg hover:bg-gray-600 dark:hover:bg-gray-200":
