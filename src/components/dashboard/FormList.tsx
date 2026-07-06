@@ -12,14 +12,13 @@ import { CreateFormButton } from "./DashboardHeader";
 import {
   Edit,
   Trash2,
-  Check,
   FileText,
   Loader2,
   Pin,
   Plus,
   Search,
-  Share2,
   Copy,
+  ExternalLink,
 } from "lucide-react";
 import { toast } from "@/components/ui/Toast";
 import { useEffect, useMemo, useState } from "react";
@@ -71,7 +70,6 @@ export function FormList({ forms: initialForms }: FormListProps) {
   const router = useRouter();
   const [forms, setForms] = useState(initialForms);
   const [templateOpen, setTemplateOpen] = useState(false);
-  const [copiedId, setCopiedId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [duplicatingId, setDuplicatingId] = useState<string | null>(null);
   const [creatingTemplateId, setCreatingTemplateId] = useState<string | null>(null);
@@ -139,13 +137,6 @@ export function FormList({ forms: initialForms }: FormListProps) {
       router.refresh();
     }
     setDeletingId(null);
-  };
-
-  const handleCopy = async (slug: string, id: string) => {
-    await navigator.clipboard.writeText(getFormPublicUrl(slug));
-    setCopiedId(id);
-    toast("Form link copied", "success");
-    setTimeout(() => setCopiedId(null), 2000);
   };
 
   const handleDuplicate = async (id: string) => {
@@ -363,24 +354,16 @@ export function FormList({ forms: initialForms }: FormListProps) {
                           </button>
 
                           {form.status === "published" && (
-                            <button
-                              type="button"
-                              onClick={() => handleCopy(form.slug, form.id)}
+                            <a
+                              href={getFormPublicUrl(form.slug)}
+                              target="_blank"
+                              rel="noopener noreferrer"
                               className={formShareBtnClass}
-                              title="Copy form link"
+                              title="Open form in new tab"
                             >
-                              {copiedId === form.id ? (
-                                <>
-                                  <Check className="h-4 w-4 shrink-0 text-whatsapp" />
-                                  Copied
-                                </>
-                              ) : (
-                                <>
-                                  <Share2 className="h-4 w-4 shrink-0" />
-                                  Share
-                                </>
-                              )}
-                            </button>
+                              <ExternalLink className="h-4 w-4 shrink-0" />
+                              Open
+                            </a>
                           )}
 
                           <button
