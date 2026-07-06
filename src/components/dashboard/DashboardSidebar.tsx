@@ -2,9 +2,11 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { BrandLogo } from "@/components/ui/BrandLogo";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
+import { useSubmissionNotifications } from "./SubmissionNotificationContext";
 import {
   LayoutDashboard,
   FileText,
@@ -82,6 +84,13 @@ export function DashboardSidebar({
   isAdmin = false,
 }: DashboardSidebarProps) {
   const pathname = usePathname();
+  const { unreadCount, clearUnread } = useSubmissionNotifications();
+
+  useEffect(() => {
+    if (pathname.startsWith("/dashboard/submissions")) {
+      clearUnread();
+    }
+  }, [pathname, clearUnread]);
 
   const isActive = (href: string, exact?: boolean) => {
     if (href === "/dashboard/forms") {
@@ -115,7 +124,12 @@ export function DashboardSidebar({
           <span className="absolute left-0 top-1/2 h-4 w-0.5 -translate-y-1/2 rounded-full bg-whatsapp" />
         )}
         <item.icon className="h-4 w-4 shrink-0" strokeWidth={2} />
-        {item.label}
+        <span className="flex-1">{item.label}</span>
+        {item.href === "/dashboard/submissions" && unreadCount > 0 && (
+          <span className="rounded-full bg-whatsapp px-1.5 py-0.5 text-[10px] font-semibold text-white">
+            {unreadCount > 99 ? "99+" : unreadCount}
+          </span>
+        )}
       </Link>
     );
   };

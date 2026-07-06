@@ -33,6 +33,7 @@ export default async function AdminLayout({
   // Pass auth data via React context instead of re-fetching in child pages
   return (
     <DashboardShell
+      userId={user.id}
       userName={profile?.name ?? user.email}
       plan={subscription?.plan ?? "free"}
       status={subscription?.status ?? "active"}

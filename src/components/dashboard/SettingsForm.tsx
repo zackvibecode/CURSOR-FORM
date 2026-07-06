@@ -20,6 +20,11 @@ interface UserSettings {
   submission_alerts?: boolean;
   meta_pixel_id?: string | null;
   meta_pixel_enabled?: boolean;
+  n8n_webhook_url?: string | null;
+  notification_email?: string | null;
+  telegram_bot_token?: string | null;
+  telegram_chat_id?: string | null;
+  telegram_notifications?: boolean;
 }
 
 const DEFAULT_SETTINGS: UserSettings = {
@@ -30,10 +35,15 @@ const DEFAULT_SETTINGS: UserSettings = {
   theme_color: "#10D050",
   redirect_after_submit: "",
   email_notifications: true,
-  whatsapp_notifications: true,
-  submission_alerts: false,
+  whatsapp_notifications: false,
+  submission_alerts: true,
   meta_pixel_id: "",
   meta_pixel_enabled: false,
+  n8n_webhook_url: "",
+  notification_email: "",
+  telegram_bot_token: "",
+  telegram_chat_id: "",
+  telegram_notifications: false,
 };
 
 function SectionCard({
@@ -203,32 +213,125 @@ export function SettingsForm({ profileEmail }: { profileEmail: string }) {
         </div>
       </SectionCard>
 
-      <SectionCard title="Notifications" description="Choose how you want to be alerted.">
-        <div className="space-y-4">
-          <Toggle
-            id="emailNotif"
-            label="Email notifications for new submissions"
-            checked={settings.email_notifications ?? true}
-            onChange={(checked) =>
-              setSettings((s) => ({ ...s, email_notifications: checked }))
-            }
-          />
-          <Toggle
-            id="waNotif"
-            label="WhatsApp notifications for new submissions"
-            checked={settings.whatsapp_notifications ?? true}
-            onChange={(checked) =>
-              setSettings((s) => ({ ...s, whatsapp_notifications: checked }))
-            }
-          />
-          <Toggle
-            id="alerts"
-            label="Daily submission summary alerts"
-            checked={settings.submission_alerts ?? false}
-            onChange={(checked) =>
-              setSettings((s) => ({ ...s, submission_alerts: checked }))
-            }
-          />
+      <SectionCard title="Notifications" description="Alert bila ada submission baru. Setup satu persatu ikut channel kau.">
+        <div className="space-y-6">
+          <div className="rounded-lg border border-border bg-muted/20 p-4">
+            <Toggle
+              id="waNotif"
+              label="1. WhatsApp via n8n"
+              checked={settings.whatsapp_notifications ?? false}
+              onChange={(checked) =>
+                setSettings((s) => ({ ...s, whatsapp_notifications: checked }))
+              }
+            />
+            <p className="mt-2 text-xs text-muted-fg">
+              OneForm hantar webhook ke n8n. Dalam n8n, guna node WhatsApp untuk hantar mesej ke nombor kau.
+            </p>
+            {settings.whatsapp_notifications && (
+              <div className="mt-3 space-y-3">
+                <div>
+                  <Label htmlFor="n8nWebhook">n8n Webhook URL</Label>
+                  <Input
+                    id="n8nWebhook"
+                    value={settings.n8n_webhook_url ?? ""}
+                    onChange={(e) =>
+                      setSettings((s) => ({ ...s, n8n_webhook_url: e.target.value }))
+                    }
+                    placeholder="https://your-n8n.com/webhook/oneform-leads"
+                    className="font-mono text-sm"
+                  />
+                </div>
+                <p className="text-[11px] leading-relaxed text-muted-fg">
+                  Payload termasuk <span className="font-mono">whatsapp_message</span>,{" "}
+                  <span className="font-mono">owner.whatsapp_number</span>, dan semua jawapan form.
+                </p>
+              </div>
+            )}
+          </div>
+
+          <div className="rounded-lg border border-border bg-muted/20 p-4">
+            <Toggle
+              id="emailNotif"
+              label="2. Email (Resend)"
+              checked={settings.email_notifications ?? true}
+              onChange={(checked) =>
+                setSettings((s) => ({ ...s, email_notifications: checked }))
+              }
+            />
+            <p className="mt-2 text-xs text-muted-fg">
+              Hantar email alert guna Resend. Admin perlu set <span className="font-mono">RESEND_API_KEY</span> dalam Vercel env.
+            </p>
+            {settings.email_notifications && (
+              <div className="mt-3">
+                <Label htmlFor="notificationEmail">Alert email (optional)</Label>
+                <Input
+                  id="notificationEmail"
+                  type="email"
+                  value={settings.notification_email ?? ""}
+                  onChange={(e) =>
+                    setSettings((s) => ({ ...s, notification_email: e.target.value }))
+                  }
+                  placeholder={profileEmail || "Leave empty to use account email"}
+                />
+              </div>
+            )}
+          </div>
+
+          <div className="rounded-lg border border-border bg-muted/20 p-4">
+            <Toggle
+              id="alerts"
+              label="3. Dashboard realtime"
+              checked={settings.submission_alerts ?? true}
+              onChange={(checked) =>
+                setSettings((s) => ({ ...s, submission_alerts: checked }))
+              }
+            />
+            <p className="mt-2 text-xs text-muted-fg">
+              Popup toast & badge dalam dashboard bila lead baru masuk (dashboard mesti dibuka).
+            </p>
+          </div>
+
+          <div className="rounded-lg border border-border bg-muted/20 p-4">
+            <Toggle
+              id="telegramNotif"
+              label="4. Telegram bot"
+              checked={settings.telegram_notifications ?? false}
+              onChange={(checked) =>
+                setSettings((s) => ({ ...s, telegram_notifications: checked }))
+              }
+            />
+            <p className="mt-2 text-xs text-muted-fg">
+              Hantar mesej ke Telegram group/chat bila ada submission.
+            </p>
+            {settings.telegram_notifications && (
+              <div className="mt-3 space-y-3">
+                <div>
+                  <Label htmlFor="telegramBotToken">Bot token</Label>
+                  <Input
+                    id="telegramBotToken"
+                    value={settings.telegram_bot_token ?? ""}
+                    onChange={(e) =>
+                      setSettings((s) => ({ ...s, telegram_bot_token: e.target.value }))
+                    }
+                    placeholder="123456789:ABCdefGHI..."
+                    className="font-mono text-sm"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="telegramChatId">Chat ID</Label>
+                  <Input
+                    id="telegramChatId"
+                    value={settings.telegram_chat_id ?? ""}
+                    onChange={(e) =>
+                      setSettings((s) => ({ ...s, telegram_chat_id: e.target.value }))
+                    }
+                    placeholder="-1001234567890"
+                    className="font-mono text-sm"
+                  />
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </SectionCard>
 

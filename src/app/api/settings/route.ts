@@ -46,6 +46,11 @@ export async function PUT(request: Request) {
     submission_alerts,
     meta_pixel_id,
     meta_pixel_enabled,
+    n8n_webhook_url,
+    notification_email,
+    telegram_bot_token,
+    telegram_chat_id,
+    telegram_notifications,
   } = body;
 
   // Upsert: update if exists, insert if not
@@ -64,6 +69,11 @@ export async function PUT(request: Request) {
         submission_alerts,
         meta_pixel_id,
         meta_pixel_enabled,
+        n8n_webhook_url,
+        notification_email,
+        telegram_bot_token,
+        telegram_chat_id,
+        telegram_notifications,
         updated_at: new Date().toISOString(),
       },
       {

@@ -3,9 +3,12 @@
 import { useState } from "react";
 import { DashboardSidebar } from "./DashboardSidebar";
 import { DashboardTopBar } from "./DashboardTopBar";
+import { SubmissionNotificationProvider } from "./SubmissionNotificationContext";
+import { SubmissionNotificationListener } from "./SubmissionNotificationListener";
 
 interface DashboardShellProps {
   children: React.ReactNode;
+  userId: string;
   userName?: string | null;
   plan?: string;
   status?: string;
@@ -15,6 +18,7 @@ interface DashboardShellProps {
 
 export function DashboardShell({
   children,
+  userId,
   userName,
   plan = "free",
   status = "active",
@@ -24,7 +28,9 @@ export function DashboardShell({
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
-    <div className="flex min-h-screen bg-bg">
+    <SubmissionNotificationProvider>
+      <SubmissionNotificationListener userId={userId} />
+      <div className="flex min-h-screen bg-bg">
       <DashboardSidebar
         open={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
@@ -43,6 +49,7 @@ export function DashboardShell({
           <div className="mx-auto max-w-6xl">{children}</div>
         </main>
       </div>
-    </div>
+      </div>
+    </SubmissionNotificationProvider>
   );
 }

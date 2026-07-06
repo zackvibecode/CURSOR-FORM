@@ -5,6 +5,10 @@ import { buildAnswersSchema } from "@/lib/form-schema";
 import { checkSubmissionLimitForOwner } from "@/lib/check-limits";
 import { resolveSubmissionRecipient } from "@/lib/resolve-recipient";
 import { rateLimit, ipFromRequest } from "@/lib/rate-limit";
+import {
+  dispatchSubmissionNotificationsInBackground,
+  loadOwnerNotificationSettings,
+} from "@/lib/notifications/dispatch";
 import { headers } from "next/headers";
 
 function getIpHash(): string | null {
@@ -48,7 +52,7 @@ export async function POST(
   const [{ data: form }, { data: fields }] = await Promise.all([
     supabase
       .from("forms")
-      .select("id, status, whatsapp_number, user_id")
+      .select("id, status, whatsapp_number, user_id, title, slug")
       .eq("id", id)
       .single(),
     supabase.from("form_fields").select("*").eq("form_id", id).order("order_index"),
@@ -114,6 +118,23 @@ export async function POST(
 
   if (insertError) {
     return NextResponse.json({ error: insertError.message }, { status: 500 });
+  }
+
+  const ownerSettings = await loadOwnerNotificationSettings(form.user_id);
+  if (ownerSettings) {
+    dispatchSubmissionNotificationsInBackground({
+      form: {
+        id: form.id,
+        title: form.title,
+        slug: form.slug,
+        user_id: form.user_id,
+      },
+      fields: parsedFields,
+      answers: result.data,
+      assignedPhone,
+      assignedName,
+      owner: ownerSettings,
+    });
   }
 
   return NextResponse.json({

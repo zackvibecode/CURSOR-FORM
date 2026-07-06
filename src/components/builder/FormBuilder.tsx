@@ -438,8 +438,20 @@ export function FormBuilder({ formId, initialData }: FormBuilderProps) {
               {tab === "team" && <TeamSettings formId={formId} />}
 
               {tab === "notifications" && (
-                <div className="flex items-center justify-center py-24">
-                  <p className="text-sm text-muted-fg">Coming soon</p>
+                <div className="mx-auto max-w-xl space-y-4 py-8">
+                  <div className="rounded-lg border border-border bg-card p-5">
+                    <h3 className="text-sm font-semibold text-fg">Submission alerts</h3>
+                    <p className="mt-2 text-sm leading-relaxed text-muted-fg">
+                      Notification channels (n8n + WhatsApp, Email Resend, Dashboard realtime, Telegram)
+                      diurus dalam <strong>Dashboard → Settings → Notifications</strong>.
+                    </p>
+                    <Link
+                      href="/dashboard/settings"
+                      className="mt-4 inline-flex text-sm font-medium text-whatsapp-deep hover:underline dark:text-whatsapp"
+                    >
+                      Open notification settings →
+                    </Link>
+                  </div>
                 </div>
               )}
 
