@@ -1,7 +1,6 @@
 "use client";
 
 import { PublicFormView } from "@/components/form/PublicFormView";
-import { MetaPixel } from "@/components/analytics/MetaPixel";
 import type { DbForm } from "@/lib/database.types";
 import type { FormField } from "@/lib/form-schema";
 import { getWhatsappTemplateFromForm } from "@/lib/form-settings";
@@ -11,7 +10,7 @@ import type { CSSProperties } from "react";
 interface PublicFormClientProps {
   form: DbForm;
   fields: FormField[];
-  pixelId?: string;
+  pixelId: string | null;
   usesTeamRouting?: boolean;
   teamRoutingSnapshot?: TeamRoutingSnapshot | null;
 }
@@ -32,9 +31,10 @@ export function PublicFormClient({
   usesTeamRouting = false,
   teamRoutingSnapshot = null,
 }: PublicFormClientProps) {
+  const effectivePixelId = pixelId || undefined;
+
   return (
     <div className="min-h-screen bg-bg text-fg [color-scheme:light]" style={lightFormTheme}>
-      {pixelId && <MetaPixel pixelId={pixelId} />}
       <main className="px-4 py-10 sm:py-14">
         <div className="mx-auto max-w-lg rounded-xl border border-border bg-card p-6 shadow-sm sm:p-8">
           <PublicFormView
@@ -44,7 +44,7 @@ export function PublicFormClient({
             whatsappNumber={form.whatsapp_number}
             fields={fields}
             formId={form.id}
-            pixelId={pixelId}
+            pixelId={effectivePixelId}
             whatsappTemplate={getWhatsappTemplateFromForm(form)}
             usesTeamRouting={usesTeamRouting}
             teamRoutingSnapshot={teamRoutingSnapshot}

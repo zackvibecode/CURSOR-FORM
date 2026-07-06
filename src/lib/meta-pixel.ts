@@ -5,7 +5,7 @@ export function trackFormSubmit(
   title: string,
   formId: string
 ) {
-  if (!pixelId || typeof window === "undefined" || !window.fbq) return;
+  if (!pixelId || typeof window === "undefined") return;
 
   const payload = {
     content_name: title,
@@ -13,6 +13,27 @@ export function trackFormSubmit(
     form_id: formId,
   };
 
-  window.fbq("track", "Lead", payload);
-  window.fbq("trackCustom", META_FORM_SUBMIT_EVENT, payload);
+  const fire = () => {
+    if (typeof window.fbq === "function") {
+      window.fbq("track", "Lead", payload);
+      window.fbq("trackCustom", META_FORM_SUBMIT_EVENT, payload);
+      return true;
+    }
+    if (window._fbq) {
+      window._fbq.push(["track", "Lead", payload]);
+      window._fbq.push(["trackCustom", META_FORM_SUBMIT_EVENT, payload]);
+      return true;
+    }
+    return false;
+  };
+
+  if (!fire()) {
+    let attempts = 0;
+    const retry = window.setInterval(() => {
+      attempts += 1;
+      if (fire() || attempts >= 10) {
+        window.clearInterval(retry);
+      }
+    }, 150);
+  }
 }

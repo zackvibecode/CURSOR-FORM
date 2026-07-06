@@ -6,7 +6,7 @@ import type { TeamRoutingSnapshot } from "@/lib/team-routing-client";
 export interface PublishedFormData {
   form: DbForm;
   fields: DbFormField[];
-  pixelId?: string;
+  pixelId: string | null;
   usesTeamRouting: boolean;
   teamRoutingSnapshot: TeamRoutingSnapshot | null;
 }
@@ -44,7 +44,7 @@ function formUsesTeamRouting(
 async function fetchPublishedFormBundle(slug: string): Promise<{
   form: DbForm;
   fields: DbFormField[];
-  pixelId?: string;
+  pixelId: string | null;
 } | null> {
   const admin = createAdminClient();
   if (!admin) return null;
@@ -71,12 +71,12 @@ async function fetchPublishedFormBundle(slug: string): Promise<{
       .maybeSingle(),
   ]);
 
-  const pixelId = ownerSettings?.meta_pixel_enabled ? ownerSettings.meta_pixel_id : undefined;
+  const pixelId = ownerSettings?.meta_pixel_enabled ? ownerSettings.meta_pixel_id : null;
 
   return {
     form: form as DbForm,
     fields: (fields ?? []) as DbFormField[],
-    pixelId: pixelId ?? undefined,
+    pixelId: pixelId ?? null,
   };
 }
 
