@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
+import { Input } from "@/components/ui/Input";
+import { Label } from "@/components/ui/Label";
 import { getFormPublicUrl, getFormPublicPath } from "@/lib/forms";
 import { formatDate } from "@/lib/utils";
 import { cn } from "@/lib/utils";
@@ -25,6 +27,7 @@ import { useEffect, useMemo, useState } from "react";
 
 const MAX_PINNED = 5;
 const PINNED_STORAGE_KEY = "oneform_pinned_forms";
+const DELETE_CONFIRM_TEXT = "DELETE";
 
 interface FormRow {
   id: string;
@@ -71,6 +74,9 @@ export function FormList({ forms: initialForms }: FormListProps) {
   const [forms, setForms] = useState(initialForms);
   const [templateOpen, setTemplateOpen] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; title: string } | null>(null);
+  const [deleteConfirmFirst, setDeleteConfirmFirst] = useState("");
+  const [deleteConfirmSecond, setDeleteConfirmSecond] = useState("");
   const [duplicatingId, setDuplicatingId] = useState<string | null>(null);
   const [creatingTemplateId, setCreatingTemplateId] = useState<string | null>(null);
   const [error, setError] = useState("");
@@ -127,14 +133,34 @@ export function FormList({ forms: initialForms }: FormListProps) {
     refreshForms();
   }, []);
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("Delete this form? This cannot be undone.")) return;
+  const closeDeleteModal = () => {
+    setDeleteTarget(null);
+    setDeleteConfirmFirst("");
+    setDeleteConfirmSecond("");
+  };
 
-    setDeletingId(id);
-    const res = await fetch(`/api/forms/${id}`, { method: "DELETE" });
+  const openDeleteModal = (form: FormRow) => {
+    setDeleteTarget({ id: form.id, title: form.title });
+    setDeleteConfirmFirst("");
+    setDeleteConfirmSecond("");
+  };
+
+  const canPermanentlyDelete =
+    deleteConfirmFirst === DELETE_CONFIRM_TEXT &&
+    deleteConfirmSecond === DELETE_CONFIRM_TEXT;
+
+  const handlePermanentDelete = async () => {
+    if (!deleteTarget || !canPermanentlyDelete) return;
+
+    setDeletingId(deleteTarget.id);
+    const res = await fetch(`/api/forms/${deleteTarget.id}`, { method: "DELETE" });
     if (res.ok) {
-      setForms((prev) => prev.filter((f) => f.id !== id));
+      setForms((prev) => prev.filter((f) => f.id !== deleteTarget.id));
+      toast("Form deleted permanently", "success");
+      closeDeleteModal();
       router.refresh();
+    } else {
+      toast("Failed to delete form", "error");
     }
     setDeletingId(null);
   };
@@ -368,7 +394,7 @@ export function FormList({ forms: initialForms }: FormListProps) {
 
                           <button
                             type="button"
-                            onClick={() => handleDelete(form.id)}
+                            onClick={() => openDeleteModal(form)}
                             disabled={deletingId === form.id}
                             className="rounded-md p-1.5 text-muted-fg transition-colors hover:bg-red-500/10 hover:text-red-600 disabled:opacity-50"
                             title="Delete"
@@ -416,6 +442,72 @@ export function FormList({ forms: initialForms }: FormListProps) {
               )}
             </button>
           ))}
+        </div>
+      </Modal>
+
+      <Modal
+        open={deleteTarget !== null}
+        onClose={closeDeleteModal}
+        title="Delete form permanently?"
+      >
+        <div className="space-y-4">
+          <p className="text-sm text-muted-fg">
+            You are about to permanently delete{" "}
+            <span className="font-medium text-fg">&ldquo;{deleteTarget?.title}&rdquo;</span>. This
+            removes all fields and submissions. This cannot be undone.
+          </p>
+
+          <div className="space-y-3">
+            <div>
+              <Label htmlFor="deleteConfirmFirst">
+                Type <span className="font-mono font-semibold text-fg">{DELETE_CONFIRM_TEXT}</span>{" "}
+                to continue
+              </Label>
+              <Input
+                id="deleteConfirmFirst"
+                value={deleteConfirmFirst}
+                onChange={(e) => setDeleteConfirmFirst(e.target.value)}
+                placeholder={DELETE_CONFIRM_TEXT}
+                className="mt-1.5 font-mono"
+                autoComplete="off"
+              />
+            </div>
+            <div>
+              <Label htmlFor="deleteConfirmSecond">
+                Type <span className="font-mono font-semibold text-fg">{DELETE_CONFIRM_TEXT}</span>{" "}
+                again to confirm
+              </Label>
+              <Input
+                id="deleteConfirmSecond"
+                value={deleteConfirmSecond}
+                onChange={(e) => setDeleteConfirmSecond(e.target.value)}
+                placeholder={DELETE_CONFIRM_TEXT}
+                className="mt-1.5 font-mono"
+                autoComplete="off"
+              />
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-2 pt-1">
+            <Button type="button" variant="outline" onClick={closeDeleteModal}>
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              variant="danger"
+              disabled={!canPermanentlyDelete || deletingId === deleteTarget?.id}
+              onClick={() => void handlePermanentDelete()}
+            >
+              {deletingId === deleteTarget?.id ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Deleting…
+                </>
+              ) : (
+                "Delete permanently"
+              )}
+            </Button>
+          </div>
         </div>
       </Modal>
     </div>
