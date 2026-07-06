@@ -9,29 +9,44 @@ const LOGO_HEIGHT = 179;
 
 function LogoMark({ className }: { className?: string }) {
   return (
-    <svg
-      viewBox="0 0 64 64"
-      fill="none"
+    <span
+      className={cn("relative inline-block shrink-0 overflow-hidden", className)}
       aria-hidden="true"
-      className={cn("shrink-0 text-fg", className)}
     >
-      <path
-        d="M32 4C18.745 4 8 14.745 8 28C8 36.5 12.2 44 18.8 48.5L14 60L26.5 54.5C28.2 55.1 30.1 55.5 32 55.5C45.255 55.5 56 44.755 56 31.5C56 18.245 45.255 4 32 4Z"
-        stroke="currentColor"
-        strokeWidth="3.5"
-        strokeLinejoin="round"
+      <Image
+        src="/oneform-logo.png"
+        alt=""
+        width={LOGO_WIDTH}
+        height={LOGO_HEIGHT}
+        className="absolute left-0 top-0 h-full w-auto max-w-none"
+        draggable={false}
+        sizes="32px"
       />
-      <path d="M20 22H44" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
-      <path d="M20 30H38" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
-      <path d="M20 38H32" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
-      <path
-        d="M34 42L38 46L48 32"
-        stroke="#10D050"
-        strokeWidth="4"
-        strokeLinecap="round"
-        strokeLinejoin="round"
+    </span>
+  );
+}
+
+function LogoImage({
+  className,
+  priority = false,
+}: {
+  className?: string;
+  priority?: boolean;
+}) {
+  return (
+    <div
+      className={cn("relative", className)}
+      style={{ aspectRatio: `${LOGO_WIDTH} / ${LOGO_HEIGHT}` }}
+    >
+      <Image
+        src="/oneform-logo.png"
+        alt="OneForm"
+        fill
+        className="object-contain object-left"
+        priority={priority}
+        sizes="200px"
       />
-    </svg>
+    </div>
   );
 }
 
@@ -40,24 +55,18 @@ export function BrandLogo({
   iconOnly = false,
   size = "md",
   priority = false,
-  variant = "image",
 }: {
   className?: string;
   iconOnly?: boolean;
   size?: "sm" | "md" | "lg";
   priority?: boolean;
+  /** @deprecated Use default full logo image instead */
   variant?: "image" | "text";
 }) {
   const imageSizes = {
     sm: "h-6 w-auto",
     md: "h-7 w-auto",
     lg: "h-8 w-auto",
-  };
-
-  const textSizes = {
-    sm: "text-lg",
-    md: "text-xl",
-    lg: "text-2xl",
   };
 
   const iconHeights = {
@@ -70,37 +79,12 @@ export function BrandLogo({
     <Link
       href="/"
       aria-label="OneForm home"
-      className={cn(
-        "group inline-flex min-w-0 shrink-0 items-center",
-        variant === "text" && "gap-2",
-        className
-      )}
+      className={cn("group inline-flex min-w-0 shrink-0 items-center", className)}
     >
       {iconOnly ? (
         <LogoMark className={iconHeights[size]} />
-      ) : variant === "text" ? (
-        <>
-          <LogoMark className={iconHeights[size]} />
-          <span
-            className={cn(
-              "truncate whitespace-nowrap font-bold leading-none tracking-tight text-fg",
-              textSizes[size]
-            )}
-          >
-            One<span className="text-whatsapp">Form</span>
-          </span>
-        </>
       ) : (
-        <div className={cn("relative", imageSizes[size])} style={{ aspectRatio: `${LOGO_WIDTH} / ${LOGO_HEIGHT}` }}>
-          <Image
-            src="/oneform-logo.png"
-            alt="One Form"
-            fill
-            className="object-contain"
-            priority={priority}
-            sizes="200px"
-          />
-        </div>
+        <LogoImage className={imageSizes[size]} priority={priority} />
       )}
     </Link>
   );
