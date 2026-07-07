@@ -335,7 +335,7 @@ export function SettingsForm({ profileEmail }: { profileEmail: string }) {
         </div>
       </SectionCard>
 
-      <SectionCard title="Meta Pixel Analytics" description="Tracks PageView on form load, Lead + zaqoneformSubmit when a visitor submits.">
+      <SectionCard title="Meta Pixel Analytics" description="Tracks PageView on form load, and Lead (browser + Conversions API) when a visitor submits.">
         <div className="space-y-4">
           <Toggle
             id="metaPixelEnabled"
