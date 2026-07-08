@@ -5,7 +5,7 @@ import { buildAnswersSchema } from "@/lib/form-schema";
 import { checkSubmissionLimitForOwner } from "@/lib/check-limits";
 import { resolveSubmissionRecipient } from "@/lib/resolve-recipient";
 import { rateLimit, ipFromRequest } from "@/lib/rate-limit";
-import { runSubmissionNotificationsForOwner } from "@/lib/notifications/dispatch";
+import { scheduleSubmissionNotificationsForOwner } from "@/lib/notifications/dispatch";
 import { headers } from "next/headers";
 
 function getIpHash(): string | null {
@@ -133,9 +133,9 @@ export async function POST(
     return NextResponse.json({ error: insertError.message }, { status: 500 });
   }
 
-  // Await notifications so Telegram/email finish before the response
-  // (redirect + keepalive often cuts off background waitUntil work).
-  await runSubmissionNotificationsForOwner({
+  // Fire notifications in background (Vercel waitUntil) so submit responds
+  // immediately and user goes to WhatsApp fast. Telegram/email still deliver.
+  scheduleSubmissionNotificationsForOwner({
     userId: form.user_id,
     form: {
       id: form.id,

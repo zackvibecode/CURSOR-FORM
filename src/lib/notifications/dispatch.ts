@@ -135,10 +135,17 @@ export function scheduleSubmissionNotifications(input: DispatchNotificationInput
 }
 
 export function scheduleSubmissionNotificationsForOwner(job: SubmissionNotificationJob): void {
-  void runSubmissionNotificationsForOwner(job);
+  const task = runSubmissionNotificationsForOwner(job);
+  // On Vercel, waitUntil keeps the function alive after the response is sent
+  // so Telegram/email still deliver even though the user already redirected.
+  if (process.env.VERCEL) {
+    waitUntil(task);
+    return;
+  }
+  void task;
 }
 
-/** Awaitable version — use on submit so Telegram finishes before function ends. */
+/** Awaitable version — use when caller wants to wait for notifications. */
 export async function runSubmissionNotificationsForOwner(
   job: SubmissionNotificationJob
 ): Promise<void> {
