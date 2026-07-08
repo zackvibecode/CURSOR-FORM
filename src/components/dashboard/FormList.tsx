@@ -24,6 +24,11 @@ import {
 } from "lucide-react";
 import { toast } from "@/components/ui/Toast";
 import { setPendingInstant } from "@/lib/instant-pending";
+import {
+  getUnreadSubmissionCount,
+  markFormSubmissionsSeen,
+  subscribeFormSeenUpdates,
+} from "@/lib/form-seen";
 import { useEffect, useMemo, useState } from "react";
 
 const MAX_PINNED = 5;
@@ -83,10 +88,26 @@ export function FormList({ forms: initialForms }: FormListProps) {
   const [error, setError] = useState("");
   const [pinnedIds, setPinnedIds] = useState<string[]>([]);
   const [query, setQuery] = useState("");
+  const [seenTick, setSeenTick] = useState(0);
 
   useEffect(() => {
     setForms(initialForms);
   }, [initialForms]);
+
+  useEffect(() => {
+    return subscribeFormSeenUpdates(() => setSeenTick((n) => n + 1));
+  }, []);
+
+  // Seed baseline counts once so existing submissions don't show as "new".
+  useEffect(() => {
+    const list = forms.map((f) => ({
+      id: f.id,
+      count: f.submissions?.[0]?.count ?? 0,
+    }));
+    for (const item of list) {
+      getUnreadSubmissionCount(item.id, item.count);
+    }
+  }, [forms]);
 
   useEffect(() => {
     try {
@@ -310,6 +331,9 @@ export function FormList({ forms: initialForms }: FormListProps) {
                 {sortedForms.map((form) => {
                   const responseCount = form.submissions?.[0]?.count ?? 0;
                   const pinned = isPinned(form.id);
+                  // seenTick keeps unread badges reactive after marking seen.
+                  void seenTick;
+                  const unread = getUnreadSubmissionCount(form.id, responseCount);
                   return (
                     <tr
                       key={form.id}
@@ -319,20 +343,33 @@ export function FormList({ forms: initialForms }: FormListProps) {
                       )}
                     >
                       <td className="px-3 py-3">
-                        <button
-                          type="button"
-                          onClick={() => togglePin(form.id)}
-                          title={pinned ? "Unpin form" : "Pin form"}
-                          aria-label={pinned ? "Unpin form" : "Pin form"}
-                          className={cn(
-                            "rounded-md p-1 transition-colors",
-                            pinned
-                              ? "text-whatsapp-deep dark:text-whatsapp"
-                              : "text-muted-fg/40 hover:bg-muted hover:text-muted-fg"
+                        <div className="relative inline-flex">
+                          <button
+                            type="button"
+                            onClick={() => togglePin(form.id)}
+                            title={pinned ? "Unpin form" : "Pin form"}
+                            aria-label={pinned ? "Unpin form" : "Pin form"}
+                            className={cn(
+                              "rounded-md p-1 transition-colors",
+                              pinned
+                                ? "text-whatsapp-deep dark:text-whatsapp"
+                                : "text-muted-fg/40 hover:bg-muted hover:text-muted-fg"
+                            )}
+                          >
+                            <Pin className={cn("h-3.5 w-3.5", pinned && "fill-current")} />
+                          </button>
+                          {unread > 0 && (
+                            <Link
+                              href="/dashboard/submissions"
+                              onClick={() => markFormSubmissionsSeen(form.id, responseCount)}
+                              title={`${unread} new submission${unread === 1 ? "" : "s"}`}
+                              aria-label={`${unread} new submissions`}
+                              className="absolute -right-1.5 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-whatsapp px-1 text-[10px] font-bold leading-none text-white shadow-sm ring-2 ring-card"
+                            >
+                              {unread > 99 ? "99+" : unread}
+                            </Link>
                           )}
-                        >
-                          <Pin className={cn("h-3.5 w-3.5", pinned && "fill-current")} />
-                        </button>
+                        </div>
                       </td>
                       <td className="px-3 py-3">
                         <Link
@@ -349,7 +386,14 @@ export function FormList({ forms: initialForms }: FormListProps) {
                         <StatusPill status={form.status} />
                       </td>
                       <td className="px-3 py-3 text-right font-mono text-xs tabular-nums text-fg">
-                        {responseCount}
+                        <span className="inline-flex items-center justify-end gap-1.5">
+                          {responseCount}
+                          {unread > 0 && (
+                            <span className="rounded-full bg-whatsapp/15 px-1.5 py-0.5 text-[10px] font-semibold text-whatsapp-deep dark:text-whatsapp">
+                              +{unread > 99 ? "99+" : unread}
+                            </span>
+                          )}
+                        </span>
                       </td>
                       <td className="px-3 py-3 whitespace-nowrap font-mono text-xs text-muted-fg">
                         {formatDate(form.updated_at)}

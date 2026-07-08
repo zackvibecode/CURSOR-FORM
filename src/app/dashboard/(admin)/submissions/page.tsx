@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { SubmissionsExplorer } from "@/components/dashboard/SubmissionsExplorer";
+import { MarkFormSubmissionsSeen } from "@/components/dashboard/MarkFormSubmissionsSeen";
 import { mapSubmissionsToRows } from "@/lib/dashboard-stats";
 
 export const dynamic = "force-dynamic";
@@ -14,7 +15,7 @@ export default async function SubmissionsPage() {
 
   const { data: forms } = await supabase
     .from("forms")
-    .select("id, title")
+    .select("id, title, submissions(count)")
     .eq("user_id", user.id);
 
   const formIds = (forms ?? []).map((f) => f.id);
@@ -40,8 +41,16 @@ export default async function SubmissionsPage() {
     );
   }
 
+  const seenForms = (forms ?? []).map((f) => ({
+    id: f.id,
+    count: Array.isArray(f.submissions)
+      ? ((f.submissions[0] as { count?: number } | undefined)?.count ?? 0)
+      : 0,
+  }));
+
   return (
     <div className="space-y-6">
+      <MarkFormSubmissionsSeen forms={seenForms} />
       <div>
         <h2 className="text-lg font-semibold text-fg">Submissions</h2>
         <p className="text-sm text-muted-fg">
