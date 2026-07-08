@@ -4,6 +4,7 @@ import type { FormField } from "@/lib/form-schema";
 import { buildWhatsAppUrl } from "@/lib/whatsapp";
 import { fireLeadEvent, sendCAPIEvent } from "@/lib/meta-pixel";
 import { setPendingInstant } from "@/lib/instant-pending";
+import { getInAppBrowserName, isRestrictiveInAppBrowser } from "@/lib/in-app-browser";
 import {
   advanceTeamRoutingSnapshot,
   peekNextTeamRecipient,
@@ -13,7 +14,7 @@ import {
 } from "@/lib/team-routing-client";
 import { DynamicFieldRenderer } from "@/components/form/DynamicFieldRenderer";
 import { Button } from "@/components/ui/Button";
-import { Loader2 } from "lucide-react";
+import { CheckCircle2, Copy, Loader2, Check } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 interface PublicFormProps {
@@ -31,7 +32,7 @@ interface PublicFormProps {
 }
 
 function openWhatsApp(url: string) {
-  window.location.replace(url);
+  window.location.assign(url);
 }
 
 function saveSubmissionInBackground(formId: string, values: Record<string, string>) {
@@ -74,6 +75,9 @@ export function PublicFormView({
   const [values, setValues] = useState<Record<string, string>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
+  const [whatsappUrl, setWhatsappUrl] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
+  const [inAppName, setInAppName] = useState<string | null>(null);
   const [routingSnapshot, setRoutingSnapshot] = useState<TeamRoutingSnapshot | null>(
     teamRoutingSnapshot
   );
@@ -93,7 +97,11 @@ export function PublicFormView({
     setRoutingSnapshot(readTeamRoutingSnapshot(formId, teamRoutingSnapshot));
   }, [formId, teamRoutingSnapshot]);
 
-  // A: Reset stuck "Opening WhatsApp..." when user returns (Back / leave WhatsApp / bfcache).
+  useEffect(() => {
+    setInAppName(getInAppBrowserName());
+  }, []);
+
+  // Reset stuck "Opening WhatsApp..." when user returns (Back / leave WhatsApp / bfcache).
   useEffect(() => {
     const onPageShow = () => unlockSubmit();
     const onVisible = () => {
@@ -122,6 +130,28 @@ export function PublicFormView({
       delete next[fieldId];
       return next;
     });
+  };
+
+  const handleCopyLink = async () => {
+    if (!whatsappUrl) return;
+    try {
+      await navigator.clipboard.writeText(whatsappUrl);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // Fallback for older WebViews without clipboard API.
+      const input = document.createElement("textarea");
+      input.value = whatsappUrl;
+      input.setAttribute("readonly", "");
+      input.style.position = "fixed";
+      input.style.left = "-9999px";
+      document.body.appendChild(input);
+      input.select();
+      document.execCommand("copy");
+      document.body.removeChild(input);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 2000);
+    }
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -189,14 +219,27 @@ export function PublicFormView({
 
     saveSubmissionInBackground(formId, submittedValues);
 
-    // B: Clear form so returning users can send another entry.
+    // Clear form so returning users can send another entry.
     setValues({});
     setErrors({});
 
     // Dismiss mobile keyboard before redirect.
     (document.activeElement as HTMLElement | null)?.blur();
 
-    // C: Safety net — unlock if WhatsApp never opens / user stays on page.
+    // TikTok / Instagram / Facebook WebViews block auto WhatsApp redirects.
+    // Show a manual open/copy screen instead of jumping to their padlock page.
+    if (isRestrictiveInAppBrowser()) {
+      if (unlockTimerRef.current !== null) {
+        window.clearTimeout(unlockTimerRef.current);
+        unlockTimerRef.current = null;
+      }
+      setWhatsappUrl(url);
+      setSubmitting(false);
+      setCopied(false);
+      return;
+    }
+
+    // Safety net — unlock if WhatsApp never opens / user stays on page.
     if (unlockTimerRef.current !== null) {
       window.clearTimeout(unlockTimerRef.current);
     }
@@ -208,6 +251,73 @@ export function PublicFormView({
     // keepalive fetch survives redirect; short delay lets browser pixel fire.
     window.setTimeout(() => openWhatsApp(url), 150);
   };
+
+  if (whatsappUrl) {
+    const appLabel = inAppName || "this app";
+
+    return (
+      <div className="space-y-6 text-center">
+        <div className="flex flex-col items-center gap-3 pt-2">
+          <CheckCircle2 className="h-12 w-12 text-whatsapp" aria-hidden />
+          <h1 className="text-xl font-bold leading-snug text-fg">Form berjaya dihantar!</h1>
+          <p className="text-sm text-muted-fg">
+            {appLabel} kadang-kadang block WhatsApp terus. Tekan butang di bawah untuk sambung.
+          </p>
+        </div>
+
+        <Button
+          type="button"
+          variant="whatsapp"
+          showWhatsAppIcon
+          className="w-full"
+          size="lg"
+          onClick={() => openWhatsApp(whatsappUrl)}
+        >
+          Buka WhatsApp
+        </Button>
+
+        <Button
+          type="button"
+          variant="outline"
+          className="w-full"
+          size="lg"
+          onClick={() => void handleCopyLink()}
+        >
+          {copied ? (
+            <>
+              <Check className="h-4 w-4" aria-hidden />
+              Link disalin
+            </>
+          ) : (
+            <>
+              <Copy className="h-4 w-4" aria-hidden />
+              Copy WhatsApp link
+            </>
+          )}
+        </Button>
+
+        <p className="text-xs leading-relaxed text-muted-fg">
+          Kalau masih tak boleh buka: tekan menu <span className="font-semibold">⋯</span> di
+          penjuru, pilih <span className="font-semibold">Open in browser</span>, lepas tu buka
+          form semula.
+        </p>
+
+        <button
+          type="button"
+          className="text-sm font-medium text-whatsapp-deep hover:underline"
+          onClick={() => {
+            setWhatsappUrl(null);
+            setCopied(false);
+            setSubmitting(false);
+          }}
+        >
+          Hantar lagi
+        </button>
+
+        <p className="text-center text-xs text-muted-fg">Powered by OneForm · oneform.app</p>
+      </div>
+    );
+  }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
