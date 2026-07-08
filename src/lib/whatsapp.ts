@@ -148,16 +148,30 @@ export function buildWhatsAppMessageFromTemplate(
     .trim();
 }
 
+export type WhatsAppLinkMode = "app" | "web";
+
+/**
+ * Build a WhatsApp chat URL with a prefilled message.
+ * - `app` (default): wa.me — opens the WhatsApp app on normal browsers
+ * - `web`: api.whatsapp.com/send — classic “Continue to Chat” page that works
+ *   inside TikTok / Instagram browsers (wa.me app deep-links get blocked there)
+ */
 export function buildWhatsAppUrl(
   phone: string,
   formTitle: string,
   fields: FormField[],
   answers: Record<string, string>,
-  template?: string | null
+  template?: string | null,
+  mode: WhatsAppLinkMode = "app"
 ): string {
   const templated = buildWhatsAppMessageFromTemplate(template ?? "", fields, answers);
   const message = templated ?? buildWhatsAppMessage(formTitle, fields, answers);
   const text = encodeURIComponent(message);
   const cleanPhone = cleanPhoneNumber(phone);
+
+  if (mode === "web") {
+    return `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${text}`;
+  }
+
   return `https://wa.me/${cleanPhone}?text=${text}`;
 }
