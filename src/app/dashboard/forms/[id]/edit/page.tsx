@@ -2,7 +2,7 @@ import { redirect, notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { FormBuilder } from "@/components/builder/FormBuilder";
 import { mapDbFieldToFormField } from "@/lib/forms";
-import { getWhatsappTemplateFromForm } from "@/lib/form-settings";
+import { getTiktokModeFromForm, getWhatsappTemplateFromForm } from "@/lib/form-settings";
 
 export const dynamic = "force-dynamic";
 
@@ -50,6 +50,7 @@ export default async function EditFormPage({
         status: form.status,
         fields: (fields ?? []).map(mapDbFieldToFormField),
         whatsappTemplate: getWhatsappTemplateFromForm(form),
+        tiktokMode: getTiktokModeFromForm(form),
       }}
     />
   );

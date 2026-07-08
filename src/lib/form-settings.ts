@@ -3,6 +3,8 @@ import { syncTemplateWithFields } from "./template-sync";
 
 export type FormSettingsJson = {
   whatsapp_template?: string;
+  /** When true, TikTok in-app browser shows manual WhatsApp open screen after submit. */
+  tiktok_mode?: boolean;
   [key: string]: unknown;
 };
 
@@ -30,6 +32,12 @@ export function getWhatsappTemplateFromForm(form: {
   const settings = parseSettingsObject(form.settings);
   const template = settings.whatsapp_template;
   return typeof template === "string" && template.trim() ? template : undefined;
+}
+
+/** TikTok mode defaults ON so bio/ads forms work; turn off for normal browser-only traffic. */
+export function getTiktokModeFromForm(form: { settings?: unknown }): boolean {
+  const settings = parseSettingsObject(form.settings);
+  return settings.tiktok_mode !== false;
 }
 
 export function getInitialWhatsappTemplate(

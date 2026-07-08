@@ -17,6 +17,7 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Label } from "@/components/ui/Label";
 import { Textarea } from "@/components/ui/Textarea";
+import { Toggle } from "@/components/ui/Toggle";
 import { getFormPublicUrl } from "@/lib/forms";
 import { slugify } from "@/lib/utils";
 import { toast } from "@/components/ui/Toast";
@@ -50,6 +51,8 @@ interface FormBuilderProps {
     status: "draft" | "published";
     fields: FormField[];
     whatsappTemplate?: string;
+    /** Default true — TikTok shows manual WhatsApp open after submit */
+    tiktokMode?: boolean;
   };
 }
 
@@ -72,6 +75,7 @@ export function FormBuilder({ formId, initialData }: FormBuilderProps) {
   const [whatsappTemplate, setWhatsappTemplate] = useState(() =>
     getInitialWhatsappTemplate(initialData.whatsappTemplate, initialData.fields)
   );
+  const [tiktokMode, setTiktokMode] = useState(initialData.tiktokMode !== false);
   const [confirmModal, setConfirmModal] = useState(false);
   const [confirmAction, setConfirmAction] = useState<"save" | "publish" | null>(null);
   const [mobileDrawer, setMobileDrawer] = useState<"add" | "edit" | null>(null);
@@ -114,7 +118,10 @@ export function FormBuilder({ formId, initialData }: FormBuilderProps) {
             description,
             status: publish ? "published" : status,
             fields,
-            settings: { whatsapp_template: whatsappTemplate },
+            settings: {
+              whatsapp_template: whatsappTemplate,
+              tiktok_mode: tiktokMode,
+            },
           }),
         });
 
@@ -143,7 +150,18 @@ export function FormBuilder({ formId, initialData }: FormBuilderProps) {
         setSaving(false);
       }
     },
-    [formId, title, slug, whatsappNumber, ctaText, description, status, fields, whatsappTemplate]
+    [
+      formId,
+      title,
+      slug,
+      whatsappNumber,
+      ctaText,
+      description,
+      status,
+      fields,
+      whatsappTemplate,
+      tiktokMode,
+    ]
   );
 
   const requestSave = (publish: boolean) => {
@@ -427,6 +445,21 @@ export function FormBuilder({ formId, initialData }: FormBuilderProps) {
                       />
                     </div>
                   </div>
+
+                  <div className="rounded-lg border border-border bg-card p-5">
+                    <Toggle
+                      id="tiktokMode"
+                      label="TikTok mode"
+                      checked={tiktokMode}
+                      onChange={setTiktokMode}
+                    />
+                    <p className="mt-2 text-xs leading-relaxed text-muted-fg">
+                      ON: dalam TikTok, lepas submit tunjuk screen &quot;Berjaya dihantar&quot; +
+                      butang Buka WhatsApp (elak page padlock TikTok). OFF: terus redirect ke
+                      WhatsApp macam biasa (Chrome / Safari / ads lain).
+                    </p>
+                  </div>
+
                   <div className="flex justify-end">
                     <Button size="sm" onClick={() => handleSave(false)}>
                       Save

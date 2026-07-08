@@ -3,7 +3,7 @@
 import { PublicFormView } from "@/components/form/PublicFormView";
 import type { DbForm } from "@/lib/database.types";
 import type { FormField } from "@/lib/form-schema";
-import { getWhatsappTemplateFromForm } from "@/lib/form-settings";
+import { getTiktokModeFromForm, getWhatsappTemplateFromForm } from "@/lib/form-settings";
 import type { TeamRoutingSnapshot } from "@/lib/team-routing-client";
 import type { CSSProperties } from "react";
 
@@ -49,6 +49,7 @@ export function PublicFormClient({
             formId={form.id}
             pixelId={effectivePixelId}
             whatsappTemplate={getWhatsappTemplateFromForm(form)}
+            tiktokMode={getTiktokModeFromForm(form)}
             usesTeamRouting={usesTeamRouting}
             teamRoutingSnapshot={teamRoutingSnapshot}
           />

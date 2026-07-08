@@ -9,7 +9,7 @@ import {
   buildWhatsAppDeepLink,
   getInAppBrowserName,
   isAndroid,
-  isRestrictiveInAppBrowser,
+  shouldUseTikTokWhatsAppWorkaround,
 } from "@/lib/in-app-browser";
 import {
   advanceTeamRoutingSnapshot,
@@ -33,6 +33,8 @@ interface PublicFormProps {
   whatsappTemplate?: string | null;
   preview?: boolean;
   pixelId?: string;
+  /** When true (default), TikTok shows manual WhatsApp open screen after submit. */
+  tiktokMode?: boolean;
   usesTeamRouting?: boolean;
   teamRoutingSnapshot?: TeamRoutingSnapshot | null;
 }
@@ -83,6 +85,7 @@ export function PublicFormView({
   whatsappTemplate,
   preview = false,
   pixelId,
+  tiktokMode = true,
   usesTeamRouting = false,
   teamRoutingSnapshot = null,
 }: PublicFormProps) {
@@ -253,10 +256,10 @@ export function PublicFormView({
     (document.activeElement as HTMLElement | null)?.blur();
 
     /**
-     * TikTok / IG / FB: NEVER auto-navigate to wa.me — TikTok shows the padlock
-     * page. Stay on form.zaqone.com and let the user tap a real link / copy.
+     * TikTok only (when form TikTok mode is ON): NEVER auto-navigate to wa.me —
+     * TikTok shows the padlock page. Stay on form.zaqone.com and let the user tap.
      */
-    if (isRestrictiveInAppBrowser()) {
+    if (shouldUseTikTokWhatsAppWorkaround(tiktokMode)) {
       if (unlockTimerRef.current !== null) {
         window.clearTimeout(unlockTimerRef.current);
         unlockTimerRef.current = null;

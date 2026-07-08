@@ -30,6 +30,15 @@ export function getInAppBrowserName(userAgent = ""): string | null {
   return null;
 }
 
+/** Manual WhatsApp screen only for TikTok when form TikTok mode is enabled. */
+export function shouldUseTikTokWhatsAppWorkaround(
+  tiktokModeEnabled: boolean,
+  userAgent = ""
+): boolean {
+  if (!tiktokModeEnabled) return false;
+  return getInAppBrowserName(userAgent) === "TikTok";
+}
+
 /** Android WhatsApp intent — sometimes opens the app without TikTok's wa.me block page. */
 export function buildWhatsAppAndroidIntent(phone: string, textEncoded: string): string {
   return `intent://send/?phone=${phone}&text=${textEncoded}#Intent;scheme=whatsapp;package=com.whatsapp;end`;

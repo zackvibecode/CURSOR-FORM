@@ -20,15 +20,18 @@ export async function loadOwnerNotificationSettings(
   const admin = createAdminClient();
   if (!admin) return null;
 
-  const [{ data: profile }, { data: settings }] = await Promise.all([
-    admin.from("profiles").select("email").eq("id", userId).single(),
+  const [{ data: profile }, { data: settings, error: settingsError }] = await Promise.all([
+    admin.from("profiles").select("email").eq("id", userId).maybeSingle(),
     admin.from("user_settings").select("*").eq("user_id", userId).maybeSingle(),
   ]);
 
-  if (!profile?.email) return null;
+  if (settingsError) {
+    logNotificationError("settings", settingsError.message);
+  }
 
+  // Email is preferred but not required for Telegram / n8n channels.
   return {
-    email: profile.email,
+    email: profile?.email ?? "",
     whatsapp_number: settings?.whatsapp_number ?? null,
     email_notifications: settings?.email_notifications ?? true,
     whatsapp_notifications: settings?.whatsapp_notifications ?? false,
@@ -70,7 +73,9 @@ export async function dispatchSubmissionNotifications(
 
   if (owner.email_notifications) {
     const emailTo = owner.notification_email?.trim() || owner.email;
-    if (process.env.RESEND_API_KEY) {
+    if (!emailTo) {
+      // skip — no address configured
+    } else if (process.env.RESEND_API_KEY) {
       tasks.push(
         sendSubmissionEmail({ to: emailTo, payload }).catch((error) => {
           logNotificationError("resend", error);
@@ -94,6 +99,11 @@ export async function dispatchSubmissionNotifications(
       }).catch((error) => {
         logNotificationError("telegram", error);
       })
+    );
+  } else if (owner.telegram_notifications) {
+    logNotificationError(
+      "telegram",
+      "enabled but bot token or chat id is missing in Settings"
     );
   }
 
