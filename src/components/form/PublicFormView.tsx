@@ -55,6 +55,9 @@ function extractPii(fields: FormField[], values: Record<string, string>) {
   return { email, phone };
 }
 
+/** How long before we unlock the button if WhatsApp redirect never happens. */
+const SUBMIT_UNLOCK_MS = 3000;
+
 export function PublicFormView({
   title,
   description,
@@ -75,11 +78,42 @@ export function PublicFormView({
     teamRoutingSnapshot
   );
   const submitRef = useRef<HTMLButtonElement>(null);
+  const unlockTimerRef = useRef<number | null>(null);
+
+  const unlockSubmit = () => {
+    if (unlockTimerRef.current !== null) {
+      window.clearTimeout(unlockTimerRef.current);
+      unlockTimerRef.current = null;
+    }
+    setSubmitting(false);
+  };
 
   useEffect(() => {
     if (!teamRoutingSnapshot) return;
     setRoutingSnapshot(readTeamRoutingSnapshot(formId, teamRoutingSnapshot));
   }, [formId, teamRoutingSnapshot]);
+
+  // A: Reset stuck "Opening WhatsApp..." when user returns (Back / leave WhatsApp / bfcache).
+  useEffect(() => {
+    const onPageShow = () => unlockSubmit();
+    const onVisible = () => {
+      if (document.visibilityState === "visible") unlockSubmit();
+    };
+    const onFocus = () => unlockSubmit();
+
+    window.addEventListener("pageshow", onPageShow);
+    document.addEventListener("visibilitychange", onVisible);
+    window.addEventListener("focus", onFocus);
+
+    return () => {
+      window.removeEventListener("pageshow", onPageShow);
+      document.removeEventListener("visibilitychange", onVisible);
+      window.removeEventListener("focus", onFocus);
+      if (unlockTimerRef.current !== null) {
+        window.clearTimeout(unlockTimerRef.current);
+      }
+    };
+  }, []);
 
   const handleChange = (fieldId: string, value: string) => {
     setValues((prev) => ({ ...prev, [fieldId]: value }));
@@ -128,7 +162,8 @@ export function PublicFormView({
       }
     }
 
-    const url = buildWhatsAppUrl(targetPhone, title, fields, values, whatsappTemplate);
+    const submittedValues = { ...values };
+    const url = buildWhatsAppUrl(targetPhone, title, fields, submittedValues, whatsappTemplate);
 
     setPendingInstant(setSubmitting, true);
 
@@ -137,7 +172,7 @@ export function PublicFormView({
 
     // --- Send CAPI (server-side) with same event_id ---
     if (pixelId && typeof window !== "undefined") {
-      const { email, phone } = extractPii(fields, values);
+      const { email, phone } = extractPii(fields, submittedValues);
       sendCAPIEvent({
         pixelId,
         eventId,
@@ -152,10 +187,23 @@ export function PublicFormView({
       });
     }
 
-    saveSubmissionInBackground(formId, values);
+    saveSubmissionInBackground(formId, submittedValues);
+
+    // B: Clear form so returning users can send another entry.
+    setValues({});
+    setErrors({});
 
     // Dismiss mobile keyboard before redirect.
     (document.activeElement as HTMLElement | null)?.blur();
+
+    // C: Safety net — unlock if WhatsApp never opens / user stays on page.
+    if (unlockTimerRef.current !== null) {
+      window.clearTimeout(unlockTimerRef.current);
+    }
+    unlockTimerRef.current = window.setTimeout(() => {
+      unlockTimerRef.current = null;
+      setSubmitting(false);
+    }, SUBMIT_UNLOCK_MS);
 
     // keepalive fetch survives redirect; short delay lets browser pixel fire.
     window.setTimeout(() => openWhatsApp(url), 150);
