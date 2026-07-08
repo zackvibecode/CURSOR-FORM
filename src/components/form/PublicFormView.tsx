@@ -263,7 +263,8 @@ export function PublicFormView({
       setSubmitting(false);
     }, SUBMIT_UNLOCK_MS);
 
-    window.setTimeout(() => openWhatsApp(appUrl), 150);
+    // Fast redirect — notifications run in background on the server.
+    window.setTimeout(() => openWhatsApp(appUrl), 50);
   };
 
   if (manualOpen) {
