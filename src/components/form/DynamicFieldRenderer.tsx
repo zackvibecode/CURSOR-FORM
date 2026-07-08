@@ -9,6 +9,7 @@ import { formatOptionDisplay } from "@/lib/option-flag";
 import { buildYouTubeEmbedUrl, parseYouTubeVideoId } from "@/lib/youtube";
 import { cn } from "@/lib/utils";
 import { ChevronDown } from "lucide-react";
+import type { RefObject } from "react";
 
 interface DynamicFieldRendererProps {
   fields: FormField[];
@@ -16,6 +17,19 @@ interface DynamicFieldRendererProps {
   onChange: (fieldId: string, value: string) => void;
   errors?: Record<string, string>;
   preview?: boolean;
+  /** Scroll target when the last fillable field is focused (e.g. submit button). */
+  scrollTargetRef?: RefObject<HTMLElement | null>;
+}
+
+function isFillableField(field: FormField): boolean {
+  return field.type !== "title" && field.type !== "image" && field.type !== "youtube";
+}
+
+function scrollSubmitIntoView(target: HTMLElement | null | undefined) {
+  if (!target) return;
+  window.setTimeout(() => {
+    target.scrollIntoView({ behavior: "smooth", block: "end" });
+  }, 100);
 }
 
 export function DynamicFieldRenderer({
@@ -24,10 +38,17 @@ export function DynamicFieldRenderer({
   onChange,
   errors = {},
   preview = false,
+  scrollTargetRef,
 }: DynamicFieldRendererProps) {
+  const lastFillableFieldId = [...fields].reverse().find(isFillableField)?.id;
+
   return (
     <div className="space-y-5">
       {fields.map((field) => {
+        const isLastFillable = field.id === lastFillableFieldId;
+        const focusLastField = () => {
+          if (isLastFillable) scrollSubmitIntoView(scrollTargetRef?.current);
+        };
         const align = field.settings?.align ?? "left";
         const alignClass =
           align === "center" ? "text-center" : align === "right" ? "text-right" : "text-left";
@@ -133,6 +154,8 @@ export function DynamicFieldRenderer({
               <Textarea
                 value={value}
                 onChange={(e) => onChange(field.id, e.target.value)}
+                onFocus={focusLastField}
+                enterKeyHint={isLastFillable ? "done" : "next"}
                 placeholder={field.placeholder}
                 disabled={preview}
               />
@@ -154,6 +177,7 @@ export function DynamicFieldRenderer({
                         value={opt}
                         checked={selected}
                         onChange={() => onChange(field.id, opt)}
+                        onFocus={focusLastField}
                         disabled={preview}
                         className="accent-whatsapp"
                       />
@@ -169,6 +193,7 @@ export function DynamicFieldRenderer({
                 <select
                   value={value}
                   onChange={(e) => onChange(field.id, e.target.value)}
+                  onFocus={focusLastField}
                   disabled={preview}
                   className={cn(
                     "w-full appearance-none rounded-md border border-border bg-card px-3 py-2 pr-10 text-sm text-fg outline-none focus:border-whatsapp focus:ring-2 focus:ring-whatsapp/20",
@@ -206,6 +231,7 @@ export function DynamicFieldRenderer({
                             : selected.filter((s) => s !== opt);
                           onChange(field.id, next.join(", "));
                         }}
+                        onFocus={focusLastField}
                         disabled={preview}
                         className="accent-whatsapp"
                       />
@@ -229,6 +255,8 @@ export function DynamicFieldRenderer({
                 }
                 value={value}
                 onChange={(e) => onChange(field.id, e.target.value)}
+                onFocus={focusLastField}
+                enterKeyHint={isLastFillable ? "done" : "next"}
                 placeholder={field.placeholder}
                 disabled={preview}
                 className={error ? "border-red-500" : ""}

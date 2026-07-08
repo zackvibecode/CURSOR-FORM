@@ -35,7 +35,10 @@ export function PublicFormClient({
 
   return (
     <div className="min-h-screen bg-bg text-fg [color-scheme:light]" style={lightFormTheme}>
-      <main className="px-4 py-10 sm:py-14">
+      <main
+        className="scroll-pb-32 px-4 py-10 pb-32 sm:py-14 sm:pb-32"
+        style={{ paddingBottom: "max(8rem, env(safe-area-inset-bottom, 0px) + 6rem)" }}
+      >
         <div className="mx-auto max-w-lg rounded-xl border border-border bg-card p-6 shadow-sm sm:p-8">
           <PublicFormView
             title={form.title}

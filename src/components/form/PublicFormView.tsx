@@ -13,7 +13,8 @@ import {
 } from "@/lib/team-routing-client";
 import { DynamicFieldRenderer } from "@/components/form/DynamicFieldRenderer";
 import { Button } from "@/components/ui/Button";
-import { useEffect, useState } from "react";
+import { Loader2 } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 
 interface PublicFormProps {
   title: string;
@@ -73,6 +74,7 @@ export function PublicFormView({
   const [routingSnapshot, setRoutingSnapshot] = useState<TeamRoutingSnapshot | null>(
     teamRoutingSnapshot
   );
+  const submitRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     if (!teamRoutingSnapshot) return;
@@ -103,6 +105,7 @@ export function PublicFormView({
 
     if (Object.keys(fieldErrors).length > 0) {
       setErrors(fieldErrors);
+      submitRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
       return;
     }
 
@@ -151,8 +154,11 @@ export function PublicFormView({
 
     saveSubmissionInBackground(formId, values);
 
-    // Give Pixel + CAPI time to fire before WhatsApp redirect.
-    window.setTimeout(() => openWhatsApp(url), 400);
+    // Dismiss mobile keyboard before redirect.
+    (document.activeElement as HTMLElement | null)?.blur();
+
+    // keepalive fetch survives redirect; short delay lets browser pixel fire.
+    window.setTimeout(() => openWhatsApp(url), 150);
   };
 
   return (
@@ -170,6 +176,7 @@ export function PublicFormView({
         onChange={handleChange}
         errors={errors}
         preview={preview}
+        scrollTargetRef={submitRef}
       />
 
       {errors._form && (
@@ -177,14 +184,24 @@ export function PublicFormView({
       )}
 
       <Button
+        ref={submitRef}
         type="submit"
         variant="whatsapp"
-        showWhatsAppIcon
-        className="w-full"
+        showWhatsAppIcon={!submitting}
+        className="w-full scroll-mt-4"
         size="lg"
         disabled={submitting || preview}
       >
-        {preview ? ctaText : submitting ? "Opening WhatsApp..." : ctaText || "Submit on WhatsApp"}
+        {preview ? (
+          ctaText
+        ) : submitting ? (
+          <>
+            <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+            Opening WhatsApp...
+          </>
+        ) : (
+          ctaText || "Submit on WhatsApp"
+        )}
       </Button>
 
       {!preview && (
