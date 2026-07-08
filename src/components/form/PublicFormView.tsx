@@ -1,10 +1,16 @@
 "use client";
 
 import type { FormField } from "@/lib/form-schema";
-import { buildWhatsAppUrl } from "@/lib/whatsapp";
+import { buildWhatsAppUrl, cleanPhoneNumber, resolveWhatsAppMessage } from "@/lib/whatsapp";
 import { fireLeadEvent, sendCAPIEvent } from "@/lib/meta-pixel";
 import { setPendingInstant } from "@/lib/instant-pending";
-import { isRestrictiveInAppBrowser } from "@/lib/in-app-browser";
+import {
+  buildWhatsAppAndroidIntent,
+  buildWhatsAppDeepLink,
+  getInAppBrowserName,
+  isAndroid,
+  isRestrictiveInAppBrowser,
+} from "@/lib/in-app-browser";
 import {
   advanceTeamRoutingSnapshot,
   peekNextTeamRecipient,
@@ -14,7 +20,7 @@ import {
 } from "@/lib/team-routing-client";
 import { DynamicFieldRenderer } from "@/components/form/DynamicFieldRenderer";
 import { Button } from "@/components/ui/Button";
-import { Loader2 } from "lucide-react";
+import { Check, CheckCircle2, Copy, ExternalLink, Loader2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 interface PublicFormProps {
@@ -31,8 +37,16 @@ interface PublicFormProps {
   teamRoutingSnapshot?: TeamRoutingSnapshot | null;
 }
 
+type ManualOpenState = {
+  phone: string;
+  textEncoded: string;
+  apiUrl: string;
+  appUrl: string;
+  intentUrl: string;
+  deepLink: string;
+};
+
 function openWhatsApp(url: string) {
-  // Same tab navigation — like a normal WhatsApp button (opens app or WhatsApp Web).
   window.location.assign(url);
 }
 
@@ -57,7 +71,6 @@ function extractPii(fields: FormField[], values: Record<string, string>) {
   return { email, phone };
 }
 
-/** How long before we unlock the button if WhatsApp redirect never happens. */
 const SUBMIT_UNLOCK_MS = 3000;
 
 export function PublicFormView({
@@ -76,6 +89,10 @@ export function PublicFormView({
   const [values, setValues] = useState<Record<string, string>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
+  const [manualOpen, setManualOpen] = useState<ManualOpenState | null>(null);
+  const [copied, setCopied] = useState(false);
+  const [appName, setAppName] = useState<string | null>(null);
+  const [android, setAndroid] = useState(false);
   const [routingSnapshot, setRoutingSnapshot] = useState<TeamRoutingSnapshot | null>(
     teamRoutingSnapshot
   );
@@ -95,7 +112,11 @@ export function PublicFormView({
     setRoutingSnapshot(readTeamRoutingSnapshot(formId, teamRoutingSnapshot));
   }, [formId, teamRoutingSnapshot]);
 
-  // Reset stuck "Opening WhatsApp..." when user returns (Back / leave WhatsApp / bfcache).
+  useEffect(() => {
+    setAppName(getInAppBrowserName());
+    setAndroid(isAndroid());
+  }, []);
+
   useEffect(() => {
     const onPageShow = () => unlockSubmit();
     const onVisible = () => {
@@ -124,6 +145,24 @@ export function PublicFormView({
       delete next[fieldId];
       return next;
     });
+  };
+
+  const handleCopy = async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+    } catch {
+      const input = document.createElement("textarea");
+      input.value = text;
+      input.setAttribute("readonly", "");
+      input.style.position = "fixed";
+      input.style.left = "-9999px";
+      document.body.appendChild(input);
+      input.select();
+      document.execCommand("copy");
+      document.body.removeChild(input);
+    }
+    setCopied(true);
+    window.setTimeout(() => setCopied(false), 2000);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -165,25 +204,33 @@ export function PublicFormView({
     }
 
     const submittedValues = { ...values };
-
-    // TikTok / IG / FB block wa.me app deep-links. Use WhatsApp Web instead
-    // (same flow as a normal WhatsApp button → web chat → user taps Send).
-    const linkMode = isRestrictiveInAppBrowser() ? "web" : "app";
-    const url = buildWhatsAppUrl(
+    const cleanPhone = cleanPhoneNumber(targetPhone);
+    const textEncoded = encodeURIComponent(
+      resolveWhatsAppMessage(title, fields, submittedValues, whatsappTemplate)
+    );
+    const appUrl = buildWhatsAppUrl(
       targetPhone,
       title,
       fields,
       submittedValues,
       whatsappTemplate,
-      linkMode
+      "app"
     );
+    const apiUrl = buildWhatsAppUrl(
+      targetPhone,
+      title,
+      fields,
+      submittedValues,
+      whatsappTemplate,
+      "web"
+    );
+    const deepLink = buildWhatsAppDeepLink(cleanPhone, textEncoded);
+    const intentUrl = buildWhatsAppAndroidIntent(cleanPhone, textEncoded);
 
     setPendingInstant(setSubmitting, true);
 
-    // --- Fire Meta Pixel Lead (browser) after validation passed ---
     const eventId = fireLeadEvent(pixelId, title, formId);
 
-    // --- Send CAPI (server-side) with same event_id ---
     if (pixelId && typeof window !== "undefined") {
       const { email, phone } = extractPii(fields, submittedValues);
       sendCAPIEvent({
@@ -201,15 +248,32 @@ export function PublicFormView({
     }
 
     saveSubmissionInBackground(formId, submittedValues);
-
-    // Clear form so returning users can send another entry.
     setValues({});
     setErrors({});
-
-    // Dismiss mobile keyboard before redirect.
     (document.activeElement as HTMLElement | null)?.blur();
 
-    // Safety net — unlock if WhatsApp never opens / user stays on page.
+    /**
+     * TikTok / IG / FB: NEVER auto-navigate to wa.me — TikTok shows the padlock
+     * page. Stay on form.zaqone.com and let the user tap a real link / copy.
+     */
+    if (isRestrictiveInAppBrowser()) {
+      if (unlockTimerRef.current !== null) {
+        window.clearTimeout(unlockTimerRef.current);
+        unlockTimerRef.current = null;
+      }
+      setManualOpen({
+        phone: cleanPhone,
+        textEncoded,
+        apiUrl,
+        appUrl,
+        intentUrl,
+        deepLink,
+      });
+      setSubmitting(false);
+      setCopied(false);
+      return;
+    }
+
     if (unlockTimerRef.current !== null) {
       window.clearTimeout(unlockTimerRef.current);
     }
@@ -218,9 +282,90 @@ export function PublicFormView({
       setSubmitting(false);
     }, SUBMIT_UNLOCK_MS);
 
-    // keepalive fetch survives redirect; short delay lets browser pixel fire.
-    window.setTimeout(() => openWhatsApp(url), 150);
+    window.setTimeout(() => openWhatsApp(appUrl), 150);
   };
+
+  if (manualOpen) {
+    const label = appName || "TikTok";
+    const primaryHref = android ? manualOpen.intentUrl : manualOpen.deepLink;
+    const secondaryHref = manualOpen.apiUrl;
+
+    return (
+      <div className="space-y-5 text-center">
+        <div className="flex flex-col items-center gap-3 pt-1">
+          <CheckCircle2 className="h-12 w-12 text-whatsapp" aria-hidden />
+          <h1 className="text-xl font-bold leading-snug text-fg">Berjaya dihantar!</h1>
+          <p className="text-sm text-muted-fg">
+            {label} block WhatsApp auto-open. Tekan butang di bawah untuk hantar mesej.
+          </p>
+        </div>
+
+        {/* Real <a> tap — user gesture; better chance than location.assign */}
+        <a
+          href={primaryHref}
+          className="inline-flex w-full items-center justify-center gap-2 rounded-md bg-whatsapp px-5 py-3 text-sm font-medium text-white hover:bg-whatsapp-deep"
+        >
+          Buka WhatsApp
+        </a>
+
+        <a
+          href={secondaryHref}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex w-full items-center justify-center gap-2 rounded-md border border-border bg-card px-5 py-3 text-sm font-medium text-fg hover:bg-muted"
+        >
+          <ExternalLink className="h-4 w-4" aria-hidden />
+          Cuba cara lain (WhatsApp link)
+        </a>
+
+        <Button
+          type="button"
+          variant="outline"
+          className="w-full"
+          size="lg"
+          onClick={() => void handleCopy(manualOpen.appUrl)}
+        >
+          {copied ? (
+            <>
+              <Check className="h-4 w-4" aria-hidden />
+              Link disalin — paste dalam browser
+            </>
+          ) : (
+            <>
+              <Copy className="h-4 w-4" aria-hidden />
+              Copy link WhatsApp
+            </>
+          )}
+        </Button>
+
+        <div className="rounded-md border border-border bg-muted/50 px-4 py-3 text-left text-xs leading-relaxed text-muted-fg">
+          <p className="font-semibold text-fg">Kalau masih block:</p>
+          <ol className="mt-2 list-decimal space-y-1 pl-4">
+            <li>
+              Tekan menu <span className="font-semibold">⋯</span> atas kanan
+            </li>
+            <li>
+              Pilih <span className="font-semibold">Open in browser</span> / Buka dalam browser
+            </li>
+            <li>Isi form semula — terus pergi WhatsApp</li>
+          </ol>
+        </div>
+
+        <button
+          type="button"
+          className="text-sm font-medium text-whatsapp-deep hover:underline"
+          onClick={() => {
+            setManualOpen(null);
+            setCopied(false);
+          }}
+        >
+          Hantar lagi
+        </button>
+
+        <p className="text-xs text-muted-fg">Powered by OneForm · oneform.app</p>
+      </div>
+    );
+  }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">

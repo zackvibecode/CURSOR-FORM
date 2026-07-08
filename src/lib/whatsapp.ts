@@ -150,11 +150,24 @@ export function buildWhatsAppMessageFromTemplate(
 
 export type WhatsAppLinkMode = "app" | "web";
 
+/** Resolve the final WhatsApp message text (template or auto). */
+export function resolveWhatsAppMessage(
+  formTitle: string,
+  fields: FormField[],
+  answers: Record<string, string>,
+  template?: string | null
+): string {
+  const templated = buildWhatsAppMessageFromTemplate(template ?? "", fields, answers);
+  return templated ?? buildWhatsAppMessage(formTitle, fields, answers);
+}
+
 /**
  * Build a WhatsApp chat URL with a prefilled message.
  * - `app` (default): wa.me — opens the WhatsApp app on normal browsers
- * - `web`: api.whatsapp.com/send — classic “Continue to Chat” page that works
- *   inside TikTok / Instagram browsers (wa.me app deep-links get blocked there)
+ * - `web`: api.whatsapp.com/send — classic Continue to Chat page
+ *
+ * Note: TikTok often blocks automatic navigation to both. Prefer staying on
+ * form.zaqone.com and letting the user tap a link (see PublicFormView).
  */
 export function buildWhatsAppUrl(
   phone: string,
@@ -164,8 +177,7 @@ export function buildWhatsAppUrl(
   template?: string | null,
   mode: WhatsAppLinkMode = "app"
 ): string {
-  const templated = buildWhatsAppMessageFromTemplate(template ?? "", fields, answers);
-  const message = templated ?? buildWhatsAppMessage(formTitle, fields, answers);
+  const message = resolveWhatsAppMessage(formTitle, fields, answers, template);
   const text = encodeURIComponent(message);
   const cleanPhone = cleanPhoneNumber(phone);
 
