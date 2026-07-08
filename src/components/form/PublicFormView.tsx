@@ -20,7 +20,7 @@ import {
 } from "@/lib/team-routing-client";
 import { DynamicFieldRenderer } from "@/components/form/DynamicFieldRenderer";
 import { Button } from "@/components/ui/Button";
-import { Check, CheckCircle2, Copy, ExternalLink, Loader2 } from "lucide-react";
+import { CheckCircle2, Loader2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 interface PublicFormProps {
@@ -93,7 +93,6 @@ export function PublicFormView({
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
   const [manualOpen, setManualOpen] = useState<ManualOpenState | null>(null);
-  const [copied, setCopied] = useState(false);
   const [appName, setAppName] = useState<string | null>(null);
   const [android, setAndroid] = useState(false);
   const [routingSnapshot, setRoutingSnapshot] = useState<TeamRoutingSnapshot | null>(
@@ -148,24 +147,6 @@ export function PublicFormView({
       delete next[fieldId];
       return next;
     });
-  };
-
-  const handleCopy = async (text: string) => {
-    try {
-      await navigator.clipboard.writeText(text);
-    } catch {
-      const input = document.createElement("textarea");
-      input.value = text;
-      input.setAttribute("readonly", "");
-      input.style.position = "fixed";
-      input.style.left = "-9999px";
-      document.body.appendChild(input);
-      input.select();
-      document.execCommand("copy");
-      document.body.removeChild(input);
-    }
-    setCopied(true);
-    window.setTimeout(() => setCopied(false), 2000);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -273,7 +254,6 @@ export function PublicFormView({
         deepLink,
       });
       setSubmitting(false);
-      setCopied(false);
       return;
     }
 
@@ -290,8 +270,7 @@ export function PublicFormView({
 
   if (manualOpen) {
     const label = appName || "TikTok";
-    const primaryHref = android ? manualOpen.intentUrl : manualOpen.deepLink;
-    const secondaryHref = manualOpen.apiUrl;
+    const whatsappHref = android ? manualOpen.intentUrl : manualOpen.deepLink;
 
     return (
       <div className="space-y-5 text-center">
@@ -305,62 +284,16 @@ export function PublicFormView({
 
         {/* Real <a> tap — user gesture; better chance than location.assign */}
         <a
-          href={primaryHref}
+          href={whatsappHref}
           className="inline-flex w-full items-center justify-center gap-2 rounded-md bg-whatsapp px-5 py-3 text-sm font-medium text-white hover:bg-whatsapp-deep"
         >
           Buka WhatsApp
         </a>
 
-        <a
-          href={secondaryHref}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex w-full items-center justify-center gap-2 rounded-md border border-border bg-card px-5 py-3 text-sm font-medium text-fg hover:bg-muted"
-        >
-          <ExternalLink className="h-4 w-4" aria-hidden />
-          Cuba cara lain (WhatsApp link)
-        </a>
-
-        <Button
-          type="button"
-          variant="outline"
-          className="w-full"
-          size="lg"
-          onClick={() => void handleCopy(manualOpen.appUrl)}
-        >
-          {copied ? (
-            <>
-              <Check className="h-4 w-4" aria-hidden />
-              Link disalin — paste dalam browser
-            </>
-          ) : (
-            <>
-              <Copy className="h-4 w-4" aria-hidden />
-              Copy link WhatsApp
-            </>
-          )}
-        </Button>
-
-        <div className="rounded-md border border-border bg-muted/50 px-4 py-3 text-left text-xs leading-relaxed text-muted-fg">
-          <p className="font-semibold text-fg">Kalau masih block:</p>
-          <ol className="mt-2 list-decimal space-y-1 pl-4">
-            <li>
-              Tekan menu <span className="font-semibold">⋯</span> atas kanan
-            </li>
-            <li>
-              Pilih <span className="font-semibold">Open in browser</span> / Buka dalam browser
-            </li>
-            <li>Isi form semula — terus pergi WhatsApp</li>
-          </ol>
-        </div>
-
         <button
           type="button"
           className="text-sm font-medium text-whatsapp-deep hover:underline"
-          onClick={() => {
-            setManualOpen(null);
-            setCopied(false);
-          }}
+          onClick={() => setManualOpen(null)}
         >
           Hantar lagi
         </button>

@@ -1,24 +1,37 @@
 -- Notification channel settings on user_settings
--- Run this in Supabase Dashboard → SQL Editor if Telegram settings fail to save.
+-- Safe for Supabase SQL Editor (one statement at a time, with exception guards).
+
 ALTER TABLE public.user_settings
-  ADD COLUMN IF NOT EXISTS n8n_webhook_url text,
-  ADD COLUMN IF NOT EXISTS notification_email text,
-  ADD COLUMN IF NOT EXISTS telegram_bot_token text,
-  ADD COLUMN IF NOT EXISTS telegram_chat_id text,
+  ADD COLUMN IF NOT EXISTS n8n_webhook_url text;
+
+ALTER TABLE public.user_settings
+  ADD COLUMN IF NOT EXISTS notification_email text;
+
+ALTER TABLE public.user_settings
+  ADD COLUMN IF NOT EXISTS telegram_bot_token text;
+
+ALTER TABLE public.user_settings
+  ADD COLUMN IF NOT EXISTS telegram_chat_id text;
+
+ALTER TABLE public.user_settings
   ADD COLUMN IF NOT EXISTS telegram_notifications boolean DEFAULT false;
 
--- Realtime: alert dashboard when new submissions arrive
-ALTER TABLE public.submissions REPLICA IDENTITY FULL;
-
+-- Optional realtime (ignore if already configured / no permission)
 DO $$
 BEGIN
-  IF NOT EXISTS (
-    SELECT 1
-    FROM pg_publication_tables
-    WHERE pubname = 'supabase_realtime'
-      AND schemaname = 'public'
-      AND tablename = 'submissions'
-  ) THEN
+  BEGIN
+    ALTER TABLE public.submissions REPLICA IDENTITY FULL;
+  EXCEPTION
+    WHEN OTHERS THEN
+      RAISE NOTICE 'Replica identity skipped: %', SQLERRM;
+  END;
+
+  BEGIN
     ALTER PUBLICATION supabase_realtime ADD TABLE public.submissions;
-  END IF;
+  EXCEPTION
+    WHEN duplicate_object THEN
+      RAISE NOTICE 'submissions already in supabase_realtime';
+    WHEN OTHERS THEN
+      RAISE NOTICE 'Realtime publication skipped: %', SQLERRM;
+  END;
 END $$;
