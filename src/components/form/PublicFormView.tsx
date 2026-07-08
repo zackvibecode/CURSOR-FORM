@@ -2,7 +2,7 @@
 
 import type { FormField } from "@/lib/form-schema";
 import { buildWhatsAppUrl } from "@/lib/whatsapp";
-import { fireBrowserLeadEvent, sendLeadToCAPI, type LeadTrackingContext } from "@/lib/meta-pixel";
+import { fireLeadEvent, sendCAPIEvent } from "@/lib/meta-pixel";
 import { setPendingInstant } from "@/lib/instant-pending";
 import {
   advanceTeamRoutingSnapshot,
@@ -39,13 +39,10 @@ function saveSubmissionInBackground(formId: string, values: Record<string, strin
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(values),
     keepalive: true,
-  }).catch(() => {
-    // keepalive helps the request finish during navigation
-  });
+  }).catch(() => {});
 }
 
-/** Extract email and phone answers from form values for CAPI user_data. */
-function extractPii(fields: FormField[], values: Record<string, string>): { email?: string; phone?: string } {
+function extractPii(fields: FormField[], values: Record<string, string>) {
   let email: string | undefined;
   let phone: string | undefined;
   for (const field of fields) {
@@ -95,7 +92,6 @@ export function PublicFormView({
     e.preventDefault();
     setErrors({});
 
-    // --- Validation (only fire Lead AFTER this passes) ---
     const requiredFields = fields.filter((f) => f.required && f.type !== "title");
     const fieldErrors: Record<string, string> = {};
 
@@ -117,7 +113,6 @@ export function PublicFormView({
 
     if (preview) return;
 
-    // --- Validation passed — proceed with submission ---
     let targetPhone = whatsappNumber;
 
     if (usesTeamRouting && routingSnapshot) {
@@ -134,15 +129,13 @@ export function PublicFormView({
 
     setPendingInstant(setSubmitting, true);
 
-    // --- Fire Meta Pixel Lead (browser) + CAPI (server) with same event_id ---
-    const { email, phone } = extractPii(fields, values);
-    const ctx: LeadTrackingContext = { title, formId, email, phone };
-    const { eventId } = fireBrowserLeadEvent(pixelId, ctx);
+    // --- Fire Meta Pixel Lead (browser) after validation passed ---
+    const eventId = fireLeadEvent(pixelId, title, formId);
 
+    // --- Send CAPI (server-side) with same event_id ---
     if (pixelId && typeof window !== "undefined") {
-      const fbp = document.cookie.match(/(?:^|; )_fbp=([^;]*)/)?.[1];
-      const fbc = document.cookie.match(/(?:^|; )_fbc=([^;]*)/)?.[1];
-      sendLeadToCAPI("/api/meta/conversions", {
+      const { email, phone } = extractPii(fields, values);
+      sendCAPIEvent({
         pixelId,
         eventId,
         formId,
@@ -150,16 +143,16 @@ export function PublicFormView({
         eventSourceUrl: window.location.href,
         email,
         phone,
-        fbp,
-        fbc,
+        fbp: document.cookie.match(/(?:^|; )_fbp=([^;]*)/)?.[1],
+        fbc: document.cookie.match(/(?:^|; )_fbc=([^;]*)/)?.[1],
         userAgent: navigator.userAgent,
       });
     }
 
     saveSubmissionInBackground(formId, values);
 
-    // Give Meta Pixel + CAPI time to fire before navigating to WhatsApp.
-    window.setTimeout(() => openWhatsApp(url), 350);
+    // Give Pixel + CAPI time to fire before WhatsApp redirect.
+    window.setTimeout(() => openWhatsApp(url), 400);
   };
 
   return (
