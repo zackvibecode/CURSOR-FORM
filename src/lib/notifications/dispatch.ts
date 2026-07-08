@@ -18,15 +18,26 @@ export async function loadOwnerNotificationSettings(
   userId: string
 ): Promise<NotificationOwnerSettings | null> {
   const admin = createAdminClient();
-  if (!admin) return null;
+  if (!admin) {
+    logNotificationError("admin", "SUPABASE_SERVICE_ROLE_KEY / URL missing");
+    return null;
+  }
 
   const [{ data: profile }, { data: settings, error: settingsError }] = await Promise.all([
     admin.from("profiles").select("email").eq("id", userId).maybeSingle(),
-    admin.from("user_settings").select("*").eq("user_id", userId).maybeSingle(),
+    admin
+      .from("user_settings")
+      .select(
+        "whatsapp_number, email_notifications, whatsapp_notifications, submission_alerts, telegram_notifications, n8n_webhook_url, notification_email, telegram_bot_token, telegram_chat_id"
+      )
+      .eq("user_id", userId)
+      .maybeSingle(),
   ]);
 
   if (settingsError) {
     logNotificationError("settings", settingsError.message);
+    // If telegram columns are missing, still return defaults so email/n8n can run,
+    // but telegram will stay off until migration is applied.
   }
 
   // Email is preferred but not required for Telegram / n8n channels.
@@ -124,9 +135,19 @@ export function scheduleSubmissionNotifications(input: DispatchNotificationInput
 }
 
 export function scheduleSubmissionNotificationsForOwner(job: SubmissionNotificationJob): void {
-  const task = (async () => {
+  void runSubmissionNotificationsForOwner(job);
+}
+
+/** Awaitable version — use on submit so Telegram finishes before function ends. */
+export async function runSubmissionNotificationsForOwner(
+  job: SubmissionNotificationJob
+): Promise<void> {
+  try {
     const owner = await loadOwnerNotificationSettings(job.userId);
-    if (!owner) return;
+    if (!owner) {
+      logNotificationError("dispatch", "owner settings could not be loaded");
+      return;
+    }
     await dispatchSubmissionNotifications({
       form: job.form,
       fields: job.fields,
@@ -135,16 +156,9 @@ export function scheduleSubmissionNotificationsForOwner(job: SubmissionNotificat
       assignedName: job.assignedName,
       owner,
     });
-  })().catch((error) => {
+  } catch (error) {
     logNotificationError("dispatch", error);
-  });
-
-  if (process.env.VERCEL) {
-    waitUntil(task);
-    return;
   }
-
-  void task;
 }
 
 export function dispatchSubmissionNotificationsInBackground(

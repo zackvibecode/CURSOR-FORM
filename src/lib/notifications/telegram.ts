@@ -51,10 +51,15 @@ async function postTelegramMessage(
   chatId: string,
   body: Record<string, unknown>
 ): Promise<{ ok: boolean; status: number; body: string }> {
+  // Telegram accepts string or number; numeric chat IDs are more reliable as numbers.
+  const normalizedChatId = /^-?\d+$/.test(chatId.trim()) ? Number(chatId.trim()) : chatId.trim();
   const response = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
+    body: JSON.stringify({
+      ...body,
+      chat_id: normalizedChatId,
+    }),
   });
   const text = await response.text().catch(() => "");
   return { ok: response.ok, status: response.status, body: text };
@@ -67,7 +72,6 @@ export async function sendTelegramNotification({
 }: SendTelegramNotificationInput): Promise<void> {
   // Prefer HTML (safe for titles like "New Zealand North & South").
   const htmlResult = await postTelegramMessage(botToken, chatId, {
-    chat_id: chatId,
     text: buildHtmlMessage(payload),
     parse_mode: "HTML",
     disable_web_page_preview: true,
@@ -77,7 +81,6 @@ export async function sendTelegramNotification({
 
   // Fallback: plain text if HTML somehow fails (bad chat_id still fails both).
   const plainResult = await postTelegramMessage(botToken, chatId, {
-    chat_id: chatId,
     text: buildPlainMessage(payload),
     disable_web_page_preview: true,
   });

@@ -84,7 +84,19 @@ export async function PUT(request: Request) {
     .single();
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    const message = error.message || "Failed to save settings";
+    // Helpful hint when migration 022 was never applied on the remote DB.
+    if (/telegram_|n8n_webhook|notification_email/i.test(message) || error.code === "42703") {
+      return NextResponse.json(
+        {
+          error:
+            "Database belum ada column Telegram. Buka Supabase → SQL Editor, run file supabase/migrations/022_notification_channels.sql, lepas tu Save semula.",
+          details: message,
+        },
+        { status: 500 }
+      );
+    }
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 
   return NextResponse.json({ settings: data });

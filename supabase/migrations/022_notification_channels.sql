@@ -1,4 +1,5 @@
 -- Notification channel settings on user_settings
+-- Run this in Supabase Dashboard → SQL Editor if Telegram settings fail to save.
 ALTER TABLE public.user_settings
   ADD COLUMN IF NOT EXISTS n8n_webhook_url text,
   ADD COLUMN IF NOT EXISTS notification_email text,

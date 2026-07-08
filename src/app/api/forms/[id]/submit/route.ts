@@ -5,7 +5,7 @@ import { buildAnswersSchema } from "@/lib/form-schema";
 import { checkSubmissionLimitForOwner } from "@/lib/check-limits";
 import { resolveSubmissionRecipient } from "@/lib/resolve-recipient";
 import { rateLimit, ipFromRequest } from "@/lib/rate-limit";
-import { scheduleSubmissionNotificationsForOwner } from "@/lib/notifications/dispatch";
+import { runSubmissionNotificationsForOwner } from "@/lib/notifications/dispatch";
 import { headers } from "next/headers";
 
 function getIpHash(): string | null {
@@ -133,7 +133,9 @@ export async function POST(
     return NextResponse.json({ error: insertError.message }, { status: 500 });
   }
 
-  scheduleSubmissionNotificationsForOwner({
+  // Await notifications so Telegram/email finish before the response
+  // (redirect + keepalive often cuts off background waitUntil work).
+  await runSubmissionNotificationsForOwner({
     userId: form.user_id,
     form: {
       id: form.id,

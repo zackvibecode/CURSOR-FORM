@@ -71,6 +71,7 @@ export function SettingsForm({ profileEmail }: { profileEmail: string }) {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [testingTelegram, setTestingTelegram] = useState(false);
 
   useEffect(() => {
     async function loadSettings() {
@@ -121,6 +122,23 @@ export function SettingsForm({ profileEmail }: { profileEmail: string }) {
       toast("Network error. Please try again.", "error");
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleTestTelegram = async () => {
+    setTestingTelegram(true);
+    try {
+      const res = await fetch("/api/settings/test-telegram", { method: "POST" });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        toast(data.error ?? "Telegram test failed", "error");
+        return;
+      }
+      toast("Telegram test sent — check your bot/chat", "success");
+    } catch {
+      toast("Network error. Please try again.", "error");
+    } finally {
+      setTestingTelegram(false);
     }
   };
 
@@ -328,7 +346,20 @@ export function SettingsForm({ profileEmail }: { profileEmail: string }) {
                     placeholder="-1001234567890"
                     className="font-mono text-sm"
                   />
+                  <p className="mt-1 text-[11px] text-muted-fg">
+                    Chat dengan bot dulu (@BotFather → /newbot). Untuk group: tambah bot, hantar
+                    mesej, dapatkan chat id dari @userinfobot / getUpdates.
+                  </p>
                 </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  disabled={testingTelegram}
+                  onClick={() => void handleTestTelegram()}
+                >
+                  {testingTelegram ? "Sending…" : "Test Telegram"}
+                </Button>
               </div>
             )}
           </div>
