@@ -1,14 +1,11 @@
 "use client";
 
 import type { FormField } from "@/lib/form-schema";
-import { buildWhatsAppUrl, cleanPhoneNumber, resolveWhatsAppMessage } from "@/lib/whatsapp";
+import { buildWhatsAppUrl } from "@/lib/whatsapp";
 import { fireLeadEvent, sendCAPIEvent } from "@/lib/meta-pixel";
 import { setPendingInstant } from "@/lib/instant-pending";
 import {
-  buildWhatsAppAndroidIntent,
-  buildWhatsAppDeepLink,
   getInAppBrowserName,
-  isAndroid,
   shouldUseTikTokWhatsAppWorkaround,
 } from "@/lib/in-app-browser";
 import {
@@ -40,12 +37,8 @@ interface PublicFormProps {
 }
 
 type ManualOpenState = {
-  phone: string;
-  textEncoded: string;
   apiUrl: string;
   appUrl: string;
-  intentUrl: string;
-  deepLink: string;
 };
 
 function openWhatsApp(url: string) {
@@ -95,7 +88,6 @@ export function PublicFormView({
   const [manualOpen, setManualOpen] = useState<ManualOpenState | null>(null);
   const [copied, setCopied] = useState(false);
   const [appName, setAppName] = useState<string | null>(null);
-  const [android, setAndroid] = useState(false);
   const [routingSnapshot, setRoutingSnapshot] = useState<TeamRoutingSnapshot | null>(
     teamRoutingSnapshot
   );
@@ -117,7 +109,6 @@ export function PublicFormView({
 
   useEffect(() => {
     setAppName(getInAppBrowserName());
-    setAndroid(isAndroid());
   }, []);
 
   useEffect(() => {
@@ -207,10 +198,6 @@ export function PublicFormView({
     }
 
     const submittedValues = { ...values };
-    const cleanPhone = cleanPhoneNumber(targetPhone);
-    const textEncoded = encodeURIComponent(
-      resolveWhatsAppMessage(title, fields, submittedValues, whatsappTemplate)
-    );
     const appUrl = buildWhatsAppUrl(
       targetPhone,
       title,
@@ -227,8 +214,6 @@ export function PublicFormView({
       whatsappTemplate,
       "web"
     );
-    const deepLink = buildWhatsAppDeepLink(cleanPhone, textEncoded);
-    const intentUrl = buildWhatsAppAndroidIntent(cleanPhone, textEncoded);
 
     setPendingInstant(setSubmitting, true);
 
@@ -264,14 +249,7 @@ export function PublicFormView({
         window.clearTimeout(unlockTimerRef.current);
         unlockTimerRef.current = null;
       }
-      setManualOpen({
-        phone: cleanPhone,
-        textEncoded,
-        apiUrl,
-        appUrl,
-        intentUrl,
-        deepLink,
-      });
+      setManualOpen({ apiUrl, appUrl });
       setSubmitting(false);
       setCopied(false);
       return;
@@ -290,8 +268,6 @@ export function PublicFormView({
 
   if (manualOpen) {
     const label = appName || "TikTok";
-    const primaryHref = android ? manualOpen.intentUrl : manualOpen.deepLink;
-    const secondaryHref = manualOpen.apiUrl;
 
     return (
       <div className="space-y-5 text-center">
@@ -303,19 +279,11 @@ export function PublicFormView({
           </p>
         </div>
 
-        {/* Real <a> tap — user gesture; better chance than location.assign */}
         <a
-          href={primaryHref}
-          className="inline-flex w-full items-center justify-center gap-2 rounded-md bg-whatsapp px-5 py-3 text-sm font-medium text-white hover:bg-whatsapp-deep"
-        >
-          Buka WhatsApp
-        </a>
-
-        <a
-          href={secondaryHref}
+          href={manualOpen.apiUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex w-full items-center justify-center gap-2 rounded-md border border-border bg-card px-5 py-3 text-sm font-medium text-fg hover:bg-muted"
+          className="inline-flex w-full items-center justify-center gap-2 rounded-md bg-whatsapp px-5 py-3 text-sm font-medium text-white hover:bg-whatsapp-deep"
         >
           <ExternalLink className="h-4 w-4" aria-hidden />
           Cuba cara lain (WhatsApp link)
