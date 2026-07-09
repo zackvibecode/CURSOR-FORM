@@ -2,11 +2,13 @@ import { createHash } from "crypto";
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 
+import { META_FORM_SUBMIT_EVENT } from "@/lib/meta-pixel";
+
 /**
- * Meta Conversions API — server-side Lead event.
+ * Meta Conversions API — server-side zaqoneformSubmit event.
  *
  * Receives the same event_id that the browser Pixel used so Meta can
- * deduplicate the browser + server events into a single Lead.
+ * deduplicate the browser + server events into a single conversion.
  */
 
 const GRAPH_API_VERSION = process.env.META_GRAPH_API_VERSION || "v21.0";
@@ -93,7 +95,7 @@ export async function POST(request: Request) {
   const payload = {
     data: [
       {
-        event_name: "Lead",
+        event_name: META_FORM_SUBMIT_EVENT,
         event_time: Math.floor(Date.now() / 1000),
         event_id: eventId,
         action_source: "website",

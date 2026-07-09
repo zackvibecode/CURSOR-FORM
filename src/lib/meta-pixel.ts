@@ -1,6 +1,8 @@
 /**
- * Meta Pixel tracking — fires Lead event on successful form submit.
+ * Meta Pixel tracking — fires zaqoneformSubmit on successful form submit.
  */
+
+export const META_FORM_SUBMIT_EVENT = "zaqoneformSubmit";
 
 export function fireLeadEvent(
   pixelId: string | undefined,
@@ -19,14 +21,14 @@ export function fireLeadEvent(
 
   const fire = () => {
     if (typeof window.fbq === "function") {
-      window.fbq("track", "Lead", payload, { eventID: eventId });
+      window.fbq("trackCustom", META_FORM_SUBMIT_EVENT, payload, { eventID: eventId });
       if (process.env.NODE_ENV === "development") {
-        console.log("[meta-pixel] Lead fired", { eventId, pixelId, formTitle });
+        console.log("[meta-pixel] zaqoneformSubmit fired", { eventId, pixelId, formTitle });
       }
       return true;
     }
     if (window._fbq) {
-      window._fbq.push(["track", "Lead", payload, { eventID: eventId }]);
+      window._fbq.push(["trackCustom", META_FORM_SUBMIT_EVENT, payload, { eventID: eventId }]);
       return true;
     }
     return false;
