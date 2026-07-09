@@ -6,22 +6,11 @@ import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
 import { Input } from "@/components/ui/Input";
 import { Label } from "@/components/ui/Label";
-import { getFormPublicUrl, getFormPublicPath } from "@/lib/forms";
-import { formatDate } from "@/lib/utils";
-import { cn } from "@/lib/utils";
+import { getFormPublicUrl } from "@/lib/forms";
 import { FORM_TEMPLATES } from "@/lib/templates";
 import { CreateFormButton } from "./DashboardHeader";
-import {
-  Edit,
-  Trash2,
-  FileText,
-  Loader2,
-  Pin,
-  Plus,
-  Search,
-  Copy,
-  ExternalLink,
-} from "lucide-react";
+import { FormCard, type FormCardData } from "./FormCard";
+import { FileText, Loader2, Plus, Search } from "lucide-react";
 import { toast } from "@/components/ui/Toast";
 import { setPendingInstant } from "@/lib/instant-pending";
 import {
@@ -35,47 +24,48 @@ const MAX_PINNED = 5;
 const PINNED_STORAGE_KEY = "oneform_pinned_forms";
 const DELETE_CONFIRM_TEXT = "DELETE";
 
-interface FormRow {
-  id: string;
-  title: string;
-  slug: string;
-  status: "draft" | "published";
-  updated_at: string;
-  submissions?: { count: number }[];
-}
-
 interface FormListProps {
-  forms: FormRow[];
+  forms: FormCardData[];
+  userName?: string | null;
 }
 
-const formActionBtnClass =
-  "inline-flex items-center gap-1.5 rounded-md border border-border bg-card px-2.5 py-1.5 text-xs font-medium text-fg touch-manipulation select-none transition-[transform,color,background-color,border-color] duration-75 active:scale-[0.98] hover:bg-muted";
-
-const formShareBtnClass =
-  "inline-flex items-center gap-1.5 rounded-md border border-border bg-card px-3 py-1.5 text-xs font-medium text-fg touch-manipulation select-none transition-[transform,color,background-color,border-color] duration-75 active:scale-[0.98] hover:border-whatsapp/40 hover:bg-whatsapp/5 hover:text-whatsapp-deep dark:hover:text-whatsapp";
-
-function StatusPill({ status }: { status: "draft" | "published" }) {
-  return (
-    <span
-      className={cn(
-        "inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-2 py-0.5 text-xs font-medium capitalize",
-        status === "published"
-          ? "text-whatsapp-deep dark:text-whatsapp"
-          : "text-muted-fg"
-      )}
-    >
-      <span
-        className={cn(
-          "h-1.5 w-1.5 rounded-full",
-          status === "published" ? "bg-whatsapp" : "bg-gray-400"
-        )}
-      />
-      {status}
-    </span>
-  );
+function getFirstName(userName?: string | null) {
+  if (!userName?.trim()) return "there";
+  const name = userName.trim();
+  if (name.includes("@")) return name.split("@")[0] ?? "there";
+  return name.split(/\s+/)[0] ?? "there";
 }
 
-export function FormList({ forms: initialForms }: FormListProps) {
+async function copyFormLink(slug: string) {
+  const url = getFormPublicUrl(slug);
+  try {
+    await navigator.clipboard.writeText(url);
+    toast("Link copied", "success");
+  } catch {
+    const textarea = document.createElement("textarea");
+    textarea.value = url;
+    document.body.appendChild(textarea);
+    textarea.select();
+    document.execCommand("copy");
+    document.body.removeChild(textarea);
+    toast("Link copied", "success");
+  }
+}
+
+async function shareFormLink(title: string, slug: string) {
+  const url = getFormPublicUrl(slug);
+  if (typeof navigator.share === "function") {
+    try {
+      await navigator.share({ title, url });
+      return;
+    } catch {
+      // User cancelled or share failed — fall back to copy.
+    }
+  }
+  await copyFormLink(slug);
+}
+
+export function FormList({ forms: initialForms, userName }: FormListProps) {
   const router = useRouter();
   const [forms, setForms] = useState(initialForms);
   const [templateOpen, setTemplateOpen] = useState(false);
@@ -90,6 +80,8 @@ export function FormList({ forms: initialForms }: FormListProps) {
   const [query, setQuery] = useState("");
   const [seenTick, setSeenTick] = useState(0);
 
+  const firstName = getFirstName(userName);
+
   useEffect(() => {
     setForms(initialForms);
   }, [initialForms]);
@@ -98,7 +90,6 @@ export function FormList({ forms: initialForms }: FormListProps) {
     return subscribeFormSeenUpdates(() => setSeenTick((n) => n + 1));
   }, []);
 
-  // Seed baseline counts once so existing submissions don't show as "new".
   useEffect(() => {
     const list = forms.map((f) => ({
       id: f.id,
@@ -161,7 +152,7 @@ export function FormList({ forms: initialForms }: FormListProps) {
     setDeleteConfirmSecond("");
   };
 
-  const openDeleteModal = (form: FormRow) => {
+  const openDeleteModal = (form: FormCardData) => {
     setDeleteTarget({ id: form.id, title: form.title });
     setDeleteConfirmFirst("");
     setDeleteConfirmSecond("");
@@ -259,17 +250,43 @@ export function FormList({ forms: initialForms }: FormListProps) {
 
   return (
     <div>
-      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-xl font-semibold text-fg">Forms</h1>
-          <p className="text-sm text-muted-fg">Create and manage your WhatsApp lead forms</p>
-        </div>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={() => setTemplateOpen(true)}>
-            From template
-          </Button>
-          <CreateFormButton onError={setError} />
-        </div>
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold text-fg">
+          Hello {firstName}
+          <span className="ml-1" aria-hidden="true">
+            👋
+          </span>
+        </h1>
+      </div>
+
+      <div className="mb-4 flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-2.5">
+        <Search className="h-4 w-4 shrink-0 text-muted-fg" />
+        <input
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Search form"
+          className="flex-1 bg-transparent text-sm text-fg outline-none placeholder:text-muted-fg"
+        />
+        <span className="font-mono text-[11px] text-muted-fg">
+          {sortedForms.length}/{forms.length}
+        </span>
+      </div>
+
+      <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-center">
+        <CreateFormButton
+          onError={setError}
+          className="w-full justify-center sm:w-auto sm:flex-1"
+        >
+          <Plus className="h-4 w-4" />
+          New Form
+        </CreateFormButton>
+        <Button
+          variant="outline"
+          onClick={() => setTemplateOpen(true)}
+          className="w-full justify-center sm:w-auto"
+        >
+          From template
+        </Button>
       </div>
 
       {error && (
@@ -279,7 +296,7 @@ export function FormList({ forms: initialForms }: FormListProps) {
       )}
 
       {forms.length === 0 ? (
-        <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-border bg-card px-6 py-20 text-center">
+        <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border bg-card px-6 py-20 text-center">
           <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-md border border-border text-muted-fg">
             <FileText className="h-5 w-5" />
           </div>
@@ -287,181 +304,42 @@ export function FormList({ forms: initialForms }: FormListProps) {
           <p className="mb-5 max-w-sm text-sm text-muted-fg">
             Create your first WhatsApp form to start collecting leads.
           </p>
-          <CreateFormButton onError={setError} />
+          <CreateFormButton onError={setError}>
+            <Plus className="h-4 w-4" />
+            New Form
+          </CreateFormButton>
         </div>
       ) : (
-        <div className="rounded-lg border border-border bg-card overflow-hidden">
-          {/* Search bar */}
-          <div className="flex items-center gap-2 border-b border-border px-3 py-2">
-            <Search className="h-3.5 w-3.5 text-muted-fg" />
-            <input
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search forms…"
-              className="flex-1 bg-transparent text-sm text-fg outline-none placeholder:text-muted-fg"
-            />
-            <span className="font-mono text-[11px] text-muted-fg">
-              {sortedForms.length} of {forms.length}
-            </span>
-          </div>
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
+          {sortedForms.map((form) => {
+            const responseCount = form.submissions?.[0]?.count ?? 0;
+            const pinned = isPinned(form.id);
+            void seenTick;
+            const unread = getUnreadSubmissionCount(form.id, responseCount);
 
-          <div className="overflow-x-auto scrollbar-thin">
-            <table className="w-full text-left text-sm">
-              <thead>
-                <tr className="border-b border-border bg-muted/40">
-                  <th className="w-8 px-3 py-2.5" />
-                  <th className="px-3 py-2.5 text-[11px] font-semibold uppercase tracking-wider text-muted-fg">
-                    Name
-                  </th>
-                  <th className="px-3 py-2.5 text-[11px] font-semibold uppercase tracking-wider text-muted-fg">
-                    Status
-                  </th>
-                  <th className="px-3 py-2.5 text-right text-[11px] font-semibold uppercase tracking-wider text-muted-fg">
-                    Submissions
-                  </th>
-                  <th className="px-3 py-2.5 text-[11px] font-semibold uppercase tracking-wider text-muted-fg">
-                    Updated
-                  </th>
-                  <th className="px-3 py-2.5 text-right text-[11px] font-semibold uppercase tracking-wider text-muted-fg">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {sortedForms.map((form) => {
-                  const responseCount = form.submissions?.[0]?.count ?? 0;
-                  const pinned = isPinned(form.id);
-                  // seenTick keeps unread badges reactive after marking seen.
-                  void seenTick;
-                  const unread = getUnreadSubmissionCount(form.id, responseCount);
-                  return (
-                    <tr
-                      key={form.id}
-                      className={cn(
-                        "group border-b border-border/60 transition-colors last:border-0 hover:bg-muted/40",
-                        pinned && "bg-whatsapp/[0.03]"
-                      )}
-                    >
-                      <td className="px-3 py-3">
-                        <div className="relative inline-flex">
-                          <button
-                            type="button"
-                            onClick={() => togglePin(form.id)}
-                            title={pinned ? "Unpin form" : "Pin form"}
-                            aria-label={pinned ? "Unpin form" : "Pin form"}
-                            className={cn(
-                              "rounded-md p-1 transition-colors",
-                              pinned
-                                ? "text-whatsapp-deep dark:text-whatsapp"
-                                : "text-muted-fg/40 hover:bg-muted hover:text-muted-fg"
-                            )}
-                          >
-                            <Pin className={cn("h-3.5 w-3.5", pinned && "fill-current")} />
-                          </button>
-                          {unread > 0 && (
-                            <Link
-                              href="/dashboard/submissions"
-                              onClick={() => markFormSubmissionsSeen(form.id, responseCount)}
-                              title={`${unread} new submission${unread === 1 ? "" : "s"}`}
-                              aria-label={`${unread} new submissions`}
-                              className="absolute -right-1.5 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-whatsapp px-1 text-[10px] font-bold leading-none text-white shadow-sm ring-2 ring-card"
-                            >
-                              {unread > 99 ? "99+" : unread}
-                            </Link>
-                          )}
-                        </div>
-                      </td>
-                      <td className="px-3 py-3">
-                        <Link
-                          href={`/dashboard/forms/${form.id}/edit`}
-                          className="block max-w-[260px] truncate font-medium text-fg hover:text-whatsapp-deep dark:hover:text-whatsapp"
-                        >
-                          {form.title}
-                        </Link>
-                        <span className="block max-w-[260px] truncate font-mono text-[11px] text-muted-fg">
-                          {getFormPublicPath(form.slug)}
-                        </span>
-                      </td>
-                      <td className="px-3 py-3">
-                        <StatusPill status={form.status} />
-                      </td>
-                      <td className="px-3 py-3 text-right font-mono text-xs tabular-nums text-fg">
-                        <span className="inline-flex items-center justify-end gap-1.5">
-                          {responseCount}
-                          {unread > 0 && (
-                            <span className="rounded-full bg-whatsapp/15 px-1.5 py-0.5 text-[10px] font-semibold text-whatsapp-deep dark:text-whatsapp">
-                              +{unread > 99 ? "99+" : unread}
-                            </span>
-                          )}
-                        </span>
-                      </td>
-                      <td className="px-3 py-3 whitespace-nowrap font-mono text-xs text-muted-fg">
-                        {formatDate(form.updated_at)}
-                      </td>
-                      <td className="px-3 py-3">
-                        <div className="flex flex-wrap items-center justify-end gap-2">
-                          <Link
-                            href={`/dashboard/forms/${form.id}/edit`}
-                            className={formActionBtnClass}
-                            title="Edit form"
-                          >
-                            <Edit className="h-3.5 w-3.5 shrink-0" />
-                            Edit
-                          </Link>
+            return (
+              <FormCard
+                key={form.id}
+                form={form}
+                pinned={pinned}
+                unread={unread}
+                responseCount={responseCount}
+                duplicating={duplicatingId === form.id}
+                onPin={() => togglePin(form.id)}
+                onCopy={() => void copyFormLink(form.slug)}
+                onShare={() => void shareFormLink(form.title, form.slug)}
+                onDuplicate={() => void handleDuplicate(form.id)}
+                onDelete={() => openDeleteModal(form)}
+                onMarkSeen={() => markFormSubmissionsSeen(form.id, responseCount)}
+              />
+            );
+          })}
 
-                          <button
-                            type="button"
-                            onClick={() => handleDuplicate(form.id)}
-                            disabled={duplicatingId === form.id}
-                            className={cn(formActionBtnClass, "disabled:opacity-50")}
-                            title="Duplicate form"
-                          >
-                            {duplicatingId === form.id ? (
-                              <Loader2 className="h-3.5 w-3.5 shrink-0 animate-spin" />
-                            ) : (
-                              <Copy className="h-3.5 w-3.5 shrink-0" />
-                            )}
-                            Duplicate
-                          </button>
-
-                          {form.status === "published" && (
-                            <a
-                              href={getFormPublicUrl(form.slug)}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className={formShareBtnClass}
-                              title="Open form in new tab"
-                            >
-                              <ExternalLink className="h-4 w-4 shrink-0" />
-                              Open
-                            </a>
-                          )}
-
-                          <button
-                            type="button"
-                            onClick={() => openDeleteModal(form)}
-                            disabled={deletingId === form.id}
-                            className="rounded-md p-1.5 text-muted-fg transition-colors hover:bg-red-500/10 hover:text-red-600 disabled:opacity-50"
-                            title="Delete"
-                          >
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-
-                {sortedForms.length === 0 && (
-                  <tr>
-                    <td colSpan={6} className="px-3 py-10 text-center text-sm text-muted-fg">
-                      No forms match &ldquo;{query}&rdquo;
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
+          {sortedForms.length === 0 && (
+            <div className="col-span-full rounded-xl border border-border bg-card px-4 py-12 text-center text-sm text-muted-fg">
+              No forms match &ldquo;{query}&rdquo;
+            </div>
+          )}
         </div>
       )}
 

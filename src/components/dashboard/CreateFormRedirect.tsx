@@ -33,7 +33,7 @@ export function CreateFormRedirect({ templateId }: { templateId: string }) {
       <div className="flex min-h-screen flex-col items-center justify-center gap-4">
         <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
         <button
-          onClick={() => router.replace("/dashboard")}
+          onClick={() => router.replace("/dashboard/forms")}
           className="text-sm font-medium text-whatsapp-deep transition-colors hover:text-whatsapp dark:text-whatsapp"
         >
           Back to dashboard

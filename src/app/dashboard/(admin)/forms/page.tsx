@@ -19,11 +19,16 @@ export default async function FormsPage({
     return <CreateFormRedirect templateId={params.template} />;
   }
 
-  const { data: forms } = await supabase
-    .from("forms")
-    .select("*, submissions(count)")
-    .eq("user_id", user!.id)
-    .order("updated_at", { ascending: false });
+  const [{ data: forms }, { data: profile }] = await Promise.all([
+    supabase
+      .from("forms")
+      .select("*, submissions(count)")
+      .eq("user_id", user!.id)
+      .order("updated_at", { ascending: false }),
+    supabase.from("profiles").select("name").eq("id", user!.id).maybeSingle(),
+  ]);
 
-  return <FormList forms={forms ?? []} />;
+  const userName = profile?.name ?? user?.email ?? null;
+
+  return <FormList forms={forms ?? []} userName={userName} />;
 }

@@ -8,7 +8,8 @@ import { useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 
 const SEGMENT_LABELS: Record<string, string> = {
-  dashboard: "Overview",
+  dashboard: "Dashboard",
+  overview: "Overview",
   forms: "Forms",
   submissions: "Submissions",
   customers: "Customers",
@@ -101,14 +102,15 @@ export function DashboardTopBar({ userName, onMenuClick }: DashboardTopBarProps)
       </div>
 
       <div className="flex items-center gap-2">
-        {/* Search (decorative — filters handled client-side in lists) */}
-        <div className="hidden items-center gap-2 rounded-md border border-border bg-card px-2.5 py-1.5 text-muted-fg md:flex">
-          <Search className="h-3.5 w-3.5" />
-          <span className="text-xs">Search…</span>
-          <kbd className="ml-2 rounded border border-border px-1.5 py-0.5 font-mono text-[10px] text-muted-fg">
-            /
-          </kbd>
-        </div>
+        {pathname !== "/dashboard/forms" && (
+          <div className="hidden items-center gap-2 rounded-md border border-border bg-card px-2.5 py-1.5 text-muted-fg md:flex">
+            <Search className="h-3.5 w-3.5" />
+            <span className="text-xs">Search…</span>
+            <kbd className="ml-2 rounded border border-border px-1.5 py-0.5 font-mono text-[10px] text-muted-fg">
+              /
+            </kbd>
+          </div>
+        )}
 
         <SubmissionNotificationBell />
 

@@ -21,8 +21,8 @@ import {
 } from "lucide-react";
 
 const mainNavItems = [
-  { href: "/dashboard", label: "Overview", icon: LayoutDashboard, exact: true },
-  { href: "/dashboard/forms", label: "Forms", icon: FileText },
+  { href: "/dashboard/forms", label: "Forms", icon: FileText, exact: true },
+  { href: "/dashboard/overview", label: "Overview", icon: LayoutDashboard, exact: true },
   { href: "/dashboard/submissions", label: "Submissions", icon: Inbox },
   { href: "/dashboard/customers", label: "Customers", icon: Users },
   { href: "/dashboard/analytics", label: "Analytics", icon: BarChart3 },

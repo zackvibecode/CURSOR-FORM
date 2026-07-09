@@ -6,13 +6,13 @@ import { ensurePendingSubscription } from "@/lib/subscription/pending-plan";
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get("code");
-  const next = searchParams.get("next") ?? "/dashboard";
+  const next = searchParams.get("next") ?? "/dashboard/forms";
   const template = searchParams.get("template");
   const plan = searchParams.get("plan");
   const cycle = searchParams.get("cycle");
 
   const safeNext = safeRedirectPath(next);
-  const redirectPath = template ? `/dashboard?template=${template}` : safeNext;
+  const redirectPath = template ? `/dashboard/forms?template=${template}` : safeNext;
 
   if (!code) {
     return NextResponse.redirect(`${origin}/login?error=auth`);

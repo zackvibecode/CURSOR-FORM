@@ -10,7 +10,7 @@ export default async function AdminSubscriptionsPage() {
   const { user, isAdmin } = await getAdminContext(supabase);
 
   if (!user) redirect("/login");
-  if (!isAdmin) redirect("/dashboard");
+  if (!isAdmin) redirect("/dashboard/forms");
 
   return (
     <div className="max-w-5xl space-y-6">

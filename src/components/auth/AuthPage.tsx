@@ -13,7 +13,7 @@ import { LogIn, Mail, UserPlus } from "lucide-react";
 
 function AuthForm({ mode }: { mode: "login" | "signup" }) {
   const searchParams = useSearchParams();
-  const redirect = searchParams.get("redirect") || "/dashboard";
+  const redirect = searchParams.get("redirect") || "/dashboard/forms";
   const template = searchParams.get("template");
   const selectedPlan = searchParams.get("plan");
   const billingCycle = searchParams.get("cycle") || "monthly";
@@ -29,7 +29,7 @@ function AuthForm({ mode }: { mode: "login" | "signup" }) {
   const [showForgotPassword, setShowForgotPassword] = useState(false);
 
   const getDashboardUrl = () => {
-    if (template) return `/dashboard?template=${template}`;
+    if (template) return `/dashboard/forms?template=${template}`;
     return safeRedirectPath(redirect);
   };
 

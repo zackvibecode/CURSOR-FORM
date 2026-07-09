@@ -49,7 +49,7 @@ export async function POST(request: NextRequest) {
   );
 
   const callbackUrl = new URL("/auth/callback", request.url);
-  callbackUrl.searchParams.set("next", "/dashboard");
+  callbackUrl.searchParams.set("next", "/dashboard/forms");
 
   // Create the account as already-confirmed using the service role key.
   // This bypasses the "Error sending confirmation email" issue when SMTP

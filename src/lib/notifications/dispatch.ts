@@ -36,9 +36,14 @@ export async function loadOwnerNotificationSettings(
 
   if (settingsError) {
     logNotificationError("settings", settingsError.message);
-    // If telegram columns are missing, still return defaults so email/n8n can run,
-    // but telegram will stay off until migration is applied.
+    // #region agent log
+    fetch('http://127.0.0.1:7551/ingest/4dbbe78a-c7ad-441f-8435-395a025d02e9',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'6a31c9'},body:JSON.stringify({sessionId:'6a31c9',location:'dispatch.ts:settingsError',message:'Settings query error',data:{msg:settingsError.message,code:settingsError.code},timestamp:Date.now(),hypothesisId:'A'})}).catch(()=>{});
+    // #endregion
   }
+
+  // #region agent log
+  fetch('http://127.0.0.1:7551/ingest/4dbbe78a-c7ad-441f-8435-395a025d02e9',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'6a31c9'},body:JSON.stringify({sessionId:'6a31c9',location:'dispatch.ts:rawSettings',message:'Raw settings from DB',data:{settingsFound:!!settings,tgEnabled:settings?.telegram_notifications,hasToken:!!settings?.telegram_bot_token,hasChatId:!!settings?.telegram_chat_id,tgTokenLen:settings?.telegram_bot_token?.length,tgChatIdLen:settings?.telegram_chat_id?.length},timestamp:Date.now(),hypothesisId:'C'})}).catch(()=>{});
+  // #endregion
 
   // Email is preferred but not required for Telegram / n8n channels.
   return {
@@ -97,6 +102,13 @@ export async function dispatchSubmissionNotifications(
     }
   }
 
+  const tgEnabled = !!(owner.telegram_notifications && owner.telegram_bot_token?.trim() && owner.telegram_chat_id?.trim());
+  const tgMissingCreds = !!owner.telegram_notifications && !tgEnabled;
+
+  // #region agent log
+  fetch('http://127.0.0.1:7551/ingest/4dbbe78a-c7ad-441f-8435-395a025d02e9',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'6a31c9'},body:JSON.stringify({sessionId:'6a31c9',location:'dispatch.ts:tgBranch',message:'Telegram branch decision',data:{tgEnabled,tgMissingCreds,tgToggle:owner.telegram_notifications,hasToken:!!owner.telegram_bot_token?.trim(),hasChatId:!!owner.telegram_chat_id?.trim(),taskCount:tasks.length+1},timestamp:Date.now(),hypothesisId:'E'})}).catch(()=>{});
+  // #endregion
+
   if (
     owner.telegram_notifications &&
     owner.telegram_bot_token?.trim() &&
@@ -107,9 +119,18 @@ export async function dispatchSubmissionNotifications(
         botToken: owner.telegram_bot_token.trim(),
         chatId: owner.telegram_chat_id.trim(),
         payload,
-      }).catch((error) => {
-        logNotificationError("telegram", error);
       })
+        .then(() => {
+          // #region agent log
+          fetch('http://127.0.0.1:7551/ingest/4dbbe78a-c7ad-441f-8435-395a025d02e9',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'6a31c9'},body:JSON.stringify({sessionId:'6a31c9',location:'telegram.ts:success',message:'Telegram send SUCCESS',data:{},timestamp:Date.now(),hypothesisId:'E'})}).catch(()=>{});
+          // #endregion
+        })
+        .catch((error) => {
+          logNotificationError("telegram", error);
+          // #region agent log
+          fetch('http://127.0.0.1:7551/ingest/4dbbe78a-c7ad-441f-8435-395a025d02e9',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'6a31c9'},body:JSON.stringify({sessionId:'6a31c9',location:'telegram.ts:fail',message:'Telegram send FAILED',data:{msg:String(error)},timestamp:Date.now(),hypothesisId:'E'})}).catch(()=>{});
+          // #endregion
+        })
     );
   } else if (owner.telegram_notifications) {
     logNotificationError(
@@ -135,10 +156,14 @@ export function scheduleSubmissionNotifications(input: DispatchNotificationInput
 }
 
 export function scheduleSubmissionNotificationsForOwner(job: SubmissionNotificationJob): void {
+  const isVercel = !!process.env.VERCEL;
+  // #region agent log
+  fetch('http://127.0.0.1:7551/ingest/4dbbe78a-c7ad-441f-8435-395a025d02e9',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'6a31c9'},body:JSON.stringify({sessionId:'6a31c9',location:'dispatch.ts:schedule',message:'scheduleSubmissionNotificationsForOwner called',data:{isVercel,userId:job.userId,formId:job.form.id},timestamp:Date.now(),hypothesisId:'D'})}).catch(()=>{});
+  // #endregion
   const task = runSubmissionNotificationsForOwner(job);
   // On Vercel, waitUntil keeps the function alive after the response is sent
   // so Telegram/email still deliver even though the user already redirected.
-  if (process.env.VERCEL) {
+  if (isVercel) {
     waitUntil(task);
     return;
   }
@@ -149,10 +174,19 @@ export function scheduleSubmissionNotificationsForOwner(job: SubmissionNotificat
 export async function runSubmissionNotificationsForOwner(
   job: SubmissionNotificationJob
 ): Promise<void> {
+  // #region agent log
+  fetch('http://127.0.0.1:7551/ingest/4dbbe78a-c7ad-441f-8435-395a025d02e9',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'6a31c9'},body:JSON.stringify({sessionId:'6a31c9',location:'dispatch.ts:runStart',message:'runSubmissionNotificationsForOwner START',data:{userId:job.userId,formId:job.form.id,hasPhone:!!job.assignedPhone},timestamp:Date.now()})}).catch(()=>{});
+  // #endregion
   try {
     const owner = await loadOwnerNotificationSettings(job.userId);
+    // #region agent log
+    fetch('http://127.0.0.1:7551/ingest/4dbbe78a-c7ad-441f-8435-395a025d02e9',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'6a31c9'},body:JSON.stringify({sessionId:'6a31c9',location:'dispatch.ts:afterLoad',message:'Owner settings loaded',data:{ownerFound:!!owner,tgEnabled:owner?.telegram_notifications,hasToken:!!owner?.telegram_bot_token,hasChatId:!!owner?.telegram_chat_id,email:owner?.email,whatsappNotif:owner?.whatsapp_notifications},timestamp:Date.now(),hypothesisId:'B'})}).catch(()=>{});
+    // #endregion
     if (!owner) {
       logNotificationError("dispatch", "owner settings could not be loaded");
+      // #region agent log
+      fetch('http://127.0.0.1:7551/ingest/4dbbe78a-c7ad-441f-8435-395a025d02e9',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'6a31c9'},body:JSON.stringify({sessionId:'6a31c9',location:'dispatch.ts:ownerNull',message:'Owner NULL — settings load failed',data:{userId:job.userId},timestamp:Date.now(),hypothesisId:'A'})}).catch(()=>{});
+      // #endregion
       return;
     }
     await dispatchSubmissionNotifications({
@@ -163,8 +197,14 @@ export async function runSubmissionNotificationsForOwner(
       assignedName: job.assignedName,
       owner,
     });
+    // #region agent log
+    fetch('http://127.0.0.1:7551/ingest/4dbbe78a-c7ad-441f-8435-395a025d02e9',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'6a31c9'},body:JSON.stringify({sessionId:'6a31c9',location:'dispatch.ts:runDone',message:'runSubmissionNotificationsForOwner DONE',data:{userId:job.userId},timestamp:Date.now()})}).catch(()=>{});
+    // #endregion
   } catch (error) {
     logNotificationError("dispatch", error);
+    // #region agent log
+    fetch('http://127.0.0.1:7551/ingest/4dbbe78a-c7ad-441f-8435-395a025d02e9',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'6a31c9'},body:JSON.stringify({sessionId:'6a31c9',location:'dispatch.ts:runError',message:'runSubmissionNotificationsForOwner ERROR',data:{msg:String(error),stack:error instanceof Error ? error.stack?.slice(0,500) : undefined},timestamp:Date.now()})}).catch(()=>{});
+    // #endregion
   }
 }
 
