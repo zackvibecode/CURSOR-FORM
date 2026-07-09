@@ -108,7 +108,7 @@ export function Navbar() {
             Login
           </Link>
           <Link href="/signup">
-            <button className="ml-1 inline-flex h-9 items-center gap-1.5 rounded-lg bg-whatsapp px-3.5 text-[13px] font-semibold text-white shadow-sm transition-all hover:bg-[#0DB849] hover:shadow-md">
+            <button className="ml-1 inline-flex h-9 items-center gap-1.5 rounded-lg bg-whatsapp-dark px-3.5 text-[13px] font-semibold text-white shadow-sm transition-all hover:bg-whatsapp-deep hover:shadow-md">
               Get started
             </button>
           </Link>
@@ -167,7 +167,7 @@ export function Navbar() {
               Login
             </Link>
             <Link href="/signup" onClick={() => setOpen(false)}>
-              <button className="mt-2 w-full rounded-xl bg-whatsapp py-2.5 text-sm font-semibold text-white shadow-sm">
+              <button className="mt-2 w-full rounded-xl bg-whatsapp-dark py-2.5 text-sm font-semibold text-white shadow-sm">
                 Get started
               </button>
             </Link>

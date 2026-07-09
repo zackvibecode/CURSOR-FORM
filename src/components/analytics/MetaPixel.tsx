@@ -6,7 +6,7 @@ interface MetaPixelProps {
   pixelId: string;
 }
 
-/** Client-side Meta Pixel loader (public forms inject the snippet server-side in [slug]/page.tsx). */
+/** Meta Pixel loader — deferred via next/script afterInteractive. */
 export function MetaPixel({ pixelId }: MetaPixelProps) {
   if (!pixelId) return null;
 

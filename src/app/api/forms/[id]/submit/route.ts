@@ -35,10 +35,6 @@ export async function POST(
 ) {
   const { id } = params;
 
-  // #region agent log
-  fetch('http://127.0.0.1:7551/ingest/4dbbe78a-c7ad-441f-8435-395a025d02e9',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'6a31c9'},body:JSON.stringify({sessionId:'6a31c9',location:'submit/route.ts:POSTentry',message:'Submit API POST called',data:{formId:id},timestamp:Date.now()})}).catch(()=>{});
-  // #endregion
-
   const ip = ipFromRequest(request);
   const limit = rateLimit(`submit:${ip}:${id}`, 20, 60_000);
   if (!limit.allowed) {
@@ -139,9 +135,6 @@ export async function POST(
 
   // Fire notifications in background (Vercel waitUntil) so submit responds
   // immediately and user goes to WhatsApp fast. Telegram/email still deliver.
-  // #region agent log
-  fetch('http://127.0.0.1:7551/ingest/4dbbe78a-c7ad-441f-8435-395a025d02e9',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'6a31c9'},body:JSON.stringify({sessionId:'6a31c9',location:'submit/route.ts:beforeSchedule',message:'About to schedule notifications',data:{userId:form.user_id,formId:form.id,assignedPhone},timestamp:Date.now()})}).catch(()=>{});
-  // #endregion
   scheduleSubmissionNotificationsForOwner({
     userId: form.user_id,
     form: {

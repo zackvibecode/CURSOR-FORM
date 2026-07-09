@@ -46,25 +46,12 @@ function openWhatsApp(url: string) {
 }
 
 function saveSubmissionInBackground(formId: string, values: Record<string, string>) {
-  // #region agent log
-  fetch('http://127.0.0.1:7551/ingest/4dbbe78a-c7ad-441f-8435-395a025d02e9',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'6a31c9'},body:JSON.stringify({sessionId:'6a31c9',location:'PublicFormView:saveBefore',message:'saveSubmissionInBackground ABOUT to fetch',data:{formId},timestamp:Date.now(),hypothesisId:'F'})}).catch(()=>{});
-  // #endregion
   void fetch(`/api/forms/${formId}/submit`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(values),
     keepalive: true,
-  })
-    .then((res) => {
-      // #region agent log
-      fetch('http://127.0.0.1:7551/ingest/4dbbe78a-c7ad-441f-8435-395a025d02e9',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'6a31c9'},body:JSON.stringify({sessionId:'6a31c9',location:'PublicFormView:saveThen',message:'fetch RESOLVED',data:{formId,status:res.status,ok:res.ok},timestamp:Date.now(),hypothesisId:'F'})}).catch(()=>{});
-      // #endregion
-    })
-    .catch((err) => {
-      // #region agent log
-      fetch('http://127.0.0.1:7551/ingest/4dbbe78a-c7ad-441f-8435-395a025d02e9',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'6a31c9'},body:JSON.stringify({sessionId:'6a31c9',location:'PublicFormView:saveCatch',message:'fetch REJECTED/ABORTED',data:{formId,err:String(err)},timestamp:Date.now(),hypothesisId:'F'})}).catch(()=>{});
-      // #endregion
-    });
+  }).catch(() => {});
 }
 
 function extractPii(fields: FormField[], values: Record<string, string>) {
@@ -277,9 +264,6 @@ export function PublicFormView({
     }, SUBMIT_UNLOCK_MS);
 
     // Fast redirect — notifications run in background on the server.
-    // #region agent log
-    fetch('http://127.0.0.1:7551/ingest/4dbbe78a-c7ad-441f-8435-395a025d02e9',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'6a31c9'},body:JSON.stringify({sessionId:'6a31c9',location:'PublicFormView:beforeRedirect',message:'About to redirect to WhatsApp in 50ms',data:{appUrl:appUrl.slice(0,80)},timestamp:Date.now(),hypothesisId:'F'})}).catch(()=>{});
-    // #endregion
     window.setTimeout(() => openWhatsApp(appUrl), 50);
   };
 

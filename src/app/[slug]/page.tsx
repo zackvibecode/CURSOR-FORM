@@ -5,6 +5,7 @@ import { getPublishedFormBySlug } from "@/lib/public-form";
 import { mapDbFieldToFormField } from "@/lib/forms";
 import { isReservedSlug } from "@/lib/reserved-slugs";
 import { PublicFormClient } from "@/components/form/PublicFormClient";
+import { MetaPixel } from "@/components/analytics/MetaPixel";
 
 export const revalidate = 120;
 
@@ -53,36 +54,7 @@ export default async function PublicFormPage({
 
   return (
     <>
-      {data.pixelId && (
-        <>
-          <script
-            id="meta-pixel-base"
-            dangerouslySetInnerHTML={{
-              __html: `
-                !function(f,b,e,v,n,t,s)
-                {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
-                n.callMethod.apply(n,arguments):n.queue.push(arguments)};
-                if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
-                n.queue=[];t=b.createElement(e);t.async=!0;
-                t.src=v;s=b.getElementsByTagName(e)[0];
-                s.parentNode.insertBefore(t,s)}(window, document,'script',
-                'https://connect.facebook.net/en_US/fbevents.js');
-                fbq('init', '${data.pixelId}');
-                fbq('track', 'PageView');
-              `,
-            }}
-          />
-          <noscript>
-            <img
-              height="1"
-              width="1"
-              style={{ display: "none" }}
-              src={`https://www.facebook.com/tr?id=${data.pixelId}&ev=PageView&noscript=1`}
-              alt=""
-            />
-          </noscript>
-        </>
-      )}
+      {data.pixelId ? <MetaPixel pixelId={data.pixelId} /> : null}
       <PublicFormClient
         form={data.form}
         fields={data.fields.map(mapDbFieldToFormField)}

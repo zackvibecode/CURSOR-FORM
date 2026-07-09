@@ -69,7 +69,7 @@ export function Hero() {
               <Link href="/signup" className="sm:w-auto">
                 <button
                   type="button"
-                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-whatsapp px-6 py-3.5 text-sm font-bold text-white shadow-md transition-colors hover:bg-[#0DB849] active:scale-[0.98] sm:w-auto"
+                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-whatsapp-dark px-6 py-3.5 text-sm font-bold text-white shadow-md transition-colors hover:bg-whatsapp-deep active:scale-[0.98] sm:w-auto"
                 >
                   <WhatsAppIcon className="h-5 w-5" />
                   Create a Free Form
@@ -140,7 +140,7 @@ export function Hero() {
                     ))}
                     <button
                       type="button"
-                      className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-lg bg-whatsapp py-2.5 text-xs font-semibold text-white shadow-sm"
+                      className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-lg bg-whatsapp-dark py-2.5 text-xs font-semibold text-white shadow-sm"
                     >
                       <WhatsAppIcon className="h-3.5 w-3.5" />
                       Submit on WhatsApp

@@ -44,6 +44,7 @@ function LogoImage({
         fill
         className="object-contain object-left"
         priority={priority}
+        fetchPriority={priority ? "high" : undefined}
         sizes="200px"
       />
     </div>
