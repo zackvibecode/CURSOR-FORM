@@ -2,7 +2,7 @@ import { redirect, notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { FormBuilder } from "@/components/builder/FormBuilder";
 import { mapDbFieldToFormField } from "@/lib/forms";
-import { getTiktokModeFromForm, getWhatsappTemplateFromForm } from "@/lib/form-settings";
+import { getTiktokModeFromForm, getWhatsappTemplateFromForm, getFormModeFromForm, getDirectMessageFromForm } from "@/lib/form-settings";
 
 export const dynamic = "force-dynamic";
 
@@ -51,6 +51,8 @@ export default async function EditFormPage({
         fields: (fields ?? []).map(mapDbFieldToFormField),
         whatsappTemplate: getWhatsappTemplateFromForm(form),
         tiktokMode: getTiktokModeFromForm(form),
+        formMode: getFormModeFromForm(form),
+        directMessage: getDirectMessageFromForm(form),
       }}
     />
   );

@@ -8,6 +8,7 @@ import {
   fieldsStructureKey,
   getInitialWhatsappTemplate,
   getWhatsappTemplateFromForm,
+  type FormMode,
 } from "@/lib/form-settings";
 import { FieldPalette } from "./FieldPalette";
 import { FormCanvas } from "./FormCanvas";
@@ -22,6 +23,7 @@ import { getFormPublicUrl } from "@/lib/forms";
 import { slugify } from "@/lib/utils";
 import { toast } from "@/components/ui/Toast";
 import { TeamSettings } from "./TeamSettings";
+import { DirectLinkEditor } from "./DirectLinkEditor";
 import {
   ArrowLeft,
   Eye,
@@ -36,6 +38,7 @@ import {
   Puzzle,
   Plus,
   X,
+  MessageCircle,
 } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
@@ -53,11 +56,16 @@ interface FormBuilderProps {
     whatsappTemplate?: string;
     /** Default true — TikTok shows manual WhatsApp open after submit */
     tiktokMode?: boolean;
+    formMode?: FormMode;
+    directMessage?: string;
   };
 }
 
 export function FormBuilder({ formId, initialData }: FormBuilderProps) {
-  const [tab, setTab] = useState<"build" | "general" | "team" | "notifications" | "seo" | "integrations">("build");
+  const isDirect = initialData.formMode === "direct";
+  const [tab, setTab] = useState<"build" | "direct" | "general" | "team" | "notifications" | "seo" | "integrations">(
+    isDirect ? "direct" : "build"
+  );
   const [title, setTitle] = useState(initialData.title);
   const [slug, setSlug] = useState(initialData.slug);
   const [whatsappNumber, setWhatsappNumber] = useState(initialData.whatsapp_number);
@@ -76,6 +84,7 @@ export function FormBuilder({ formId, initialData }: FormBuilderProps) {
     getInitialWhatsappTemplate(initialData.whatsappTemplate, initialData.fields)
   );
   const [tiktokMode, setTiktokMode] = useState(initialData.tiktokMode !== false);
+  const [directMessage, setDirectMessage] = useState(initialData.directMessage ?? "");
   const [confirmModal, setConfirmModal] = useState(false);
   const [confirmAction, setConfirmAction] = useState<"save" | "publish" | null>(null);
   const [mobileDrawer, setMobileDrawer] = useState<"add" | "edit" | null>(null);
@@ -119,6 +128,8 @@ export function FormBuilder({ formId, initialData }: FormBuilderProps) {
             status: publish ? "published" : status,
             fields,
             settings: {
+              form_mode: isDirect ? "direct" : "form",
+              direct_message: directMessage,
               whatsapp_template: whatsappTemplate,
               tiktok_mode: tiktokMode,
             },
@@ -161,12 +172,24 @@ export function FormBuilder({ formId, initialData }: FormBuilderProps) {
       fields,
       whatsappTemplate,
       tiktokMode,
+      directMessage,
+      isDirect,
     ]
   );
 
   const requestSave = (publish: boolean) => {
     if (!publish) {
       handleSave(false);
+      return;
+    }
+    if (isDirect) {
+      if (!whatsappNumber.trim()) {
+        toast("Add a WhatsApp number before publishing", "error");
+        setTab("direct");
+        return;
+      }
+      setConfirmAction("publish");
+      setConfirmModal(true);
       return;
     }
     if (fields.length === 0) {
@@ -184,14 +207,19 @@ export function FormBuilder({ formId, initialData }: FormBuilderProps) {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const tabs = [
-    { key: "build" as const, label: "Build", icon: Layout },
-    { key: "general" as const, label: "Settings", icon: Settings },
-  ];
+  const tabs = isDirect
+    ? [
+        { key: "direct" as const, label: "Direct", icon: MessageCircle },
+        { key: "general" as const, label: "Settings", icon: Settings },
+      ]
+    : [
+        { key: "build" as const, label: "Build", icon: Layout },
+        { key: "general" as const, label: "Settings", icon: Settings },
+      ];
 
   const settingsNav = [
     { key: "general" as const, label: "General", icon: Settings },
-    { key: "team" as const, label: "Team", icon: Users },
+    ...(isDirect ? [] : [{ key: "team" as const, label: "Team", icon: Users }]),
     { key: "notifications" as const, label: "Notifications", icon: Bell },
     { key: "seo" as const, label: "SEO", icon: Search },
     { key: "integrations" as const, label: "Integrations", icon: Puzzle },
@@ -278,7 +306,15 @@ export function FormBuilder({ formId, initialData }: FormBuilderProps) {
         ))}
       </div>
 
-      {tab === "build" ? (
+      {tab === "direct" ? (
+        <DirectLinkEditor
+          whatsappNumber={whatsappNumber}
+          onWhatsappNumberChange={setWhatsappNumber}
+          directMessage={directMessage}
+          onDirectMessageChange={setDirectMessage}
+          slug={slug}
+        />
+      ) : tab === "build" ? (
         <div className="relative flex flex-1 flex-col overflow-hidden lg:flex-row">
           <div className="hidden lg:flex">
             <FieldPalette onAddField={handleAddField} />
@@ -513,6 +549,8 @@ export function FormBuilder({ formId, initialData }: FormBuilderProps) {
         whatsappNumber={whatsappNumber}
         fields={fields}
         formId={formId}
+        formMode={isDirect ? "direct" : "form"}
+        directMessage={directMessage}
       />
 
       {/* Publish Confirmation Modal */}
@@ -529,7 +567,9 @@ export function FormBuilder({ formId, initialData }: FormBuilderProps) {
               <h3 className="text-sm font-semibold text-fg">Publish form?</h3>
             </div>
             <p className="mb-5 text-sm text-muted-fg">
-              This will make your form publicly accessible. Anyone with the link can view and submit to this form.
+              {isDirect
+                ? "This will make your direct WhatsApp link publicly accessible. Anyone with the link can open WhatsApp with your pre-filled message."
+                : "This will make your form publicly accessible. Anyone with the link can view and submit to this form."}
             </p>
             <div className="flex gap-2">
               <Button variant="outline" className="flex-1" onClick={() => setConfirmModal(false)}>

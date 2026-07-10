@@ -187,3 +187,24 @@ export function buildWhatsAppUrl(
 
   return `https://wa.me/${cleanPhone}?text=${text}`;
 }
+
+/** Build a direct WhatsApp link with a static pre-filled message (no form fields). */
+export function buildDirectWhatsAppUrl(
+  phone: string,
+  message?: string | null,
+  mode: WhatsAppLinkMode = "app"
+): string {
+  const cleanPhone = cleanPhoneNumber(phone);
+  if (!cleanPhone) return "";
+
+  const trimmed = message?.trim() ?? "";
+  const text = trimmed ? encodeURIComponent(trimmed) : "";
+
+  if (mode === "web") {
+    return text
+      ? `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${text}`
+      : `https://api.whatsapp.com/send?phone=${cleanPhone}`;
+  }
+
+  return text ? `https://wa.me/${cleanPhone}?text=${text}` : `https://wa.me/${cleanPhone}`;
+}

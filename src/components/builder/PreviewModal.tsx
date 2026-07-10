@@ -1,7 +1,9 @@
 "use client";
 
 import type { FormField } from "@/lib/form-schema";
+import type { FormMode } from "@/lib/form-settings";
 import { PublicFormView } from "@/components/form/PublicFormView";
+import { DirectWhatsAppView } from "@/components/form/DirectWhatsAppView";
 import { Modal } from "@/components/ui/Modal";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
@@ -16,6 +18,8 @@ interface PreviewModalProps {
   whatsappNumber: string;
   fields: FormField[];
   formId: string;
+  formMode?: FormMode;
+  directMessage?: string;
 }
 
 export function PreviewModal({
@@ -27,7 +31,10 @@ export function PreviewModal({
   whatsappNumber,
   fields,
   formId,
+  formMode = "form",
+  directMessage = "",
 }: PreviewModalProps) {
+  const isDirect = formMode === "direct";
   const [view, setView] = useState<"mobile" | "desktop">("mobile");
 
   return (
@@ -66,15 +73,26 @@ export function PreviewModal({
             view === "mobile" ? "w-full max-w-sm" : "w-full max-w-2xl"
           )}
         >
-          <PublicFormView
-            title={title}
-            description={description}
-            ctaText={ctaText}
-            whatsappNumber={whatsappNumber}
-            fields={fields}
-            formId={formId}
-            preview
-          />
+          {isDirect ? (
+            <DirectWhatsAppView
+              title={title}
+              description={description}
+              ctaText={ctaText}
+              whatsappNumber={whatsappNumber}
+              directMessage={directMessage}
+              preview
+            />
+          ) : (
+            <PublicFormView
+              title={title}
+              description={description}
+              ctaText={ctaText}
+              whatsappNumber={whatsappNumber}
+              fields={fields}
+              formId={formId}
+              preview
+            />
+          )}
         </div>
       </div>
     </Modal>

@@ -66,10 +66,15 @@ export async function POST(request: Request) {
 
   const body = await request.json();
   const templateId = body.templateId as string | undefined;
+  const mode = body.mode as string | undefined;
+  const isDirect = mode === "direct";
 
-  let title = "Untitled Form";
+  let title = isDirect ? "Direct WhatsApp Link" : "Untitled Form";
   let description = "";
-  let ctaText = "Submit on WhatsApp";
+  let ctaText = isDirect ? "Chat on WhatsApp" : "Submit on WhatsApp";
+  let settings: Record<string, unknown> | undefined = isDirect
+    ? { form_mode: "direct", direct_message: "", tiktok_mode: true }
+    : undefined;
   let fields: Array<{
     type: string;
     label: string;
@@ -77,23 +82,25 @@ export async function POST(request: Request) {
     required: boolean;
     options?: string[];
     order_index: number;
-  }> = [
-    {
-      type: "title",
-      label: "Welcome!",
-      required: false,
-      order_index: 0,
-    },
-    {
-      type: "text",
-      label: "Your name",
-      placeholder: "Enter your name",
-      required: true,
-      order_index: 1,
-    },
-  ];
+  }> = isDirect
+    ? []
+    : [
+        {
+          type: "title",
+          label: "Welcome!",
+          required: false,
+          order_index: 0,
+        },
+        {
+          type: "text",
+          label: "Your name",
+          placeholder: "Enter your name",
+          required: true,
+          order_index: 1,
+        },
+      ];
 
-  if (templateId) {
+  if (templateId && !isDirect) {
     const template = getTemplateById(templateId);
     if (template) {
       title = template.title;
@@ -110,7 +117,7 @@ export async function POST(request: Request) {
     }
   }
 
-  const baseSlug = slugify(title) || "form";
+  const baseSlug = slugify(title) || (isDirect ? "direct-link" : "form");
   const slug = `${baseSlug}-${crypto.randomUUID().slice(0, 8)}`;
 
   const { data: form, error: formError } = await supabase
@@ -122,12 +129,17 @@ export async function POST(request: Request) {
       description,
       cta_text: ctaText,
       status: "draft",
+      ...(settings ? { settings } : {}),
     })
     .select()
     .single();
 
   if (formError || !form) {
     return NextResponse.json({ error: formError?.message ?? "Failed to create form" }, { status: 500 });
+  }
+
+  if (fields.length === 0) {
+    return NextResponse.json({ form }, { status: 201 });
   }
 
   const fieldRows = fields.map((f) => ({

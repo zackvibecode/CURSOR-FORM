@@ -10,7 +10,7 @@ import { getFormPublicUrl } from "@/lib/forms";
 import { FORM_TEMPLATES } from "@/lib/templates";
 import { CreateFormButton } from "./DashboardHeader";
 import { FormCard, type FormCardData } from "./FormCard";
-import { FileText, Loader2, Plus, Search } from "lucide-react";
+import { FileText, Link2, Loader2, Plus, Search } from "lucide-react";
 import { toast } from "@/components/ui/Toast";
 import { setPendingInstant } from "@/lib/instant-pending";
 import {
@@ -75,6 +75,7 @@ export function FormList({ forms: initialForms, userName }: FormListProps) {
   const [deleteConfirmSecond, setDeleteConfirmSecond] = useState("");
   const [duplicatingId, setDuplicatingId] = useState<string | null>(null);
   const [creatingTemplateId, setCreatingTemplateId] = useState<string | null>(null);
+  const [creatingDirectLink, setCreatingDirectLink] = useState(false);
   const [error, setError] = useState("");
   const [pinnedIds, setPinnedIds] = useState<string[]>([]);
   const [query, setQuery] = useState("");
@@ -229,6 +230,32 @@ export function FormList({ forms: initialForms, userName }: FormListProps) {
     }
   };
 
+  const handleDirectLinkCreate = async () => {
+    setCreatingDirectLink(true);
+    setError("");
+
+    try {
+      const res = await fetch("/api/forms", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ mode: "direct" }),
+      });
+      const data = await res.json();
+
+      if (!res.ok || !data.form) {
+        setError(data.message ?? data.error ?? "Failed to create direct link.");
+        return;
+      }
+
+      router.push(`/dashboard/forms/${data.form.id}/edit`);
+      router.refresh();
+    } catch {
+      setError("Network error. Please try again.");
+    } finally {
+      setCreatingDirectLink(false);
+    }
+  };
+
   const isPinned = (id: string) => pinnedIds.includes(id);
 
   const sortedForms = useMemo(() => {
@@ -280,6 +307,19 @@ export function FormList({ forms: initialForms, userName }: FormListProps) {
           <Plus className="h-4 w-4" />
           New Form
         </CreateFormButton>
+        <Button
+          variant="outline"
+          onClick={() => void handleDirectLinkCreate()}
+          disabled={creatingDirectLink}
+          className="w-full justify-center sm:w-auto"
+        >
+          {creatingDirectLink ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <Link2 className="h-4 w-4" />
+          )}
+          New Direct Link
+        </Button>
         <Button
           variant="outline"
           onClick={() => setTemplateOpen(true)}

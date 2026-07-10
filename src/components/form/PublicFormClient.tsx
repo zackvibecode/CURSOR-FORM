@@ -1,9 +1,15 @@
 "use client";
 
 import { PublicFormView } from "@/components/form/PublicFormView";
+import { DirectWhatsAppView } from "@/components/form/DirectWhatsAppView";
 import type { DbForm } from "@/lib/database.types";
 import type { FormField } from "@/lib/form-schema";
-import { getTiktokModeFromForm, getWhatsappTemplateFromForm } from "@/lib/form-settings";
+import {
+  getDirectMessageFromForm,
+  getTiktokModeFromForm,
+  getWhatsappTemplateFromForm,
+  isDirectLinkForm,
+} from "@/lib/form-settings";
 import type { TeamRoutingSnapshot } from "@/lib/team-routing-client";
 import type { CSSProperties } from "react";
 
@@ -32,6 +38,7 @@ export function PublicFormClient({
   teamRoutingSnapshot = null,
 }: PublicFormClientProps) {
   const effectivePixelId = pixelId || undefined;
+  const isDirect = isDirectLinkForm(form);
 
   return (
     <div className="min-h-screen bg-bg text-fg [color-scheme:light]" style={lightFormTheme}>
@@ -40,19 +47,30 @@ export function PublicFormClient({
         style={{ paddingBottom: "max(8rem, env(safe-area-inset-bottom, 0px) + 6rem)" }}
       >
         <div className="mx-auto max-w-lg rounded-xl border border-border bg-card p-6 shadow-sm sm:p-8">
-          <PublicFormView
-            title={form.title}
-            description={form.description}
-            ctaText={form.cta_text || "Submit on WhatsApp"}
-            whatsappNumber={form.whatsapp_number}
-            fields={fields}
-            formId={form.id}
-            pixelId={effectivePixelId}
-            whatsappTemplate={getWhatsappTemplateFromForm(form)}
-            tiktokMode={getTiktokModeFromForm(form)}
-            usesTeamRouting={usesTeamRouting}
-            teamRoutingSnapshot={teamRoutingSnapshot}
-          />
+          {isDirect ? (
+            <DirectWhatsAppView
+              title={form.title}
+              description={form.description}
+              ctaText={form.cta_text || "Chat on WhatsApp"}
+              whatsappNumber={form.whatsapp_number}
+              directMessage={getDirectMessageFromForm(form)}
+              tiktokMode={getTiktokModeFromForm(form)}
+            />
+          ) : (
+            <PublicFormView
+              title={form.title}
+              description={form.description}
+              ctaText={form.cta_text || "Submit on WhatsApp"}
+              whatsappNumber={form.whatsapp_number}
+              fields={fields}
+              formId={form.id}
+              pixelId={effectivePixelId}
+              whatsappTemplate={getWhatsappTemplateFromForm(form)}
+              tiktokMode={getTiktokModeFromForm(form)}
+              usesTeamRouting={usesTeamRouting}
+              teamRoutingSnapshot={teamRoutingSnapshot}
+            />
+          )}
         </div>
       </main>
     </div>

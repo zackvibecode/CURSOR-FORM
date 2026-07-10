@@ -14,6 +14,7 @@ import {
 import { cn } from "@/lib/utils";
 import { formatDate } from "@/lib/utils";
 import { getFormPublicUrl } from "@/lib/forms";
+import { isDirectLinkForm } from "@/lib/form-settings";
 
 export interface FormCardData {
   id: string;
@@ -21,6 +22,7 @@ export interface FormCardData {
   slug: string;
   status: "draft" | "published";
   updated_at: string;
+  settings?: unknown;
   submissions?: { count: number }[];
 }
 
@@ -78,6 +80,7 @@ export function FormCard({
   const publicUrl = getFormPublicUrl(form.slug);
   const displayUrl = publicUrl.replace(/^https?:\/\//, "");
   const isPublished = form.status === "published";
+  const isDirect = isDirectLinkForm(form);
 
   return (
     <article
@@ -169,8 +172,13 @@ export function FormCard({
       <div className="flex items-center justify-between gap-2 border-t border-border/60 pt-3">
         <div className="flex items-center gap-2">
           <StatusPill status={form.status} />
+          {isDirect ? (
+            <span className="rounded-full border border-whatsapp/30 bg-whatsapp/10 px-2 py-0.5 text-[10px] font-medium text-whatsapp-deep dark:text-whatsapp">
+              Direct Link
+            </span>
+          ) : null}
           <span className="font-mono text-[11px] text-muted-fg tabular-nums">
-            {responseCount} submission{responseCount === 1 ? "" : "s"}
+            {isDirect ? "Link" : `${responseCount} submission${responseCount === 1 ? "" : "s"}`}
           </span>
         </div>
         <div className="flex items-center gap-1">
