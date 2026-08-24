@@ -6,6 +6,8 @@ import { mapDbFieldToFormField } from "@/lib/forms";
 import { isReservedSlug } from "@/lib/reserved-slugs";
 import { PublicFormClient } from "@/components/form/PublicFormClient";
 import { MetaPixel } from "@/components/analytics/MetaPixel";
+import { MetaViewContent } from "@/components/analytics/MetaViewContent";
+import { isDirectLinkForm } from "@/lib/form-settings";
 
 export const revalidate = 120;
 
@@ -54,7 +56,17 @@ export default async function PublicFormPage({
 
   return (
     <>
-      {data.pixelId ? <MetaPixel pixelId={data.pixelId} /> : null}
+      {data.pixelId ? (
+        <>
+          <MetaPixel pixelId={data.pixelId} />
+          <MetaViewContent
+            formId={data.form.id}
+            formTitle={data.form.title}
+            contentCategory={isDirectLinkForm(data.form) ? "whatsapp_direct_link" : "lead_form"}
+            pixelId={data.pixelId}
+          />
+        </>
+      ) : null}
       <PublicFormClient
         form={data.form}
         fields={data.fields.map(mapDbFieldToFormField)}

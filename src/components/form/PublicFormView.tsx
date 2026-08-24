@@ -2,7 +2,12 @@
 
 import type { FormField } from "@/lib/form-schema";
 import { buildWhatsAppUrl } from "@/lib/whatsapp";
-import { fireLeadEvent, sendCAPIEvent } from "@/lib/meta-pixel";
+import {
+  META_EVENTS,
+  generateEventId,
+  sendCapiEvent,
+  trackMetaEvent,
+} from "@/lib/meta-pixel";
 import { setPendingInstant } from "@/lib/instant-pending";
 import {
   getInAppBrowserName,
@@ -45,15 +50,6 @@ function openWhatsApp(url: string) {
   window.location.assign(url);
 }
 
-function saveSubmissionInBackground(formId: string, values: Record<string, string>) {
-  void fetch(`/api/forms/${formId}/submit`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(values),
-    keepalive: true,
-  }).catch(() => {});
-}
-
 function extractPii(fields: FormField[], values: Record<string, string>) {
   let email: string | undefined;
   let phone: string | undefined;
@@ -64,6 +60,44 @@ function extractPii(fields: FormField[], values: Record<string, string>) {
     if (field.type === "phone" && !phone) phone = value;
   }
   return { email, phone };
+}
+
+/**
+ * Confirm the submission with the backend BEFORE firing any conversion event.
+ * Returns the submission ID on success, or an error message on failure.
+ */
+async function submitToBackend(
+  formId: string,
+  values: Record<string, string>
+): Promise<{ ok: true; submissionId?: string } | { ok: false; message: string }> {
+  try {
+    const res = await fetch(`/api/forms/${formId}/submit`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(values),
+      keepalive: true,
+    });
+
+    const data = (await res.json().catch(() => null)) as
+      | { success?: boolean; submission_id?: string; message?: string; error?: string }
+      | null;
+
+    if (!res.ok || !data?.success) {
+      const message =
+        data?.message ||
+        (res.status === 429
+          ? "Too many submissions. Please try again in a moment."
+          : "Submission failed. Please try again.");
+      return { ok: false, message };
+    }
+
+    return { ok: true, submissionId: data.submission_id };
+  } catch {
+    return {
+      ok: false,
+      message: "Network error — your submission was not sent. Please try again.",
+    };
+  }
 }
 
 const SUBMIT_UNLOCK_MS = 3000;
@@ -93,6 +127,7 @@ export function PublicFormView({
   );
   const submitRef = useRef<HTMLButtonElement>(null);
   const unlockTimerRef = useRef<number | null>(null);
+  const submitInFlightRef = useRef(false);
 
   const unlockSubmit = () => {
     if (unlockTimerRef.current !== null) {
@@ -159,7 +194,7 @@ export function PublicFormView({
     window.setTimeout(() => setCopied(false), 2000);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrors({});
 
@@ -184,6 +219,9 @@ export function PublicFormView({
     }
 
     if (preview) return;
+
+    if (submitInFlightRef.current) return;
+    submitInFlightRef.current = true;
 
     let targetPhone = whatsappNumber;
 
@@ -217,25 +255,59 @@ export function PublicFormView({
 
     setPendingInstant(setSubmitting, true);
 
-    const eventId = fireLeadEvent(pixelId, title, formId);
+    /**
+     * Confirm the submission with the backend first. The Lead event is only
+     * fired (browser Pixel + server CAPI, shared event ID) after the API
+     * confirms success — validation failures, rate limits and server errors
+     * must never produce a conversion.
+     */
+    const result = await submitToBackend(formId, submittedValues);
 
-    if (pixelId && typeof window !== "undefined") {
+    if (!result.ok) {
+      submitInFlightRef.current = false;
+      setErrors({ _form: result.message });
+      unlockSubmit();
+      return;
+    }
+
+    // One conversion → ONE event ID shared by browser Pixel and server CAPI.
+    const eventId = result.submissionId
+      ? `lead_${result.submissionId}`
+      : generateEventId("lead");
+
+    if (pixelId) {
       const { email, phone } = extractPii(fields, submittedValues);
-      sendCAPIEvent({
-        pixelId,
+
+      trackMetaEvent(
+        META_EVENTS.lead,
+        {
+          content_name: title,
+          content_category: "lead_form",
+          content_ids: [formId],
+          content_type: "form",
+          form_name: title,
+          form_id: formId,
+          source: "oneform_public_form",
+        },
         eventId,
+        pixelId
+      );
+
+      sendCapiEvent({
+        pixelId,
+        eventName: META_EVENTS.lead,
+        eventId,
+        eventSourceUrl: window.location.href,
         formId,
         formTitle: title,
-        eventSourceUrl: window.location.href,
+        source: "oneform_public_form",
+        leadId: result.submissionId,
         email,
         phone,
-        fbp: document.cookie.match(/(?:^|; )_fbp=([^;]*)/)?.[1],
-        fbc: document.cookie.match(/(?:^|; )_fbc=([^;]*)/)?.[1],
-        userAgent: navigator.userAgent,
       });
     }
 
-    saveSubmissionInBackground(formId, submittedValues);
+    submitInFlightRef.current = false;
     setValues({});
     setErrors({});
     (document.activeElement as HTMLElement | null)?.blur();
@@ -284,6 +356,19 @@ export function PublicFormView({
           href={manualOpen.apiUrl}
           target="_blank"
           rel="noopener noreferrer"
+          onClick={() =>
+            pixelId &&
+            trackMetaEvent(
+              META_EVENTS.contact,
+              {
+                contact_method: "whatsapp",
+                page_path: window.location.pathname,
+                content_name: title,
+              },
+              undefined,
+              pixelId
+            )
+          }
           className="inline-flex w-full items-center justify-center gap-2 rounded-md bg-whatsapp px-5 py-3 text-sm font-medium text-white hover:bg-whatsapp-deep"
         >
           <ExternalLink className="h-4 w-4" aria-hidden />

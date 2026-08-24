@@ -121,13 +121,17 @@ export async function POST(
   const assignedPhone = resolved.phone;
   const assignedName = resolved.name;
 
-  const { error: insertError } = await admin.from("submissions").insert({
-    form_id: id,
-    data: result.data,
-    ip_hash: getIpHash(),
-    assigned_name: assignedName,
-    assigned_phone: assignedPhone || null,
-  });
+  const { data: inserted, error: insertError } = await admin
+    .from("submissions")
+    .insert({
+      form_id: id,
+      data: result.data,
+      ip_hash: getIpHash(),
+      assigned_name: assignedName,
+      assigned_phone: assignedPhone || null,
+    })
+    .select("id")
+    .single();
 
   if (insertError) {
     return NextResponse.json({ error: insertError.message }, { status: 500 });
@@ -151,6 +155,7 @@ export async function POST(
 
   return NextResponse.json({
     success: true,
+    submission_id: inserted?.id ?? null,
     whatsapp_number: assignedPhone,
     assigned_name: assignedName,
     from_team: resolved.fromTeam,

@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/Label";
 import { Textarea } from "@/components/ui/Textarea";
 import { BrandLogo } from "@/components/ui/BrandLogo";
 import { FloatingWhatsAppButton } from "@/components/ui/FloatingWhatsAppButton";
+import { META_EVENTS, trackMetaEvent } from "@/lib/meta-pixel";
 import Link from "next/link";
 
 const DEMO_WHATSAPP = "60123456789";
@@ -68,6 +69,16 @@ export function DemoForm() {
 
     const message = buildDemoMessage(values);
     const url = `https://wa.me/${DEMO_WHATSAPP}?text=${encodeURIComponent(message)}`;
+
+    // The demo has no backend — nothing is persisted, so this is contact
+    // intent, NOT a lead. Real Lead events only fire for confirmed
+    // submissions on published forms.
+    trackMetaEvent(META_EVENTS.contact, {
+      contact_method: "whatsapp",
+      page_path: "/demo",
+      content_name: "Demo Form",
+    });
+
     window.open(url, "_blank");
   };
 

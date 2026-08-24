@@ -55,6 +55,7 @@ export function PublicFormClient({
               whatsappNumber={form.whatsapp_number}
               directMessage={getDirectMessageFromForm(form)}
               tiktokMode={getTiktokModeFromForm(form)}
+              pixelId={effectivePixelId}
             />
           ) : (
             <PublicFormView

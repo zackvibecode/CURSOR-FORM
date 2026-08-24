@@ -1,19 +1,36 @@
 "use client";
 
 import Script from "next/script";
+import { useEffect } from "react";
+import { captureFbclid } from "@/lib/meta-pixel";
 
 interface MetaPixelProps {
   pixelId: string;
 }
 
-/** Meta Pixel loader — deferred via next/script afterInteractive. */
+const SITE_PIXEL_ID = process.env.NEXT_PUBLIC_META_PIXEL_ID;
+
+/**
+ * Tenant Meta Pixel loader — mounted once per public form page (/[slug]).
+ * Fires the initial PageView. SPA route changes are not applicable here:
+ * form pages are standalone full page loads.
+ */
 export function MetaPixel({ pixelId }: MetaPixelProps) {
+  useEffect(() => {
+    captureFbclid();
+  }, []);
+
   if (!pixelId) return null;
+
+  // The site-level pixel (SiteMetaPixel, root layout) already initialises this
+  // ID — rendering a second loader would double-init the pixel and double-fire
+  // PageView to the same data source.
+  if (SITE_PIXEL_ID && SITE_PIXEL_ID === pixelId) return null;
 
   return (
     <>
       <Script
-        id="meta-pixel"
+        id="meta-pixel-form"
         strategy="afterInteractive"
         dangerouslySetInnerHTML={{
           __html: `

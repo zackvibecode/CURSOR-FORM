@@ -1,3 +1,6 @@
+"use client";
+
+import { META_EVENTS, trackMetaEvent } from "@/lib/meta-pixel";
 import { WhatsAppIcon } from "./WhatsAppIcon";
 
 const DEFAULT_NUMBER = "60123456789";
@@ -18,6 +21,14 @@ export function FloatingWhatsAppButton({
       target="_blank"
       rel="noopener noreferrer"
       aria-label="Contact us on WhatsApp"
+      onClick={() => {
+        // Site-level support CTA — contact intent, not a lead. Safe no-op
+        // when no site pixel is configured.
+        trackMetaEvent(META_EVENTS.contact, {
+          contact_method: "whatsapp",
+          page_path: typeof window !== "undefined" ? window.location.pathname : undefined,
+        });
+      }}
       className="fixed bottom-6 right-6 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-whatsapp text-white shadow-soft transition-transform hover:scale-105 hover:bg-[#0DB849] active:scale-95"
     >
       <WhatsAppIcon className="h-7 w-7" />

@@ -3,6 +3,7 @@ import { GeistSans } from "geist/font/sans";
 import { GeistMono } from "geist/font/mono";
 import "./globals.css";
 import { ToastContainer } from "@/components/ui/Toast";
+import { SiteMetaPixel } from "@/components/analytics/SiteMetaPixel";
 
 const geistSans = GeistSans;
 const geistMono = GeistMono;
@@ -58,6 +59,7 @@ export default function RootLayout({
       </head>
       <body className={`${geistSans.variable} ${geistMono.variable} font-sans`}>
         {children}
+        <SiteMetaPixel />
         <ToastContainer />
       </body>
     </html>

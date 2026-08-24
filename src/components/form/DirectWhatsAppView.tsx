@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { buildDirectWhatsAppUrl } from "@/lib/whatsapp";
 import {
   getInAppBrowserName,
   shouldUseTikTokWhatsAppWorkaround,
 } from "@/lib/in-app-browser";
+import { META_EVENTS, trackMetaEvent } from "@/lib/meta-pixel";
 import { Button } from "@/components/ui/Button";
 import { Check, CheckCircle2, Copy, ExternalLink, Loader2, MessageCircle } from "lucide-react";
 
@@ -17,6 +18,7 @@ interface DirectWhatsAppViewProps {
   directMessage: string;
   tiktokMode?: boolean;
   preview?: boolean;
+  pixelId?: string;
 }
 
 type ManualOpenState = {
@@ -36,14 +38,36 @@ export function DirectWhatsAppView({
   directMessage,
   tiktokMode = true,
   preview = false,
+  pixelId,
 }: DirectWhatsAppViewProps) {
   const [manualOpen, setManualOpen] = useState<ManualOpenState | null>(null);
   const [redirecting, setRedirecting] = useState(!preview);
   const [copied, setCopied] = useState(false);
   const [appName, setAppName] = useState<string | null>(null);
+  const contactFiredRef = useRef(false);
 
   const appUrl = buildDirectWhatsAppUrl(whatsappNumber, directMessage, "app");
   const apiUrl = buildDirectWhatsAppUrl(whatsappNumber, directMessage, "web");
+
+  /**
+   * Direct links have no form — the visit itself is the contact intent.
+   * Fire Contact once, at the moment the visitor is actually taken to
+   * WhatsApp (auto-redirect or manual button click).
+   */
+  const trackContact = () => {
+    if (!pixelId || preview || contactFiredRef.current) return;
+    contactFiredRef.current = true;
+    trackMetaEvent(
+      META_EVENTS.contact,
+      {
+        contact_method: "whatsapp",
+        page_path: window.location.pathname,
+        content_name: title,
+      },
+      undefined,
+      pixelId
+    );
+  };
 
   useEffect(() => {
     setAppName(getInAppBrowserName());
@@ -61,8 +85,12 @@ export function DirectWhatsAppView({
       return;
     }
 
-    const timer = window.setTimeout(() => openWhatsApp(appUrl), 50);
+    const timer = window.setTimeout(() => {
+      trackContact();
+      openWhatsApp(appUrl);
+    }, 50);
     return () => window.clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [preview, whatsappNumber, directMessage, tiktokMode, appUrl, apiUrl]);
 
   async function handleCopy(url: string) {
@@ -107,6 +135,7 @@ export function DirectWhatsAppView({
           href={manualOpen.apiUrl}
           target="_blank"
           rel="noopener noreferrer"
+          onClick={trackContact}
           className="inline-flex w-full items-center justify-center gap-2 rounded-md bg-whatsapp-dark px-5 py-3 text-sm font-medium text-white hover:bg-whatsapp-deep"
         >
           <ExternalLink className="h-4 w-4" aria-hidden />

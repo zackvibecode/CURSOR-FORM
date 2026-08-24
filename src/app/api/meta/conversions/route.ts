@@ -2,18 +2,34 @@ import { createHash } from "crypto";
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 
-import { META_FORM_SUBMIT_EVENT } from "@/lib/meta-pixel";
-
 /**
- * Meta Conversions API — server-side zaqoneformSubmit event.
+ * Meta Conversions API — server-side conversion events.
  *
- * Receives the same event_id that the browser Pixel used so Meta can
- * deduplicate the browser + server events into a single conversion.
+ * The browser Pixel fires the same event with the SAME event_id (see
+ * src/lib/meta-pixel.ts). Meta deduplicates browser + server events that
+ * share event_name + event_id into a single conversion.
+ *
+ * The CAPI access token never leaves the server. The pixel ID comes from the
+ * client because this is a multi-tenant app (each form owner has their own
+ * pixel) — it is strictly validated below.
  */
 
 const GRAPH_API_VERSION = process.env.META_GRAPH_API_VERSION || "v21.0";
 const CAPI_ACCESS_TOKEN = process.env.META_CAPI_ACCESS_TOKEN;
-const TEST_EVENT_CODE = process.env.META_CAPI_TEST_EVENT_CODE;
+const TEST_EVENT_CODE =
+  process.env.META_TEST_EVENT_CODE || process.env.META_CAPI_TEST_EVENT_CODE;
+
+/**
+ * Optional single-tenant lock: when META_PIXEL_ID is set, the endpoint only
+ * forwards events to that pixel. Leave empty for multi-tenant use.
+ */
+const RESTRICTED_PIXEL_ID = process.env.META_PIXEL_ID;
+
+const PIXEL_ID_PATTERN = /^\d{10,20}$/;
+const ALLOWED_EVENTS = new Set(["Lead", "Contact", "ViewContent", "PageView", "Search"]);
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const FBP_PATTERN = /^fb\.1\.\d+\.\d+$/;
+const FBC_PATTERN = /^fb\.1\.\d+\.[A-Za-z0-9_-]+$/;
 
 function sha256(value: string): string {
   return createHash("sha256").update(value.trim().toLowerCase()).digest("hex");
@@ -34,10 +50,13 @@ function getClientIP(): string | undefined {
 
 interface CAPIRequestBody {
   pixelId: string;
+  eventName: string;
   eventId: string;
-  formId: string;
-  formTitle: string;
   eventSourceUrl: string;
+  formId?: string;
+  formTitle?: string;
+  source?: string;
+  leadId?: string;
   email?: string;
   phone?: string;
   fbp?: string;
@@ -53,36 +72,66 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
 
-  const { pixelId, eventId, formTitle, eventSourceUrl, email, phone, fbp, fbc, userAgent } = body;
+  const {
+    pixelId,
+    eventName,
+    eventId,
+    eventSourceUrl,
+    formId,
+    formTitle,
+    source,
+    leadId,
+    email,
+    phone,
+    fbp,
+    fbc,
+  } = body;
 
-  if (!pixelId || !eventId) {
-    return NextResponse.json({ error: "pixelId and eventId are required" }, { status: 400 });
+  if (!pixelId || !PIXEL_ID_PATTERN.test(pixelId)) {
+    return NextResponse.json({ error: "Invalid pixelId" }, { status: 400 });
   }
+
+  if (RESTRICTED_PIXEL_ID && pixelId !== RESTRICTED_PIXEL_ID) {
+    return NextResponse.json({ error: "Invalid pixelId" }, { status: 400 });
+  }
+
+  if (!eventId || typeof eventId !== "string") {
+    return NextResponse.json({ error: "eventId is required" }, { status: 400 });
+  }
+
+  const finalEventName = ALLOWED_EVENTS.has(eventName) ? eventName : "Lead";
 
   if (!CAPI_ACCESS_TOKEN) {
     if (process.env.NODE_ENV === "development") {
-      console.log("[meta-capi] skip — META_CAPI_ACCESS_TOKEN not configured", { pixelId, eventId });
+      console.log("[Meta CAPI] skip — META_CAPI_ACCESS_TOKEN not configured", {
+        pixelId,
+        eventId,
+      });
     }
     // Don't block the user — just skip silently.
     return NextResponse.json({ success: false, reason: "capi_not_configured" });
   }
 
   const clientIP = getClientIP();
-  const ua = userAgent || headers().get("user-agent") || undefined;
+  const ua = body.userAgent || headers().get("user-agent") || undefined;
 
-  // Build user_data — all PII fields must be SHA-256 hashed.
+  // Build user_data — PII fields must be SHA-256 hashed. Only use data the
+  // visitor genuinely provided in the form; never invent identifiers.
   const userData: Record<string, string> = {};
 
-  if (email && email.trim()) {
+  if (email && typeof email === "string" && EMAIL_PATTERN.test(email)) {
     userData.em = sha256(email);
   }
-  if (phone && phone.trim()) {
+  if (phone && typeof phone === "string" && phone.replace(/\D/g, "").length >= 7) {
     userData.ph = sha256(normalizePhone(phone));
   }
-  if (fbp) {
+  if (leadId && typeof leadId === "string") {
+    userData.external_id = sha256(leadId);
+  }
+  if (fbp && typeof fbp === "string" && FBP_PATTERN.test(fbp)) {
     userData.fbp = fbp;
   }
-  if (fbc) {
+  if (fbc && typeof fbc === "string" && FBC_PATTERN.test(fbc)) {
     userData.fbc = fbc;
   }
   if (clientIP) {
@@ -95,14 +144,17 @@ export async function POST(request: Request) {
   const payload = {
     data: [
       {
-        event_name: META_FORM_SUBMIT_EVENT,
+        event_name: finalEventName,
         event_time: Math.floor(Date.now() / 1000),
         event_id: eventId,
         action_source: "website",
         event_source_url: eventSourceUrl,
         custom_data: {
           content_name: formTitle,
-          content_category: "form_submission",
+          content_category: "lead_form",
+          form_name: formTitle,
+          form_id: formId,
+          source,
         },
         user_data: userData,
       },
@@ -118,11 +170,14 @@ export async function POST(request: Request) {
       body: JSON.stringify(payload),
     });
 
-    const result = await res.json();
+    const result = (await res.json().catch(() => null)) as
+      | { events_received?: number; error?: { fbtrace_id?: string } }
+      | null;
 
     if (process.env.NODE_ENV === "development") {
-      console.log("[meta-capi] response", {
+      console.log("[Meta CAPI] response", {
         status: res.status,
+        eventName: finalEventName,
         eventId,
         pixelId,
         fbtraceId: result?.error?.fbtrace_id,
@@ -131,14 +186,19 @@ export async function POST(request: Request) {
     }
 
     if (!res.ok) {
-      console.error("[meta-capi] Meta API error", { status: res.status, result });
+      // Log a safe, PII-free error. Never expose Meta errors to the customer.
+      console.error("[Meta CAPI] Meta API error", {
+        status: res.status,
+        eventId,
+        fbtraceId: result?.error?.fbtrace_id,
+      });
       // Don't throw — form submission must still work.
       return NextResponse.json({ success: false, error: "meta_api_error" }, { status: 200 });
     }
 
     return NextResponse.json({ success: true, eventId });
   } catch (err) {
-    console.error("[meta-capi] fetch failed", err);
+    console.error("[Meta CAPI] fetch failed", err instanceof Error ? err.message : err);
     // Never block form submission due to CAPI failure.
     return NextResponse.json({ success: false, error: "capi_fetch_failed" }, { status: 200 });
   }
