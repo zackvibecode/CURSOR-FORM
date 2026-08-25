@@ -7,6 +7,9 @@ export const PAYMENT_BRANDING = {
   qrImagePath: "/IMG_3906.PNG",
   currency: "MYR",
   currencySymbol: "RM",
+  /** Default Pro package price for payment recording */
+  proPackagePrice: 100,
+  proPackageLabel: "Pro package",
 } as const;
 
 export type InvoiceRecord = {

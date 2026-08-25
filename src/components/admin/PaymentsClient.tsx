@@ -24,8 +24,6 @@ export function PaymentsClient() {
 
   const [customerName, setCustomerName] = useState("");
   const [customerEmail, setCustomerEmail] = useState("");
-  const [amount, setAmount] = useState("");
-  const [description, setDescription] = useState("");
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -57,8 +55,8 @@ export function PaymentsClient() {
         body: JSON.stringify({
           customer_name: customerName,
           customer_email: customerEmail,
-          amount: Number(amount),
-          description,
+          amount: PAYMENT_BRANDING.proPackagePrice,
+          description: PAYMENT_BRANDING.proPackageLabel,
         }),
       });
       const json = await res.json();
@@ -66,8 +64,6 @@ export function PaymentsClient() {
       const invoice = json.invoice as InvoiceRecord;
       setCustomerName("");
       setCustomerEmail("");
-      setAmount("");
-      setDescription("");
       router.push(`/dashboard/admin/payments/${invoice.id}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to record payment");
@@ -126,29 +122,12 @@ export function PaymentsClient() {
             />
           </div>
 
-          <div className="space-y-1.5">
-            <Label htmlFor="amount">Jumlah (RM)</Label>
-            <Input
-              id="amount"
-              type="number"
-              min="0"
-              step="0.01"
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-              placeholder=""
-              required
-            />
-          </div>
-
-          <div className="space-y-1.5">
-            <Label htmlFor="description">Untuk</Label>
-            <Input
-              id="description"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder=""
-              required
-            />
+          <div className="rounded-lg border border-border bg-muted/30 px-4 py-3">
+            <p className="text-xs text-muted-fg">Pakej</p>
+            <p className="mt-0.5 text-sm font-semibold text-fg">
+              {PAYMENT_BRANDING.proPackageLabel} ·{" "}
+              {formatMoney(PAYMENT_BRANDING.proPackagePrice)}
+            </p>
           </div>
 
           <div className="space-y-1.5">
