@@ -13,12 +13,9 @@ export default async function AdminPaymentsPage() {
   if (!isAdmin) redirect("/dashboard/forms");
 
   return (
-    <div className="max-w-5xl space-y-6">
-      <div>
+    <div className="space-y-8">
+      <div className="text-center">
         <h2 className="text-lg font-semibold text-fg">Payments</h2>
-        <p className="text-sm text-muted-fg">
-          Maybank DuitNow QR · Record payment and generate invoice.
-        </p>
       </div>
       <PaymentsClient />
     </div>
