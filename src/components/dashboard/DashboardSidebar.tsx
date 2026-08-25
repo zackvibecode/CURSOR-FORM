@@ -18,6 +18,7 @@ import {
   X,
   Crown,
   ShieldCheck,
+  Wallet,
 } from "lucide-react";
 
 const mainNavItems = [
@@ -146,7 +147,7 @@ export function DashboardSidebar({
 
       <aside
         className={cn(
-          "fixed inset-y-0 left-0 z-50 flex w-60 flex-col border-r border-border bg-card transition-transform duration-200 lg:static lg:translate-x-0",
+          "fixed inset-y-0 left-0 z-50 flex w-60 flex-col border-r border-border bg-card transition-transform duration-200 print:hidden lg:static lg:translate-x-0",
           open ? "translate-x-0" : "-translate-x-full"
         )}
       >
@@ -186,6 +187,11 @@ export function DashboardSidebar({
                   href: "/dashboard/admin/subscriptions",
                   label: "Subscriptions",
                   icon: ShieldCheck,
+                })}
+                {renderNavLink({
+                  href: "/dashboard/admin/payments",
+                  label: "Payments",
+                  icon: Wallet,
                 })}
               </div>
             </>

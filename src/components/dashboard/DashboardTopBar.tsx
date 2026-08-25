@@ -20,6 +20,7 @@ const SEGMENT_LABELS: Record<string, string> = {
   "qr-generator": "QR Generator",
   "link-generator": "Link Generator",
   subscriptions: "Subscriptions",
+  payments: "Payments",
   edit: "Edit",
 };
 
@@ -67,7 +68,7 @@ export function DashboardTopBar({ userName, onMenuClick }: DashboardTopBarProps)
   const initial = userName?.trim()?.[0]?.toUpperCase() ?? "U";
 
   return (
-    <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-border bg-bg/80 px-4 backdrop-blur-md sm:px-6">
+    <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-border bg-bg/80 px-4 backdrop-blur-md print:hidden sm:px-6">
       <div className="flex min-w-0 items-center gap-3">
         <button
           onClick={onMenuClick}
