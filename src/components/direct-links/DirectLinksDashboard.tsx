@@ -67,7 +67,8 @@ export function DirectLinksDashboard({ directLinks: initialLinks }: DirectLinksD
   };
 
   const handleCopy = useCallback(async (link: DirectLink) => {
-    const url = getPublicUrl(link.slug);
+    // Cache-bust so WhatsApp re-scrapes OG image instead of showing old favicon
+    const url = `${getPublicUrl(link.slug)}?og=${Date.parse(link.updated_at) || Date.now()}`;
     try {
       await navigator.clipboard.writeText(url);
     } catch {
@@ -79,7 +80,7 @@ export function DirectLinksDashboard({ directLinks: initialLinks }: DirectLinksD
       document.body.removeChild(ta);
     }
     setCopiedId(link.id);
-    toast("Link copied!", "success");
+    toast("Link copied! Paste as a new WhatsApp message for image preview.", "success");
     setTimeout(() => setCopiedId(null), 2000);
   }, []);
 

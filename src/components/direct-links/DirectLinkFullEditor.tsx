@@ -53,8 +53,14 @@ export function DirectLinkFullEditor({ directLink: initialData }: DirectLinkFull
   const [seoOgImage, setSeoOgImage]       = useState(initialData.seo_og_image ?? "");
   const [seoIndexing, setSeoIndexing]     = useState<"index" | "noindex">(initialData.seo_indexing ?? "index");
   const [canonicalUrl, setCanonicalUrl]   = useState(initialData.canonical_url ?? "");
+  // Bust WhatsApp's aggressive link-preview cache whenever the OG image changes
+  const [shareVersion, setShareVersion]   = useState(
+    () => Date.parse(initialData.updated_at) || Date.now()
+  );
 
   const publicUrl = getPublicUrl(slug);
+  /** Use this when sharing to WhatsApp so the preview re-scrapes the new image */
+  const shareUrl = `${publicUrl}?og=${shareVersion}`;
 
   // Auto-generate slug from name (only while user hasn't manually edited slug)
   const [slugManual, setSlugManual] = useState(false);
@@ -72,10 +78,10 @@ export function DirectLinkFullEditor({ directLink: initialData }: DirectLinkFull
 
   const handleCopyLink = async () => {
     try {
-      await navigator.clipboard.writeText(publicUrl);
+      await navigator.clipboard.writeText(shareUrl);
     } catch {
       const ta = document.createElement("textarea");
-      ta.value = publicUrl;
+      ta.value = shareUrl;
       document.body.appendChild(ta);
       ta.select();
       document.execCommand("copy");
@@ -457,6 +463,8 @@ export function DirectLinkFullEditor({ directLink: initialData }: DirectLinkFull
                       value={seoOgImage}
                       onChange={async (url) => {
                         setSeoOgImage(url);
+                        const version = Date.now();
+                        setShareVersion(version);
                         // Persist immediately so WhatsApp crawlers can scrape it
                         try {
                           await fetch(`/api/direct-links/${initialData.id}`, {
@@ -470,6 +478,12 @@ export function DirectLinkFullEditor({ directLink: initialData }: DirectLinkFull
                       }}
                       directLinkId={initialData.id}
                     />
+                    {seoOgImage ? (
+                      <p className="mt-2 text-[11px] text-muted-fg">
+                        After uploading, use <strong>Copy Link</strong> and paste as a <strong>new</strong> WhatsApp
+                        message (old chats keep the old logo cache).
+                      </p>
+                    ) : null}
                   </div>
                 </div>
 
