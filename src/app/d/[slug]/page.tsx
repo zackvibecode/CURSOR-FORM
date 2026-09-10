@@ -71,15 +71,14 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     "Chat with us on WhatsApp.";
   const pageUrl = dl.canonical_url || `${appUrl}/d/${dl.slug}`;
 
-  // Custom upload → else site icon so WhatsApp always has an image to scrape
-  const imageUrl = absoluteUrl(dl.seo_og_image, "/favicon-icon.png");
-  const imageType = /\.jpe?g(\?|$)/i.test(imageUrl)
-    ? "image/jpeg"
-    : /\.webp(\?|$)/i.test(imageUrl)
-      ? "image/webp"
-      : /\.gif(\?|$)/i.test(imageUrl)
-        ? "image/gif"
-        : "image/png";
+  // Serve OG image from OUR domain (not Supabase) so WhatsApp/Facebook crawlers
+  // are not blocked by Supabase's `x-robots-tag: none` header.
+  // Cache-bust with updated_at so a new upload refreshes WhatsApp preview.
+  const bust = dl.updated_at ? Date.parse(dl.updated_at) || Date.now() : Date.now();
+  const imageUrl = dl.seo_og_image
+    ? `${appUrl}/api/og/d/${dl.slug}?v=${bust}`
+    : absoluteUrl(null, "/favicon-icon.png");
+  const imageType = "image/jpeg";
 
   return {
     metadataBase: new URL(appUrl),
@@ -98,6 +97,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       images: [
         {
           url: imageUrl,
+          secureUrl: imageUrl,
           width: OG_SIZE,
           height: OG_SIZE,
           alt: title,
@@ -144,6 +144,7 @@ export default async function DirectLinkPage({ params }: Props) {
             slug={params.slug}
             name={dl.name}
             seoDescription={dl.seo_description}
+            ogImage={dl.seo_og_image}
             isDraft={isDraft}
           />
         </Suspense>

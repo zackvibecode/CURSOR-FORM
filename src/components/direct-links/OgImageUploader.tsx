@@ -20,10 +20,46 @@ interface OgImageUploaderProps {
 }
 
 const MAX_SIZE_MB = 5;
+const TARGET_PX = 1000;
 const ALLOWED_TYPES = ["image/png", "image/jpeg", "image/jpg", "image/webp", "image/gif"];
-const ALLOWED_EXT   = ["png", "jpg", "jpeg", "webp", "gif"];
 
 type Mode = "upload" | "url";
+
+/** Resize to 1000×1000 JPEG so WhatsApp previews load reliably (smaller file). */
+async function prepareOgFile(file: File): Promise<File> {
+  if (typeof window === "undefined" || typeof createImageBitmap === "undefined") {
+    return file;
+  }
+
+  try {
+    const bitmap = await createImageBitmap(file);
+    const canvas = document.createElement("canvas");
+    canvas.width = TARGET_PX;
+    canvas.height = TARGET_PX;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return file;
+
+    // Cover-fit into square
+    const scale = Math.max(TARGET_PX / bitmap.width, TARGET_PX / bitmap.height);
+    const w = bitmap.width * scale;
+    const h = bitmap.height * scale;
+    const x = (TARGET_PX - w) / 2;
+    const y = (TARGET_PX - h) / 2;
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, TARGET_PX, TARGET_PX);
+    ctx.drawImage(bitmap, x, y, w, h);
+    bitmap.close();
+
+    const blob = await new Promise<Blob | null>((resolve) =>
+      canvas.toBlob((b) => resolve(b), "image/jpeg", 0.85)
+    );
+    if (!blob) return file;
+
+    return new File([blob], `og-${Date.now()}.jpg`, { type: "image/jpeg" });
+  } catch {
+    return file;
+  }
+}
 
 export function OgImageUploader({ value, onChange, directLinkId }: OgImageUploaderProps) {
   const [mode, setMode]           = useState<Mode>("upload");
@@ -58,17 +94,11 @@ export function OgImageUploader({ value, onChange, directLinkId }: OgImageUpload
         return;
       }
 
-      const ext = file.name.split(".").pop()?.toLowerCase() ?? "png";
-      if (!ALLOWED_EXT.includes(ext)) {
-        setError("File extension not supported.");
-        setUploading(false);
-        return;
-      }
-
-      const path = `${user.id}/og-${directLinkId}-${Date.now()}.${ext}`;
+      const prepared = await prepareOgFile(file);
+      const path = `${user.id}/og-${directLinkId}-${Date.now()}.jpg`;
       const { error: uploadErr } = await supabase.storage
         .from("form-images")
-        .upload(path, file, { upsert: true });
+        .upload(path, prepared, { upsert: true, contentType: "image/jpeg" });
 
       if (uploadErr) {
         setError(uploadErr.message);

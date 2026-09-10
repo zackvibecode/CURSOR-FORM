@@ -20,6 +20,8 @@ interface Props {
   slug: string;
   name: string;
   seoDescription?: string | null;
+  /** Uploaded OG / marketing image (shown at natural square size on the page) */
+  ogImage?: string | null;
   isDraft?: boolean;
 }
 
@@ -29,19 +31,24 @@ type State =
   | { phase: "error"; message: string }
   | { phase: "no_members" };
 
-export function DirectLinkRedirectView({ slug, name, seoDescription, isDraft }: Props) {
+export function DirectLinkRedirectView({
+  slug,
+  name,
+  seoDescription,
+  ogImage,
+  isDraft,
+}: Props) {
   const searchParams = useSearchParams();
   const [state, setState] = useState<State>(
     isDraft ? { phase: "error", message: "draft-preview" } : { phase: "loading" }
   );
+  const [imgFailed, setImgFailed] = useState(false);
 
   useEffect(() => {
-    // Don't fire the redirect API in draft preview mode
     if (isDraft) return;
 
     async function fetchAndRedirect() {
       try {
-        // Build query string — forward all UTM params
         const qs = new URLSearchParams();
         ["utm_source", "utm_medium", "utm_campaign", "utm_content", "utm_term"].forEach((k) => {
           const v = searchParams.get(k);
@@ -59,7 +66,6 @@ export function DirectLinkRedirectView({ slug, name, seoDescription, isDraft }: 
         };
 
         if (data.is_bot) {
-          // Bot detected server-side — show static message, no redirect
           setState({ phase: "error", message: "Preview mode — no redirect for bots." });
           return;
         }
@@ -83,10 +89,10 @@ export function DirectLinkRedirectView({ slug, name, seoDescription, isDraft }: 
           assignedName: data.assigned_name ?? null,
         });
 
-        // Redirect after a brief moment so the "Opening WhatsApp…" message renders
+        // Slightly longer delay so visitors can see the uploaded image
         const timer = window.setTimeout(() => {
           window.location.assign(data.wa_url!);
-        }, 400);
+        }, 900);
         return () => window.clearTimeout(timer);
       } catch {
         setState({ phase: "error", message: "Something went wrong. Please try again." });
@@ -97,23 +103,41 @@ export function DirectLinkRedirectView({ slug, name, seoDescription, isDraft }: 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [slug]);
 
-  return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-bg px-4 py-16">
-      <div className="w-full max-w-sm space-y-6 text-center">
-        {/* Icon */}
-        <div className="flex justify-center">
-          {state.phase === "loading" || state.phase === "redirecting" ? (
-            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#25D366]/10 text-[#25D366]">
-              <MessageCircle className="h-7 w-7" />
-            </div>
-          ) : state.phase === "no_members" || state.phase === "error" ? (
-            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-amber-500/10 text-amber-500">
-              <AlertTriangle className="h-7 w-7" />
-            </div>
-          ) : null}
-        </div>
+  const showHeroImage = Boolean(ogImage) && !imgFailed;
+  const isBusy = state.phase === "loading" || state.phase === "redirecting";
+  const isProblem = state.phase === "no_members" || state.phase === "error";
 
-        {/* Link name */}
+  return (
+    <div className="flex min-h-screen flex-col items-center justify-center bg-bg px-4 py-10">
+      <div className="w-full max-w-sm space-y-5 text-center">
+
+        {/* Hero: uploaded OG image at full square size (1000×1000 source) */}
+        {showHeroImage ? (
+          <div className="mx-auto w-full overflow-hidden rounded-2xl border border-border bg-muted shadow-sm">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={ogImage!}
+              alt={name}
+              width={1000}
+              height={1000}
+              className="aspect-square h-auto w-full object-cover"
+              onError={() => setImgFailed(true)}
+            />
+          </div>
+        ) : (
+          <div className="flex justify-center">
+            {isBusy ? (
+              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#25D366]/10 text-[#25D366]">
+                <MessageCircle className="h-7 w-7" />
+              </div>
+            ) : isProblem ? (
+              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-amber-500/10 text-amber-500">
+                <AlertTriangle className="h-7 w-7" />
+              </div>
+            ) : null}
+          </div>
+        )}
+
         <div>
           <h1 className="text-xl font-bold text-fg">{name}</h1>
           {seoDescription && (
@@ -121,8 +145,7 @@ export function DirectLinkRedirectView({ slug, name, seoDescription, isDraft }: 
           )}
         </div>
 
-        {/* State-based content */}
-        {(state.phase === "loading" || state.phase === "redirecting") && (
+        {isBusy && (
           <div className="space-y-4">
             <div className="flex items-center justify-center gap-2 text-sm text-muted-fg">
               <Loader2 className="h-4 w-4 animate-spin" />
