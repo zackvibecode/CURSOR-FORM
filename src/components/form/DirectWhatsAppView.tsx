@@ -57,16 +57,11 @@ export function DirectWhatsAppView({
   const trackContact = () => {
     if (!pixelId || preview || contactFiredRef.current) return;
     contactFiredRef.current = true;
-    trackMetaEvent(
-      META_EVENTS.contact,
-      {
-        contact_method: "whatsapp",
-        page_path: window.location.pathname,
-        content_name: title,
-      },
-      undefined,
-      pixelId
-    );
+    trackMetaEvent(META_EVENTS.contact, {
+      contact_method: "whatsapp",
+      page_path: window.location.pathname,
+      content_name: title,
+    });
   };
 
   useEffect(() => {

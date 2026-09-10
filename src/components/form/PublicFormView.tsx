@@ -289,8 +289,7 @@ export function PublicFormView({
           form_id: formId,
           source: "oneform_public_form",
         },
-        eventId,
-        pixelId
+        { eventID: eventId }
       );
 
       sendCapiEvent({
@@ -300,10 +299,12 @@ export function PublicFormView({
         eventSourceUrl: window.location.href,
         formId,
         formTitle: title,
-        source: "oneform_public_form",
-        leadId: result.submissionId,
         email,
         phone,
+        customData: {
+          source: "oneform_public_form",
+          ...(result.submissionId ? { lead_id: result.submissionId } : {}),
+        },
       });
     }
 
@@ -358,16 +359,11 @@ export function PublicFormView({
           rel="noopener noreferrer"
           onClick={() =>
             pixelId &&
-            trackMetaEvent(
-              META_EVENTS.contact,
-              {
-                contact_method: "whatsapp",
-                page_path: window.location.pathname,
-                content_name: title,
-              },
-              undefined,
-              pixelId
-            )
+            trackMetaEvent(META_EVENTS.contact, {
+              contact_method: "whatsapp",
+              page_path: window.location.pathname,
+              content_name: title,
+            })
           }
           className="inline-flex w-full items-center justify-center gap-2 rounded-md bg-whatsapp px-5 py-3 text-sm font-medium text-white hover:bg-whatsapp-deep"
         >

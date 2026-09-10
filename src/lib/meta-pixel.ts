@@ -52,21 +52,23 @@ export function fireLeadEvent(
 export function sendCAPIEvent(body: {
   pixelId: string;
   eventId: string;
-  formId: string;
-  formTitle: string;
+  formId?: string;
+  formTitle?: string;
+  eventName?: string;
   eventSourceUrl?: string;
   email?: string;
   phone?: string;
   fbp?: string;
   fbc?: string;
   userAgent?: string;
+  customData?: Record<string, string | number | string[] | boolean | undefined>;
 }) {
   const attribution = getMetaAttributionCookies();
 
   void sendMetaCapiEvent({
     pixelId: body.pixelId,
     eventId: body.eventId,
-    eventName: "Lead",
+    eventName: body.eventName || "Lead",
     formId: body.formId,
     formTitle: body.formTitle,
     eventSourceUrl: body.eventSourceUrl || getEventSourceUrl(),
@@ -75,10 +77,11 @@ export function sendCAPIEvent(body: {
     customData: {
       content_name: body.formTitle,
       content_category: "form_submission",
-      content_ids: [body.formId],
+      ...(body.formId ? { content_ids: [body.formId] } : {}),
       content_type: "form",
       form_name: body.formTitle,
       source: "oneform",
+      ...body.customData,
     },
   });
 

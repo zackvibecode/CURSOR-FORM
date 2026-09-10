@@ -60,10 +60,10 @@ export default async function PublicFormPage({
         <>
           <MetaPixel pixelId={data.pixelId} />
           <MetaViewContent
-            formId={data.form.id}
-            formTitle={data.form.title}
+            contentKey={data.form.id}
+            contentName={data.form.title}
             contentCategory={isDirectLinkForm(data.form) ? "whatsapp_direct_link" : "lead_form"}
-            pixelId={data.pixelId}
+            contentIds={[data.form.id]}
           />
         </>
       ) : null}
