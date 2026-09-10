@@ -125,12 +125,12 @@ export function OgImageUploader({ value, onChange, directLinkId }: OgImageUpload
           <img
             src={value}
             alt="OG Image Preview"
-            className="h-44 w-full object-cover"
+            className="aspect-square w-full max-h-72 object-cover"
             onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
           />
           <div className="absolute bottom-0 left-0 right-0 flex items-center justify-between bg-black/60 px-3 py-2 backdrop-blur-sm">
             <span className="text-[11px] font-medium text-white/80">
-              OG Image Preview (1200×630)
+              OG Image Preview (1000×1000)
             </span>
             <button
               type="button"
@@ -146,10 +146,10 @@ export function OgImageUploader({ value, onChange, directLinkId }: OgImageUpload
           </div>
         </div>
       ) : (
-        <div className="flex h-44 flex-col items-center justify-center rounded-xl border border-dashed border-border bg-muted/30 text-center">
+        <div className="flex aspect-square max-h-72 w-full flex-col items-center justify-center rounded-xl border border-dashed border-border bg-muted/30 text-center">
           <ImageIcon className="mb-2 h-8 w-8 text-muted-fg/30" />
           <p className="text-xs text-muted-fg">No image set</p>
-          <p className="text-[11px] text-muted-fg/60">Recommended size: 1200 × 630 px</p>
+          <p className="text-[11px] text-muted-fg/60">Recommended size: 1000 × 1000 px</p>
         </div>
       )}
 

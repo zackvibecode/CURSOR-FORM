@@ -448,14 +448,26 @@ export function DirectLinkFullEditor({ directLink: initialData }: DirectLinkFull
                     />
                   </div>
                   <div>
-                    <Label>OG Image</Label>
+                    <Label>OG Image (WhatsApp preview)</Label>
                     <p className="mb-2 mt-1 text-[11px] text-muted-fg">
-                      Upload directly or paste a URL. Recommended size: 1200×630 px.
-                      This image appears when the link is shared on Facebook, WhatsApp, etc.
+                      This image shows above your link when shared on WhatsApp / Facebook.
+                      Use <strong>1000×1000 px</strong> (square). Upload is saved automatically.
                     </p>
                     <OgImageUploader
                       value={seoOgImage}
-                      onChange={setSeoOgImage}
+                      onChange={async (url) => {
+                        setSeoOgImage(url);
+                        // Persist immediately so WhatsApp crawlers can scrape it
+                        try {
+                          await fetch(`/api/direct-links/${initialData.id}`, {
+                            method: "PUT",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ seo_og_image: url || null }),
+                          });
+                        } catch {
+                          // Ignore — user can still hit Save SEO settings
+                        }
+                      }}
                       directLinkId={initialData.id}
                     />
                   </div>

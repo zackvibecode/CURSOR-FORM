@@ -1,28 +1,48 @@
 /**
  * Public Direct Link page — /d/[slug]
  *
- * - Published links  → full redirect flow
- * - Draft links      → same page, but with a "Draft Preview" banner (no SEO indexing)
- * - Missing slug     → 404
- *
- * SEO metadata is generated server-side so bots see og: tags.
- * The actual WhatsApp redirect only fires in the client component (bots never run JS).
+ * SEO / Open Graph metadata is generated server-side so WhatsApp, Facebook,
+ * and other crawlers see og:title / og:description / og:image BEFORE any JS runs.
+ * The WhatsApp redirect only happens client-side (bots never trigger team rotation).
  */
 
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { getAppUrl } from "@/lib/auth/urls";
 import type { DirectLink } from "@/lib/database.types";
 import { DirectLinkRedirectView } from "@/components/direct-links/DirectLinkRedirectView";
 import { Loader2 } from "lucide-react";
 
-export const revalidate = 30;
+export const revalidate = 0; // always fresh OG tags after SEO save
 
 type Props = { params: { slug: string } };
 
-// Fetch the link regardless of status — we handle draft display below
+const OG_SIZE = 1000;
+
+function absoluteUrl(url: string | null | undefined, fallbackPath: string): string {
+  const base = getAppUrl();
+  if (!url || !url.trim()) return `${base}${fallbackPath}`;
+  if (/^https?:\/\//i.test(url)) return url;
+  if (url.startsWith("//")) return `https:${url}`;
+  if (url.startsWith("/")) return `${base}${url}`;
+  return url;
+}
+
 async function getDirectLink(slug: string): Promise<DirectLink | null> {
+  // Prefer service role so crawlers (no cookies) always get published rows
+  const admin = createAdminClient();
+  if (admin) {
+    const { data } = await admin
+      .from("direct_links")
+      .select("*")
+      .eq("slug", slug)
+      .maybeSingle();
+    return (data as DirectLink | null) ?? null;
+  }
+
   const supabase = await createClient();
   const { data } = await supabase
     .from("direct_links")
@@ -32,9 +52,9 @@ async function getDirectLink(slug: string): Promise<DirectLink | null> {
   return data ?? null;
 }
 
-// ── SEO Metadata (served to ALL requests, including bots) ─────────────────
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const dl = await getDirectLink(params.slug);
+  const appUrl = getAppUrl();
 
   if (!dl) {
     return {
@@ -43,43 +63,57 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     };
   }
 
-  // Drafts: never index
-  if (dl.status !== "published") {
-    return {
-      title: `${dl.name} (Draft)`,
-      robots: { index: false, follow: false },
-    };
-  }
+  const isDraft = dl.status !== "published";
+  const title = dl.seo_og_title || dl.seo_title || dl.name;
+  const description =
+    dl.seo_og_description ||
+    dl.seo_description ||
+    "Chat with us on WhatsApp.";
+  const pageUrl = dl.canonical_url || `${appUrl}/d/${dl.slug}`;
 
-  const title       = dl.seo_title       || dl.name;
-  const description = dl.seo_description || "Chat with us on WhatsApp.";
-  const ogTitle     = dl.seo_og_title    || title;
-  const ogDesc      = dl.seo_og_description || description;
-  const canonical   = dl.canonical_url   || `${process.env.NEXT_PUBLIC_APP_URL}/d/${dl.slug}`;
-  const robots      = dl.seo_indexing === "noindex" ? "noindex, nofollow" : "index, follow";
+  // Custom upload → else site icon so WhatsApp always has an image to scrape
+  const imageUrl = absoluteUrl(dl.seo_og_image, "/favicon-icon.png");
+  const imageType = /\.jpe?g(\?|$)/i.test(imageUrl)
+    ? "image/jpeg"
+    : /\.webp(\?|$)/i.test(imageUrl)
+      ? "image/webp"
+      : /\.gif(\?|$)/i.test(imageUrl)
+        ? "image/gif"
+        : "image/png";
 
   return {
-    title,
+    metadataBase: new URL(appUrl),
+    title: isDraft ? `${dl.name} (Draft)` : title,
     description,
-    alternates: { canonical },
-    robots,
+    alternates: { canonical: pageUrl },
+    robots: isDraft || dl.seo_indexing === "noindex"
+      ? { index: false, follow: false }
+      : { index: true, follow: true },
     openGraph: {
-      title: ogTitle,
-      description: ogDesc,
-      url: canonical,
+      title,
+      description,
+      url: pageUrl,
+      siteName: "OneForm",
       type: "website",
-      ...(dl.seo_og_image ? { images: [{ url: dl.seo_og_image }] } : {}),
+      images: [
+        {
+          url: imageUrl,
+          width: OG_SIZE,
+          height: OG_SIZE,
+          alt: title,
+          type: imageType,
+        },
+      ],
     },
     twitter: {
       card: "summary_large_image",
-      title: ogTitle,
-      description: ogDesc,
-      ...(dl.seo_og_image ? { images: [dl.seo_og_image] } : {}),
+      title,
+      description,
+      images: [imageUrl],
     },
   };
 }
 
-// ── Page Component ────────────────────────────────────────────────────────
 export default async function DirectLinkPage({ params }: Props) {
   const dl = await getDirectLink(params.slug);
 
@@ -89,7 +123,6 @@ export default async function DirectLinkPage({ params }: Props) {
 
   return (
     <div className="flex min-h-screen flex-col bg-bg">
-      {/* Draft banner — only visible when link is not published */}
       {isDraft && (
         <div className="flex items-center justify-center gap-2 bg-amber-400 px-4 py-2.5 text-center text-xs font-semibold text-amber-900">
           <span>⚠</span>
