@@ -19,10 +19,12 @@ import {
   Crown,
   ShieldCheck,
   Wallet,
+  Link2,
 } from "lucide-react";
 
 const mainNavItems = [
-  { href: "/dashboard/forms", label: "Forms", icon: FileText, exact: true },
+  { href: "/dashboard/forms", label: "WhatsForm", icon: FileText, exact: true },
+  { href: "/dashboard/direct-links", label: "Direct Links", icon: Link2, exact: true },
   { href: "/dashboard/overview", label: "Overview", icon: LayoutDashboard, exact: true },
   { href: "/dashboard/submissions", label: "Submissions", icon: Inbox },
   { href: "/dashboard/customers", label: "Customers", icon: Users },
@@ -96,6 +98,9 @@ export function DashboardSidebar({
   const isActive = (href: string, exact?: boolean) => {
     if (href === "/dashboard/forms") {
       return pathname.startsWith("/dashboard/forms");
+    }
+    if (href === "/dashboard/direct-links") {
+      return pathname.startsWith("/dashboard/direct-links");
     }
     if (href === "/dashboard/tools") {
       return pathname.startsWith("/dashboard/tools");

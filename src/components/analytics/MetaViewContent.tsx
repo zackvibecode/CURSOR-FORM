@@ -1,45 +1,54 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { META_EVENTS, trackMetaEvent } from "@/lib/meta-pixel";
-
-interface MetaViewContentProps {
-  formId: string;
-  formTitle: string;
-  contentCategory: string;
-  /** Tenant pixel — scopes ViewContent to the owner's data source only. */
-  pixelId?: string;
-}
+import { trackViewContent } from "@/lib/meta/track";
+import type { MetaEventParams } from "@/lib/meta/types";
 
 /**
- * Fires the Meta `ViewContent` event once when a visitor opens a published
- * form page. The ref guard ensures it never re-fires on re-renders or React
- * Strict Mode double effects.
+ * Fires ViewContent once when the component mounts for a given content key.
+ * Guards against React re-renders / remounts within the same tab session.
  */
 export function MetaViewContent({
-  formId,
-  formTitle,
+  contentKey,
+  contentName,
   contentCategory,
-  pixelId,
-}: MetaViewContentProps) {
+  contentIds,
+  contentType = "form",
+}: {
+  contentKey: string;
+  contentName: string;
+  contentCategory?: string;
+  contentIds?: string[];
+  contentType?: string;
+}) {
   const firedRef = useRef(false);
 
   useEffect(() => {
     if (firedRef.current) return;
+    if (typeof window === "undefined") return;
+
+    const storageKey = `meta_vc_${contentKey}`;
+    try {
+      if (sessionStorage.getItem(storageKey) === "1") {
+        firedRef.current = true;
+        return;
+      }
+      sessionStorage.setItem(storageKey, "1");
+    } catch {
+      // sessionStorage may be blocked — fall through with ref guard only.
+    }
+
     firedRef.current = true;
 
-    trackMetaEvent(
-      META_EVENTS.viewContent,
-      {
-        content_name: formTitle,
-        content_category: contentCategory,
-        content_ids: [formId],
-        content_type: "form",
-      },
-      undefined,
-      pixelId
-    );
-  }, [formId, formTitle, contentCategory, pixelId]);
+    const params: MetaEventParams = {
+      content_name: contentName,
+      content_type: contentType,
+      ...(contentCategory ? { content_category: contentCategory } : {}),
+      ...(contentIds?.length ? { content_ids: contentIds } : {}),
+    };
+
+    trackViewContent(params);
+  }, [contentKey, contentName, contentCategory, contentIds, contentType]);
 
   return null;
 }

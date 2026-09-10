@@ -2,6 +2,7 @@
 export const RESERVED_FORM_SLUGS = new Set([
   "api",
   "auth",
+  "d",           // Direct Links public route: /d/[slug]
   "dashboard",
   "demo",
   "f",
