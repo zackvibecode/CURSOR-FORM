@@ -24,6 +24,7 @@ import { slugify } from "@/lib/utils";
 import { toast } from "@/components/ui/Toast";
 import { TeamSettings } from "./TeamSettings";
 import { DirectLinkEditor } from "./DirectLinkEditor";
+import { OgImageUploader } from "@/components/direct-links/OgImageUploader";
 import {
   ArrowLeft,
   Eye,
@@ -58,6 +59,14 @@ interface FormBuilderProps {
     tiktokMode?: boolean;
     formMode?: FormMode;
     directMessage?: string;
+    seo_title?: string;
+    seo_description?: string;
+    seo_og_title?: string;
+    seo_og_description?: string;
+    seo_og_image?: string;
+    seo_indexing?: "index" | "noindex";
+    canonical_url?: string;
+    updated_at?: string;
   };
 }
 
@@ -85,12 +94,23 @@ export function FormBuilder({ formId, initialData }: FormBuilderProps) {
   );
   const [tiktokMode, setTiktokMode] = useState(initialData.tiktokMode !== false);
   const [directMessage, setDirectMessage] = useState(initialData.directMessage ?? "");
+  const [seoTitle, setSeoTitle] = useState(initialData.seo_title ?? "");
+  const [seoDesc, setSeoDesc] = useState(initialData.seo_description ?? "");
+  const [seoOgTitle, setSeoOgTitle] = useState(initialData.seo_og_title ?? "");
+  const [seoOgDesc, setSeoOgDesc] = useState(initialData.seo_og_description ?? "");
+  const [seoOgImage, setSeoOgImage] = useState(initialData.seo_og_image ?? "");
+  const [seoIndexing, setSeoIndexing] = useState<"index" | "noindex">(initialData.seo_indexing ?? "index");
+  const [canonicalUrl, setCanonicalUrl] = useState(initialData.canonical_url ?? "");
+  const [shareVersion, setShareVersion] = useState(
+    () => Date.parse(initialData.updated_at ?? "") || Date.now()
+  );
   const [confirmModal, setConfirmModal] = useState(false);
   const [confirmAction, setConfirmAction] = useState<"save" | "publish" | null>(null);
   const [mobileDrawer, setMobileDrawer] = useState<"add" | "edit" | null>(null);
   const lastSyncedFieldsKey = useRef(fieldsStructureKey(initialData.fields));
 
   const selectedField = fields.find((f) => f.id === selectedId) ?? null;
+  const shareUrl = `${getFormPublicUrl(slug)}?og=${shareVersion}`;
 
   // Sync template only when fields are added, removed, or renamed — not on first load.
   useEffect(() => {
@@ -110,6 +130,20 @@ export function FormBuilder({ formId, initialData }: FormBuilderProps) {
     setFields((prev) => prev.map((f) => (f.id === updated.id ? updated : f)));
   };
 
+  const buildSettings = () => ({
+    form_mode: isDirect ? "direct" : "form",
+    direct_message: directMessage,
+    whatsapp_template: whatsappTemplate,
+    tiktok_mode: tiktokMode,
+    seo_title: seoTitle || undefined,
+    seo_description: seoDesc || undefined,
+    seo_og_title: seoOgTitle || undefined,
+    seo_og_description: seoOgDesc || undefined,
+    seo_og_image: seoOgImage || undefined,
+    seo_indexing: seoIndexing,
+    canonical_url: canonicalUrl || undefined,
+  });
+
   const handleSave = useCallback(
     async (publish = false) => {
       setSaving(true);
@@ -127,12 +161,7 @@ export function FormBuilder({ formId, initialData }: FormBuilderProps) {
             description,
             status: publish ? "published" : status,
             fields,
-            settings: {
-              form_mode: isDirect ? "direct" : "form",
-              direct_message: directMessage,
-              whatsapp_template: whatsappTemplate,
-              tiktok_mode: tiktokMode,
-            },
+            settings: buildSettings(),
           }),
         });
 
@@ -146,6 +175,7 @@ export function FormBuilder({ formId, initialData }: FormBuilderProps) {
         }
 
         if (publish) setStatus("published");
+        setShareVersion(Date.now());
 
         const savedTemplate = getWhatsappTemplateFromForm(data.form ?? {});
         if (savedTemplate) {
@@ -174,6 +204,13 @@ export function FormBuilder({ formId, initialData }: FormBuilderProps) {
       tiktokMode,
       directMessage,
       isDirect,
+      seoTitle,
+      seoDesc,
+      seoOgTitle,
+      seoOgDesc,
+      seoOgImage,
+      seoIndexing,
+      canonicalUrl,
     ]
   );
 
@@ -201,9 +238,9 @@ export function FormBuilder({ formId, initialData }: FormBuilderProps) {
   };
 
   const handleCopyLink = async () => {
-    const url = getFormPublicUrl(slug);
-    await navigator.clipboard.writeText(url);
+    await navigator.clipboard.writeText(shareUrl);
     setCopied(true);
+    toast("Link copied — paste as a new WhatsApp message for image preview", "success");
     setTimeout(() => setCopied(false), 2000);
   };
 
@@ -313,6 +350,7 @@ export function FormBuilder({ formId, initialData }: FormBuilderProps) {
           directMessage={directMessage}
           onDirectMessageChange={setDirectMessage}
           slug={slug}
+          shareUrl={shareUrl}
         />
       ) : tab === "build" ? (
         <div className="relative flex flex-1 flex-col overflow-hidden lg:flex-row">
@@ -525,8 +563,114 @@ export function FormBuilder({ formId, initialData }: FormBuilderProps) {
               )}
 
               {tab === "seo" && (
-                <div className="flex items-center justify-center py-24">
-                  <p className="text-sm text-muted-fg">Coming soon</p>
+                <div className="space-y-6">
+                  <div>
+                    <h2 className="text-base font-semibold text-fg">SEO & WhatsApp Preview</h2>
+                    <p className="mt-1 text-sm text-muted-fg">
+                      Control how your form looks when shared on WhatsApp, Facebook, and Google.
+                    </p>
+                  </div>
+
+                  <div className="space-y-4 rounded-xl border border-border bg-card p-4">
+                    <div>
+                      <Label>SEO Title</Label>
+                      <Input
+                        value={seoTitle}
+                        onChange={(e) => setSeoTitle(e.target.value)}
+                        placeholder={title || "Form title"}
+                        className="mt-1.5"
+                      />
+                    </div>
+                    <div>
+                      <Label>Meta Description</Label>
+                      <Textarea
+                        value={seoDesc}
+                        onChange={(e) => setSeoDesc(e.target.value)}
+                        placeholder={description || "Fill out this form"}
+                        rows={3}
+                        className="mt-1.5 resize-none"
+                      />
+                    </div>
+                    <div>
+                      <Label>Canonical URL</Label>
+                      <Input
+                        value={canonicalUrl}
+                        onChange={(e) => setCanonicalUrl(e.target.value)}
+                        placeholder={getFormPublicUrl(slug)}
+                        className="mt-1.5 font-mono text-xs"
+                      />
+                    </div>
+                    <div className="flex items-center justify-between gap-3 rounded-lg border border-border px-3 py-2.5">
+                      <div>
+                        <p className="text-sm font-medium text-fg">Allow search engines to index</p>
+                        <p className="text-[11px] text-muted-fg">Turn off for private / unlisted forms</p>
+                      </div>
+                      <Toggle
+                        checked={seoIndexing === "index"}
+                        onChange={(on) => setSeoIndexing(on ? "index" : "noindex")}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-4 rounded-xl border border-border bg-card p-4">
+                    <div>
+                      <Label>OG Title</Label>
+                      <Input
+                        value={seoOgTitle}
+                        onChange={(e) => setSeoOgTitle(e.target.value)}
+                        placeholder={seoTitle || title || "Form title"}
+                        className="mt-1.5"
+                      />
+                    </div>
+                    <div>
+                      <Label>OG Description</Label>
+                      <Textarea
+                        value={seoOgDesc}
+                        onChange={(e) => setSeoOgDesc(e.target.value)}
+                        placeholder={seoDesc || description || "Fill out this form"}
+                        rows={3}
+                        className="mt-1.5 resize-none"
+                      />
+                    </div>
+                    <div>
+                      <Label>OG Image (WhatsApp preview)</Label>
+                      <p className="mb-2 mt-1 text-[11px] text-muted-fg">
+                        This image shows above your link when shared on WhatsApp / Facebook.
+                        Use <strong>1000×1000 px</strong> (square). Upload is saved automatically.
+                      </p>
+                      <OgImageUploader
+                        value={seoOgImage}
+                        onChange={async (url) => {
+                          setSeoOgImage(url);
+                          setShareVersion(Date.now());
+                          try {
+                            await fetch(`/api/forms/${formId}`, {
+                              method: "PUT",
+                              headers: { "Content-Type": "application/json" },
+                              body: JSON.stringify({
+                                settings: { seo_og_image: url || undefined },
+                              }),
+                            });
+                          } catch {
+                            // user can still Save SEO settings
+                          }
+                        }}
+                        entityId={formId}
+                      />
+                      {seoOgImage ? (
+                        <p className="mt-2 text-[11px] text-muted-fg">
+                          After uploading, use <strong>Copy Link</strong> and paste as a <strong>new</strong> WhatsApp
+                          message (old chats keep the old logo cache).
+                        </p>
+                      ) : null}
+                    </div>
+                  </div>
+
+                  <div className="flex justify-end">
+                    <Button size="sm" onClick={() => handleSave(false)} disabled={saving}>
+                      {saving ? "Saving…" : "Save SEO settings"}
+                    </Button>
+                  </div>
                 </div>
               )}
 

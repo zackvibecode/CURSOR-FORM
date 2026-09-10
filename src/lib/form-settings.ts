@@ -3,6 +3,16 @@ import { syncTemplateWithFields } from "./template-sync";
 
 export type FormMode = "form" | "direct";
 
+export type FormSeoSettings = {
+  seo_title?: string;
+  seo_description?: string;
+  seo_og_title?: string;
+  seo_og_description?: string;
+  seo_og_image?: string;
+  seo_indexing?: "index" | "noindex";
+  canonical_url?: string;
+};
+
 export type FormSettingsJson = {
   /** `direct` = skip form UI and open WhatsApp on visit. */
   form_mode?: FormMode;
@@ -12,7 +22,7 @@ export type FormSettingsJson = {
   /** When true, TikTok in-app browser shows manual WhatsApp open screen after submit. */
   tiktok_mode?: boolean;
   [key: string]: unknown;
-};
+} & FormSeoSettings;
 
 function parseSettingsObject(raw: unknown): FormSettingsJson {
   if (!raw) return {};
@@ -30,6 +40,28 @@ function parseSettingsObject(raw: unknown): FormSettingsJson {
   }
 
   return {};
+}
+
+export function getFormSeoFromForm(form: { settings?: unknown; title?: string; description?: string | null }): {
+  seo_title: string;
+  seo_description: string;
+  seo_og_title: string;
+  seo_og_description: string;
+  seo_og_image: string;
+  seo_indexing: "index" | "noindex";
+  canonical_url: string;
+} {
+  const s = parseSettingsObject(form.settings);
+  const str = (v: unknown) => (typeof v === "string" ? v : "");
+  return {
+    seo_title: str(s.seo_title),
+    seo_description: str(s.seo_description),
+    seo_og_title: str(s.seo_og_title),
+    seo_og_description: str(s.seo_og_description),
+    seo_og_image: str(s.seo_og_image),
+    seo_indexing: s.seo_indexing === "noindex" ? "noindex" : "index",
+    canonical_url: str(s.canonical_url),
+  };
 }
 
 export function getWhatsappTemplateFromForm(form: {

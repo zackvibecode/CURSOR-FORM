@@ -2,7 +2,7 @@ import { redirect, notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { FormBuilder } from "@/components/builder/FormBuilder";
 import { mapDbFieldToFormField } from "@/lib/forms";
-import { getTiktokModeFromForm, getWhatsappTemplateFromForm, getFormModeFromForm, getDirectMessageFromForm } from "@/lib/form-settings";
+import { getTiktokModeFromForm, getWhatsappTemplateFromForm, getFormModeFromForm, getDirectMessageFromForm, getFormSeoFromForm } from "@/lib/form-settings";
 
 export const dynamic = "force-dynamic";
 
@@ -38,6 +38,8 @@ export default async function EditFormPage({
     .eq("form_id", id)
     .order("order_index");
 
+  const seo = getFormSeoFromForm(form);
+
   return (
     <FormBuilder
       formId={form.id}
@@ -53,6 +55,14 @@ export default async function EditFormPage({
         tiktokMode: getTiktokModeFromForm(form),
         formMode: getFormModeFromForm(form),
         directMessage: getDirectMessageFromForm(form),
+        seo_title: seo.seo_title,
+        seo_description: seo.seo_description,
+        seo_og_title: seo.seo_og_title,
+        seo_og_description: seo.seo_og_description,
+        seo_og_image: seo.seo_og_image,
+        seo_indexing: seo.seo_indexing,
+        canonical_url: seo.canonical_url,
+        updated_at: form.updated_at,
       }}
     />
   );

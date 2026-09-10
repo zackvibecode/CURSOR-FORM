@@ -477,6 +477,7 @@ export function DirectLinkFullEditor({ directLink: initialData }: DirectLinkFull
                         }
                       }}
                       directLinkId={initialData.id}
+                      entityId={initialData.id}
                     />
                     {seoOgImage ? (
                       <p className="mt-2 text-[11px] text-muted-fg">

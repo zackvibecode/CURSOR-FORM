@@ -7,9 +7,12 @@ import { isReservedSlug } from "@/lib/reserved-slugs";
 import { PublicFormClient } from "@/components/form/PublicFormClient";
 import { MetaPixel } from "@/components/analytics/MetaPixel";
 import { MetaViewContent } from "@/components/analytics/MetaViewContent";
-import { isDirectLinkForm } from "@/lib/form-settings";
+import { getFormSeoFromForm, isDirectLinkForm } from "@/lib/form-settings";
+import { getAppUrl } from "@/lib/auth/urls";
 
-export const revalidate = 120;
+export const revalidate = 60;
+
+const OG_SIZE = 1000;
 
 export async function generateMetadata({
   params,
@@ -18,12 +21,54 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const data = await getPublishedFormBySlug(params.slug);
   if (!data) {
-    return { title: "Form not found" };
+    return { title: "Form not found", robots: { index: false, follow: false } };
   }
 
+  const appUrl = getAppUrl();
+  const seo = getFormSeoFromForm(data.form);
+  const title = seo.seo_og_title || seo.seo_title || data.form.title;
+  const description =
+    seo.seo_og_description ||
+    seo.seo_description ||
+    data.form.description ||
+    `Fill out ${data.form.title}`;
+  const pageUrl = seo.canonical_url || `${appUrl}/${data.form.slug}`;
+  const bust = Date.parse(data.form.updated_at) || Date.now();
+  const imageUrl = seo.seo_og_image
+    ? `${appUrl}/api/og/f/${data.form.slug}?v=${bust}`
+    : `${appUrl}/favicon-icon.png`;
+
   return {
-    title: data.form.title,
-    description: data.form.description || `Fill out ${data.form.title}`,
+    metadataBase: new URL(appUrl),
+    title,
+    description,
+    alternates: { canonical: pageUrl },
+    robots: seo.seo_indexing === "noindex"
+      ? { index: false, follow: false }
+      : { index: true, follow: true },
+    openGraph: {
+      title,
+      description,
+      url: pageUrl,
+      siteName: "OneForm",
+      type: "website",
+      images: [
+        {
+          url: imageUrl,
+          secureUrl: imageUrl,
+          width: OG_SIZE,
+          height: OG_SIZE,
+          alt: title,
+          type: "image/jpeg",
+        },
+      ],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: [imageUrl],
+    },
   };
 }
 

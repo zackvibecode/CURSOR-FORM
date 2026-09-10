@@ -16,7 +16,10 @@ import { cn } from "@/lib/utils";
 interface OgImageUploaderProps {
   value: string;
   onChange: (url: string) => void;
-  directLinkId: string;
+  /** Used as folder/file prefix in storage (form id or direct-link id) */
+  entityId: string;
+  /** @deprecated use entityId */
+  directLinkId?: string;
 }
 
 const MAX_SIZE_MB = 5;
@@ -61,7 +64,8 @@ async function prepareOgFile(file: File): Promise<File> {
   }
 }
 
-export function OgImageUploader({ value, onChange, directLinkId }: OgImageUploaderProps) {
+export function OgImageUploader({ value, onChange, entityId, directLinkId }: OgImageUploaderProps) {
+  const storageId = entityId || directLinkId || "og";
   const [mode, setMode]           = useState<Mode>("upload");
   const [uploading, setUploading] = useState(false);
   const [urlInput, setUrlInput]   = useState(value);
@@ -95,7 +99,7 @@ export function OgImageUploader({ value, onChange, directLinkId }: OgImageUpload
       }
 
       const prepared = await prepareOgFile(file);
-      const path = `${user.id}/og-${directLinkId}-${Date.now()}.jpg`;
+      const path = `${user.id}/og-${storageId}-${Date.now()}.jpg`;
       const { error: uploadErr } = await supabase.storage
         .from("form-images")
         .upload(path, prepared, { upsert: true, contentType: "image/jpeg" });
@@ -116,7 +120,7 @@ export function OgImageUploader({ value, onChange, directLinkId }: OgImageUpload
     } finally {
       setUploading(false);
     }
-  }, [directLinkId, onChange]);
+  }, [storageId, onChange]);
 
   // ── Drag & Drop ──────────────────────────────────────────────────────────
   const handleDrop = useCallback((e: React.DragEvent) => {

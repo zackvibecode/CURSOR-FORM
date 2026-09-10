@@ -36,11 +36,11 @@ function getFirstName(userName?: string | null) {
   return name.split(/\s+/)[0] ?? "there";
 }
 
-async function copyFormLink(slug: string) {
-  const url = getFormPublicUrl(slug);
+async function copyFormLink(slug: string, updatedAt?: string) {
+  const url = `${getFormPublicUrl(slug)}?og=${Date.parse(updatedAt ?? "") || Date.now()}`;
   try {
     await navigator.clipboard.writeText(url);
-    toast("Link copied", "success");
+    toast("Link copied — paste as a new WhatsApp message for image preview", "success");
   } catch {
     const textarea = document.createElement("textarea");
     textarea.value = url;
@@ -52,17 +52,17 @@ async function copyFormLink(slug: string) {
   }
 }
 
-async function shareFormLink(title: string, slug: string) {
-  const url = getFormPublicUrl(slug);
-  if (typeof navigator.share === "function") {
+async function shareFormLink(title: string, slug: string, updatedAt?: string) {
+  const url = `${getFormPublicUrl(slug)}?og=${Date.parse(updatedAt ?? "") || Date.now()}`;
+  if (typeof navigator !== "undefined" && typeof navigator.share === "function") {
     try {
       await navigator.share({ title, url });
       return;
     } catch {
-      // User cancelled or share failed — fall back to copy.
+      // fall through to copy
     }
   }
-  await copyFormLink(slug);
+  await copyFormLink(slug, updatedAt);
 }
 
 export function FormList({ forms: initialForms, userName }: FormListProps) {
@@ -366,8 +366,8 @@ export function FormList({ forms: initialForms, userName }: FormListProps) {
                 responseCount={responseCount}
                 duplicating={duplicatingId === form.id}
                 onPin={() => togglePin(form.id)}
-                onCopy={() => void copyFormLink(form.slug)}
-                onShare={() => void shareFormLink(form.title, form.slug)}
+                onCopy={() => void copyFormLink(form.slug, form.updated_at)}
+                onShare={() => void shareFormLink(form.title, form.slug, form.updated_at)}
                 onDuplicate={() => void handleDuplicate(form.id)}
                 onDelete={() => openDeleteModal(form)}
                 onMarkSeen={() => markFormSubmissionsSeen(form.id, responseCount)}

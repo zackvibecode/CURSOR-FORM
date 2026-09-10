@@ -15,6 +15,8 @@ interface DirectLinkEditorProps {
   directMessage: string;
   onDirectMessageChange: (value: string) => void;
   slug: string;
+  /** Optional WhatsApp share URL with cache-bust query */
+  shareUrl?: string;
 }
 
 export function DirectLinkEditor({
@@ -23,12 +25,13 @@ export function DirectLinkEditor({
   directMessage,
   onDirectMessageChange,
   slug,
+  shareUrl,
 }: DirectLinkEditorProps) {
   const [copiedWa, setCopiedWa] = useState(false);
   const [copiedPublic, setCopiedPublic] = useState(false);
 
   const waLink = buildDirectWhatsAppUrl(whatsappNumber, directMessage, "app");
-  const publicUrl = getFormPublicUrl(slug);
+  const publicUrl = shareUrl || getFormPublicUrl(slug);
 
   async function copyText(text: string, setter: (v: boolean) => void) {
     if (!text) return;
