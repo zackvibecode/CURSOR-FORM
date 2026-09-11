@@ -4,7 +4,7 @@ import { useState, useCallback } from "react";
 import Link from "next/link";
 import {
   ArrowLeft, Eye, Save, Globe, Settings, Users, Search, Puzzle,
-  Copy, Check, ExternalLink, AlertTriangle,
+  Copy, Check, ExternalLink, AlertTriangle, BarChart3,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
@@ -13,6 +13,7 @@ import { Textarea } from "@/components/ui/Textarea";
 import { toast } from "@/components/ui/Toast";
 import { cn, slugify } from "@/lib/utils";
 import { DirectLinkTeamSettings } from "./DirectLinkTeamSettings";
+import { DirectLinkReports } from "./DirectLinkReports";
 import { OgImageUploader } from "./OgImageUploader";
 import type { DirectLink } from "@/lib/database.types";
 
@@ -26,11 +27,12 @@ function getPublicUrl(slug: string) {
   return `${APP_URL}/d/${slug}`;
 }
 
-type Tab = "general" | "team" | "seo" | "integrations";
+type Tab = "general" | "team" | "reports" | "seo" | "integrations";
 
 const settingsNav: { key: Tab; label: string; icon: typeof Settings }[] = [
   { key: "general",      label: "General",      icon: Settings },
   { key: "team",         label: "Team",         icon: Users },
+  { key: "reports",      label: "Reports",      icon: BarChart3 },
   { key: "seo",          label: "SEO",          icon: Search },
   { key: "integrations", label: "Integrations", icon: Puzzle },
 ];
@@ -358,6 +360,11 @@ export function DirectLinkFullEditor({ directLink: initialData }: DirectLinkFull
             {/* ── TEAM ──────────────────────────────────────────────────────── */}
             {tab === "team" && (
               <DirectLinkTeamSettings directLinkId={initialData.id} />
+            )}
+
+            {/* ── REPORTS ───────────────────────────────────────────────────── */}
+            {tab === "reports" && (
+              <DirectLinkReports directLinkId={initialData.id} />
             )}
 
             {/* ── SEO ───────────────────────────────────────────────────────── */}
