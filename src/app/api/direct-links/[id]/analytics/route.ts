@@ -47,17 +47,35 @@ export async function GET(request: Request, { params }: Params) {
   const bots = rows.filter((c) => c.is_bot).length;
   const failed = rows.filter((c) => !c.is_bot && c.redirect_status !== "ok").length;
 
-  // Per team sales member
+  // Per team sales member — group by phone (stable), not member UUID.
+  // Re-saving the team creates new member rows, so old clicks keep old IDs
+  // and would otherwise show as duplicate names.
   const byMemberMap = new Map<
     string,
     { member_id: string | null; name: string; phone: string | null; clicks: number }
   >();
 
+  const memberKey = (c: {
+    assigned_member_id: string | null;
+    assigned_name: string | null;
+    assigned_phone: string | null;
+  }) => {
+    const phone = (c.assigned_phone || "").replace(/\D/g, "");
+    if (phone) return `phone:${phone}`;
+    const name = (c.assigned_name || "").trim().toLowerCase();
+    if (name) return `name:${name}`;
+    return "unassigned";
+  };
+
   for (const c of real) {
-    const key = c.assigned_member_id || c.assigned_name || "unassigned";
+    const key = memberKey(c);
     const existing = byMemberMap.get(key);
     if (existing) {
       existing.clicks += 1;
+      // Prefer non-empty latest name/phone/id
+      if (c.assigned_name?.trim()) existing.name = c.assigned_name.trim();
+      if (c.assigned_phone) existing.phone = c.assigned_phone;
+      if (c.assigned_member_id) existing.member_id = c.assigned_member_id;
     } else {
       byMemberMap.set(key, {
         member_id: c.assigned_member_id,

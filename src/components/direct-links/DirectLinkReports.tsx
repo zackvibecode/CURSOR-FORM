@@ -239,7 +239,7 @@ export function DirectLinkReports({ directLinkId }: { directLinkId: string }) {
             ) : (
               <div className="space-y-3">
                 {data.by_member.map((m) => (
-                  <div key={m.member_id || m.name} className="space-y-1.5">
+                  <div key={`${m.phone || m.name}-${m.member_id || ""}`} className="space-y-1.5">
                     <div className="flex items-center justify-between gap-3 text-sm">
                       <div className="min-w-0">
                         <p className="truncate font-medium text-fg">{m.name}</p>
