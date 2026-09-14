@@ -1,15 +1,41 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { StatCard } from "@/components/ui/StatCard";
+import { fetchAllRows } from "@/lib/supabase/paginate";
 import { SubmissionsTable } from "@/components/dashboard/SubmissionsTable";
 import { CreateFormButton } from "@/components/dashboard/DashboardHeader";
-import { computeDashboardStats, mapSubmissionsToRows } from "@/lib/dashboard-stats";
+import { OverviewKpiCard } from "@/components/dashboard/OverviewKpiCard";
+import { OverviewCharts } from "@/components/dashboard/OverviewCharts";
+import { OverviewRangeSelect } from "@/components/dashboard/OverviewRange";
+import { OverviewTopList, type OverviewTopItem } from "@/components/dashboard/OverviewTopList";
+import { extractCustomers, mapSubmissionsToRows } from "@/lib/dashboard-stats";
+import type { SubmissionRow } from "@/components/dashboard/SubmissionsTable";
 import { getPlanLimits } from "@/lib/plan-limits";
-import { FileText, Inbox, Crown, ArrowRight } from "lucide-react";
+import {
+  buildSeries,
+  countBy,
+  isRealClick,
+  parseOverviewRange,
+  percentChange,
+  previousRangeStart,
+  rangeStart,
+  topItems,
+} from "@/lib/overview-stats";
+import { FileText, Inbox, Link2, MousePointerClick, Users } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
-export default async function DashboardOverviewPage() {
+interface RawClick {
+  direct_link_id: string;
+  clicked_at: string;
+  is_bot: boolean;
+  redirect_status: string;
+}
+
+export default async function DashboardOverviewPage({
+  searchParams,
+}: {
+  searchParams?: { range?: string | string[] };
+}) {
   const supabase = await createClient();
 
   const {
@@ -18,139 +44,294 @@ export default async function DashboardOverviewPage() {
 
   if (!user) return null;
 
+  const days = parseOverviewRange(searchParams?.range);
   const now = new Date();
-  const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+  const since = rangeStart(days, now);
+  const prevSince = previousRangeStart(days, now);
+  const sinceIso = since.toISOString();
+  const prevSinceIso = prevSince.toISOString();
+  const firstDayOfMonth = new Date(
+    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1)
+  ).toISOString();
 
-  const { data: forms } = await supabase
-    .from("forms")
-    .select("id, title")
-    .eq("user_id", user.id);
+  // ── Round 1: workspace-wide collections ─────────────────────────────────
+  const [formsResult, linksResult, subResult] = await Promise.all([
+    supabase
+      .from("forms")
+      .select("id, title, slug, created_at")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: true }),
+    supabase
+      .from("direct_links")
+      .select("id, name, slug, total_clicks, created_at")
+      .eq("user_id", user.id),
+    supabase.from("subscriptions").select("*").eq("user_id", user.id).maybeSingle(),
+  ]);
 
-  const formIds = (forms ?? []).map((f) => f.id);
-  const formIdFilter = formIds.length > 0 ? formIds : ["none"];
+  const forms = (formsResult.data ?? []) as {
+    id: string;
+    title: string;
+    slug: string;
+    created_at: string;
+  }[];
+  const links = (linksResult.data ?? []) as {
+    id: string;
+    name: string;
+    slug: string;
+    total_clicks: number;
+    created_at: string;
+  }[];
+  const subscription = subResult.data as { plan?: string; status?: string } | null;
 
-  let submissions: ReturnType<typeof mapSubmissionsToRows> = [];
-  let subscription: { plan?: string; status?: string } | null = null;
-  let monthSubmissions = 0;
+  const formIds = forms.map((f) => f.id);
+  const linkIds = links.map((l) => l.id);
+  const allFormIds = formIds.length > 0 ? formIds : ["none"];
+  const allLinkIds = linkIds.length > 0 ? linkIds : ["none"];
 
-  if (formIds.length > 0) {
-    const [submissionsResult, fieldsResult, subResult, monthResult] = await Promise.all([
+  // ── Round 2: scoped fields + windowed rows + exact period counts ────────
+  const [
+    fieldsResult,
+    windowSubs,
+    windowClicks,
+    allTimeSubsResult,
+    prevSubsCountResult,
+    currentSubsCountResult,
+    currentClicksCountResult,
+    prevClicksCountResult,
+    monthResult,
+  ] = await Promise.all([
+    supabase
+      .from("form_fields")
+      .select("id, label, type, form_id")
+      .in("form_id", allFormIds),
+    fetchAllRows<any>((from, to) =>
       supabase
         .from("submissions")
-        .select("*, forms(title)")
-        .in("form_id", formIds)
+        .select("id, form_id, data, submitted_at, forms(title)")
+        .in("form_id", allFormIds)
+        .gte("submitted_at", prevSinceIso)
         .order("submitted_at", { ascending: false })
-        .limit(50),
+        .range(from, to)
+    ),
+    fetchAllRows<RawClick>((from, to) =>
       supabase
-        .from("form_fields")
-        .select("id, label, type, form_id")
-        .in("form_id", formIds),
-      supabase.from("subscriptions").select("*").eq("user_id", user.id).single(),
-      supabase
-        .from("submissions")
-        .select("*", { count: "exact", head: true })
-        .in("form_id", formIdFilter)
-        .gte("submitted_at", firstDayOfMonth),
-    ]);
+        .from("direct_link_clicks")
+        .select("direct_link_id, clicked_at, is_bot, redirect_status")
+        .in("direct_link_id", allLinkIds)
+        .gte("clicked_at", prevSinceIso)
+        .order("clicked_at", { ascending: false })
+        .range(from, to)
+    ),
+    supabase
+      .from("submissions")
+      .select("*", { count: "exact", head: true })
+      .in("form_id", allFormIds),
+    supabase
+      .from("submissions")
+      .select("*", { count: "exact", head: true })
+      .in("form_id", allFormIds)
+      .gte("submitted_at", prevSinceIso)
+      .lt("submitted_at", sinceIso),
+    supabase
+      .from("submissions")
+      .select("*", { count: "exact", head: true })
+      .in("form_id", allFormIds)
+      .gte("submitted_at", sinceIso),
+    supabase
+      .from("direct_link_clicks")
+      .select("*", { count: "exact", head: true })
+      .in("direct_link_id", allLinkIds)
+      .gte("clicked_at", sinceIso)
+      .eq("is_bot", false)
+      .eq("redirect_status", "ok"),
+    supabase
+      .from("direct_link_clicks")
+      .select("*", { count: "exact", head: true })
+      .in("direct_link_id", allLinkIds)
+      .gte("clicked_at", prevSinceIso)
+      .lt("clicked_at", sinceIso)
+      .eq("is_bot", false)
+      .eq("redirect_status", "ok"),
+    supabase
+      .from("submissions")
+      .select("*", { count: "exact", head: true })
+      .in("form_id", allFormIds)
+      .gte("submitted_at", firstDayOfMonth),
+  ]);
 
-    submissions = mapSubmissionsToRows(
-      submissionsResult.data ?? [],
-      forms ?? [],
-      fieldsResult.data ?? []
-    );
-    subscription = subResult.data;
-    monthSubmissions = monthResult.count ?? 0;
-  } else {
-    const [subResult, monthResult] = await Promise.all([
-      supabase.from("subscriptions").select("*").eq("user_id", user.id).single(),
-      supabase
-        .from("submissions")
-        .select("*", { count: "exact", head: true })
-        .in("form_id", formIdFilter)
-        .gte("submitted_at", firstDayOfMonth),
-    ]);
-    subscription = subResult.data;
-    monthSubmissions = monthResult.count ?? 0;
-  }
+  const fields = (fieldsResult.data ?? []) as {
+    id: string;
+    label: string;
+    type: string;
+    form_id: string;
+  }[];
+  const totalSubmissions = allTimeSubsResult.count ?? 0;
+  const currentSubmissions = currentSubsCountResult.count ?? 0;
+  const previousSubmissions = prevSubsCountResult.count ?? 0;
+  const currentClickCount = currentClicksCountResult.count ?? 0;
+  const previousClickCount = prevClicksCountResult.count ?? 0;
 
-  const stats = computeDashboardStats(
-    forms ?? [],
-    submissions.map((s) => ({
-      id: s.id,
-      form_id: "",
-      data: {},
-      submitted_at: s.date,
-      ip_hash: null,
-    }))
+  const currentSubs = windowSubs.filter((s) => s.submitted_at >= sinceIso);
+  const currentClicks = windowClicks.filter(
+    (c) => c.clicked_at >= sinceIso && isRealClick(c)
   );
+
+  // ── Derived metrics ─────────────────────────────────────────────────────
+  const mapped = mapSubmissionsToRows(windowSubs as never, forms, fields);
+  const isCurrent = (row: SubmissionRow) => new Date(row.date) >= since;
+
+  // Rows without a resolvable name/phone both collapse to "—"; exclude them so
+  // they don't merge into a single fake "customer".
+  const resolved = mapped.filter((row) => row.name !== "—" || row.phone !== "—");
+
+  const latestSubmissions = mapped.slice(0, 5);
+  const currentCustomers = extractCustomers(resolved.filter(isCurrent)).length;
+  const previousCustomers = extractCustomers(resolved.filter((r) => !isCurrent(r))).length;
+
+  const submissionsSeries = buildSeries(
+    currentSubs.map((s) => s.submitted_at),
+    days,
+    now
+  );
+  const clicksSeries = buildSeries(
+    currentClicks.map((c) => c.clicked_at),
+    days,
+    now
+  );
+
+  const formsCreatedNow = forms.filter((f) => f.created_at >= sinceIso).length;
+  const formsCreatedPrev = forms.filter(
+    (f) => f.created_at >= prevSinceIso && f.created_at < sinceIso
+  ).length;
+
+  // ── Top lists (current period) ──────────────────────────────────────────
+  const formTitles = new Map(forms.map((f) => [f.id, f]));
+  const formCounts = countBy(currentSubs, (s) => s.form_id);
+  const totalSubsInPeriod = currentSubs.length;
+  const topForms: OverviewTopItem[] = topItems(formCounts, 5).map(({ key, count }) => {
+    const form = formTitles.get(key);
+    return {
+      id: key,
+      label: form?.title ?? "Untitled form",
+      count,
+      percent: totalSubsInPeriod > 0 ? Math.round((count / totalSubsInPeriod) * 100) : 0,
+      href: `/dashboard/forms/${key}/edit`,
+    };
+  });
+
+  const linkMap = new Map(links.map((l) => [l.id, l]));
+  const linkCounts = countBy(currentClicks, (c) => c.direct_link_id);
+  const totalClicksInPeriod = currentClicks.length;
+  const topLinks: OverviewTopItem[] = topItems(linkCounts, 5).map(({ key, count }) => {
+    const link = linkMap.get(key);
+    return {
+      id: key,
+      label: link?.name ?? "Direct link",
+      count,
+      percent: totalClicksInPeriod > 0 ? Math.round((count / totalClicksInPeriod) * 100) : 0,
+      href: `/dashboard/direct-links/${key}/edit`,
+    };
+  });
+
+  const totalLinkClicks = links.reduce((sum, l) => sum + (l.total_clicks ?? 0), 0);
 
   const plan = subscription?.plan ?? "free";
   const limits = getPlanLimits(plan);
-  const formsCount = (forms ?? []).length;
-  const status = subscription?.status ?? "active";
-  const submissionsThisMonth = monthSubmissions;
+  const submissionsThisMonth = monthResult.count ?? 0;
+  const isFree = plan === "free";
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <p className="text-xs text-muted-fg">Welcome back</p>
-          <h2 className="text-lg font-semibold text-fg">Overview</h2>
-        </div>
-        <CreateFormButton />
-      </div>
-
-      {status === "pending" && (
-        <div className="flex items-center gap-2 rounded-md border border-amber-500/30 bg-amber-500/5 px-4 py-2.5">
-          <Crown className="h-3.5 w-3.5 text-amber-600 dark:text-amber-400" />
-          <p className="text-sm text-amber-800 dark:text-amber-200">
-            Your <span className="font-semibold">{plan}</span> plan is pending approval.
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div className="min-w-0">
+          <p className="text-xs text-muted-fg">Welcome back,</p>
+          <h2 className="text-xl font-semibold text-fg">Here&apos;s what&apos;s happening</h2>
+          <p className="mt-1 text-sm text-muted-fg">
+            Real-time insights from your forms and direct links
           </p>
+          {isFree && (
+            <p className="mt-1 font-mono text-[11px] text-muted-fg">
+              Free plan · {forms.length}/
+              {limits.maxForms === Infinity ? "∞" : limits.maxForms} forms ·{" "}
+              {submissionsThisMonth}/
+              {limits.maxSubmissionsPerMonth === Infinity
+                ? "∞"
+                : limits.maxSubmissionsPerMonth}{" "}
+              submissions this month ·{" "}
+              <Link
+                href="/pricing"
+                className="font-medium text-whatsapp-deep hover:text-whatsapp dark:text-whatsapp"
+              >
+                Upgrade
+              </Link>
+            </p>
+          )}
         </div>
-      )}
-
-      {plan === "free" && (
-        <div className="flex flex-col gap-3 rounded-md border border-border bg-card px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-center gap-2.5">
-            <span className="h-1.5 w-1.5 rounded-full bg-whatsapp" />
-            <div>
-              <p className="text-sm font-medium text-fg">Free plan</p>
-              <p className="font-mono text-[11px] text-muted-fg">
-                {formsCount}/{limits.maxForms === Infinity ? "∞" : limits.maxForms} forms ·{" "}
-                {submissionsThisMonth}/
-                {limits.maxSubmissionsPerMonth === Infinity
-                  ? "∞"
-                  : limits.maxSubmissionsPerMonth}{" "}
-                submissions this month
-              </p>
-            </div>
-          </div>
-          <Link
-            href="/pricing"
-            className="inline-flex shrink-0 items-center gap-1.5 rounded-md bg-fg px-3 py-1.5 text-xs font-medium text-bg transition-colors hover:bg-gray-600 dark:hover:bg-gray-200"
-          >
-            Upgrade to Pro
-            <ArrowRight className="h-3.5 w-3.5" />
-          </Link>
+        <div className="flex shrink-0 items-center gap-2">
+          <CreateFormButton />
+          <OverviewRangeSelect value={days} />
         </div>
-      )}
+      </div>
 
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard title="Total Forms" value={stats.totalForms} icon={FileText} />
-        <StatCard title="Total Submissions" value={stats.totalSubmissions} icon={Inbox} />
+        <OverviewKpiCard
+          label="Total Forms"
+          value={forms.length}
+          icon={FileText}
+          change={percentChange(formsCreatedNow, formsCreatedPrev)}
+        />
+        <OverviewKpiCard
+          label="Total Submissions"
+          value={totalSubmissions}
+          icon={Inbox}
+          change={percentChange(currentSubmissions, previousSubmissions)}
+        />
+        <OverviewKpiCard
+          label="Total Link Clicks"
+          value={totalLinkClicks}
+          icon={MousePointerClick}
+          change={percentChange(currentClickCount, previousClickCount)}
+        />
+        <OverviewKpiCard
+          label="Unique Customers"
+          value={currentCustomers}
+          icon={Users}
+          change={percentChange(currentCustomers, previousCustomers)}
+        />
       </div>
 
-      <div>
-        <div className="mb-3 flex items-center justify-between">
-          <h3 className="text-sm font-semibold text-fg">Latest Submissions</h3>
-          <Link
-            href="/dashboard/submissions"
-            className="text-xs font-medium text-whatsapp-deep transition-colors hover:text-whatsapp dark:text-whatsapp"
-          >
-            View all →
-          </Link>
+      <OverviewCharts submissions={submissionsSeries} clicks={clicksSeries} />
+
+      <div className="grid gap-4 lg:grid-cols-3">
+        <div className="lg:col-span-2">
+          <div className="mb-3 flex items-center justify-between">
+            <h3 className="text-sm font-semibold text-fg">Latest Submissions</h3>
+            <Link
+              href="/dashboard/submissions"
+              className="text-xs font-medium text-whatsapp-deep transition-colors hover:text-whatsapp dark:text-whatsapp"
+            >
+              View all →
+            </Link>
+          </div>
+          <SubmissionsTable submissions={latestSubmissions} compact />
         </div>
-        <SubmissionsTable submissions={submissions} compact />
+
+        <div className="space-y-4">
+          <OverviewTopList
+            title="Top Forms"
+            icon={FileText}
+            viewAllHref="/dashboard/analytics"
+            items={topForms}
+            emptyLabel="No submissions in this period."
+          />
+          <OverviewTopList
+            title="Top Direct Links"
+            icon={Link2}
+            viewAllHref="/dashboard/direct-links"
+            items={topLinks}
+            emptyLabel="No clicks in this period."
+          />
+        </div>
       </div>
     </div>
   );

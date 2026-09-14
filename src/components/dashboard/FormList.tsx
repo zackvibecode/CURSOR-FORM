@@ -1,16 +1,36 @@
 "use client";
 
 import Link from "next/link";
+import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
 import { Input } from "@/components/ui/Input";
 import { Label } from "@/components/ui/Label";
+import { WhatsAppIcon } from "@/components/ui/WhatsAppIcon";
 import { getFormPublicUrl } from "@/lib/forms";
+import { isDirectLinkForm } from "@/lib/form-settings";
 import { FORM_TEMPLATES } from "@/lib/templates";
 import { CreateFormButton } from "./DashboardHeader";
-import { FormCard, type FormCardData } from "./FormCard";
-import { FileText, Link2, Loader2, Plus, Search } from "lucide-react";
+import { cn, formatDateOnly, formatTime } from "@/lib/utils";
+import {
+  ChevronLeft,
+  ChevronRight,
+  Copy,
+  ExternalLink,
+  FileText,
+  Files,
+  Filter,
+  LayoutTemplate,
+  Link2,
+  Loader2,
+  MoreHorizontal,
+  Pin,
+  Plus,
+  Search,
+  Share2,
+  Trash2,
+} from "lucide-react";
 import { toast } from "@/components/ui/Toast";
 import { setPendingInstant } from "@/lib/instant-pending";
 import {
@@ -18,11 +38,23 @@ import {
   markFormSubmissionsSeen,
   subscribeFormSeenUpdates,
 } from "@/lib/form-seen";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 const MAX_PINNED = 5;
 const PINNED_STORAGE_KEY = "oneform_pinned_forms";
 const DELETE_CONFIRM_TEXT = "DELETE";
+const PAGE_SIZE = 10;
+
+export interface FormCardData {
+  id: string;
+  title: string;
+  slug: string;
+  status: "draft" | "published";
+  updated_at: string;
+  created_at?: string;
+  settings?: unknown;
+  submissions?: { count: number }[];
+}
 
 interface FormListProps {
   forms: FormCardData[];
@@ -65,6 +97,209 @@ async function shareFormLink(title: string, slug: string, updatedAt?: string) {
   await copyFormLink(slug, updatedAt);
 }
 
+function StatusPill({ status }: { status: "draft" | "published" }) {
+  return (
+    <span
+      className={cn(
+        "inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-2 py-0.5 text-[10px] font-medium capitalize",
+        status === "published" ? "text-whatsapp-deep dark:text-whatsapp" : "text-muted-fg"
+      )}
+    >
+      <span
+        className={cn(
+          "h-1.5 w-1.5 rounded-full",
+          status === "published" ? "bg-whatsapp" : "bg-gray-400"
+        )}
+      />
+      {status}
+    </span>
+  );
+}
+
+function HeroIllustration() {
+  return (
+    <div
+      aria-hidden="true"
+      className="relative hidden h-32 w-full max-w-sm shrink-0 items-center justify-center overflow-hidden rounded-xl bg-whatsapp/[0.06] lg:flex"
+    >
+      <div className="absolute -right-6 -top-8 h-24 w-24 rounded-full bg-whatsapp/10 blur-2xl" />
+      <div className="absolute -bottom-10 left-4 h-24 w-24 rounded-full bg-whatsapp/10 blur-2xl" />
+
+      <span className="absolute left-5 top-5 max-w-[8rem] text-base font-semibold italic leading-tight text-whatsapp-deep dark:text-whatsapp">
+        More conversations
+        <br />
+        More customers
+      </span>
+
+      <span className="absolute bottom-5 right-6 max-w-[8rem] text-right text-xs font-medium italic text-muted-fg">
+        &ldquo;Simple forms.
+        <br />
+        Real connections.&rdquo;
+      </span>
+
+      <div className="relative z-10 flex h-14 w-14 items-center justify-center rounded-2xl bg-whatsapp text-white shadow-md">
+        <WhatsAppIcon className="h-7 w-7" />
+      </div>
+    </div>
+  );
+}
+
+function RowActions({
+  form,
+  pinned,
+  duplicating,
+  onCopy,
+  onShare,
+  onDuplicate,
+  onPin,
+  onDelete,
+}: {
+  form: FormCardData;
+  pinned: boolean;
+  duplicating: boolean;
+  onCopy: () => void;
+  onShare: () => void;
+  onDuplicate: () => void;
+  onPin: () => void;
+  onDelete: () => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [pos, setPos] = useState<{ top: number; left: number } | null>(null);
+  const btnRef = useRef<HTMLButtonElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+  const isPublished = form.status === "published";
+
+  useEffect(() => {
+    if (!open) return;
+    const onDown = (event: MouseEvent) => {
+      const target = event.target as Node;
+      if (btnRef.current?.contains(target) || menuRef.current?.contains(target)) return;
+      setOpen(false);
+    };
+    const close = () => setOpen(false);
+    document.addEventListener("mousedown", onDown);
+    window.addEventListener("scroll", close, true);
+    window.addEventListener("resize", close);
+    return () => {
+      document.removeEventListener("mousedown", onDown);
+      window.removeEventListener("scroll", close, true);
+      window.removeEventListener("resize", close);
+    };
+  }, [open]);
+
+  const handleToggle = () => {
+    if (open) {
+      setOpen(false);
+      return;
+    }
+    const rect = btnRef.current?.getBoundingClientRect();
+    if (rect) setPos({ top: rect.bottom + 4, left: Math.max(8, rect.right - 160) });
+    setOpen(true);
+  };
+
+  const itemClass =
+    "flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs text-muted-fg transition-colors hover:bg-muted hover:text-fg disabled:pointer-events-none disabled:opacity-40";
+
+  return (
+    <>
+      <button
+        ref={btnRef}
+        type="button"
+        onClick={handleToggle}
+        className="inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-fg transition-colors hover:bg-muted hover:text-fg"
+        aria-label="Form actions"
+        aria-haspopup="menu"
+        aria-expanded={open}
+      >
+        <MoreHorizontal className="h-4 w-4" />
+      </button>
+
+      {open &&
+        pos &&
+        createPortal(
+          <div
+            ref={menuRef}
+            role="menu"
+            style={{ position: "fixed", top: pos.top, left: pos.left }}
+            className="z-50 w-40 overflow-hidden rounded-md border border-border bg-card py-1 shadow-md"
+          >
+          <Link
+            href={`/dashboard/forms/${form.id}/edit`}
+            className={itemClass}
+            onClick={() => setOpen(false)}
+          >
+            <ExternalLink className="h-3.5 w-3.5" />
+            Open editor
+          </Link>
+          <button
+            type="button"
+            disabled={!isPublished}
+            onClick={() => {
+              setOpen(false);
+              onCopy();
+            }}
+            className={itemClass}
+          >
+            <Copy className="h-3.5 w-3.5" />
+            Copy link
+          </button>
+          <button
+            type="button"
+            disabled={!isPublished}
+            onClick={() => {
+              setOpen(false);
+              onShare();
+            }}
+            className={itemClass}
+          >
+            <Share2 className="h-3.5 w-3.5" />
+            Share
+          </button>
+          <button
+            type="button"
+            disabled={duplicating}
+            onClick={() => {
+              setOpen(false);
+              onDuplicate();
+            }}
+            className={itemClass}
+          >
+            {duplicating ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <Files className="h-3.5 w-3.5" />
+            )}
+            Duplicate
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setOpen(false);
+              onPin();
+            }}
+            className={itemClass}
+          >
+            <Pin className={cn("h-3.5 w-3.5", pinned && "fill-current text-whatsapp-deep")} />
+            {pinned ? "Unpin" : "Pin"}
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setOpen(false);
+              onDelete();
+            }}
+            className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs text-red-500 transition-colors hover:bg-red-500/10"
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+            Delete
+          </button>
+          </div>,
+          document.body
+        )}
+    </>
+  );
+}
+
 export function FormList({ forms: initialForms, userName }: FormListProps) {
   const router = useRouter();
   const [forms, setForms] = useState(initialForms);
@@ -79,9 +314,17 @@ export function FormList({ forms: initialForms, userName }: FormListProps) {
   const [error, setError] = useState("");
   const [pinnedIds, setPinnedIds] = useState<string[]>([]);
   const [query, setQuery] = useState("");
+  const [publishedOnly, setPublishedOnly] = useState(false);
+  const [page, setPage] = useState(1);
   const [seenTick, setSeenTick] = useState(0);
+  const [greeting, setGreeting] = useState("Welcome back");
 
   const firstName = getFirstName(userName);
+
+  useEffect(() => {
+    const hour = new Date().getHours();
+    setGreeting(hour < 12 ? "Good morning," : hour < 18 ? "Good afternoon," : "Good evening,");
+  }, []);
 
   useEffect(() => {
     setForms(initialForms);
@@ -259,12 +502,12 @@ export function FormList({ forms: initialForms, userName }: FormListProps) {
   const isPinned = (id: string) => pinnedIds.includes(id);
 
   const sortedForms = useMemo(() => {
-    const filtered = forms.filter((f) =>
-      query.trim() === ""
-        ? true
-        : f.title.toLowerCase().includes(query.toLowerCase()) ||
-          f.slug.toLowerCase().includes(query.toLowerCase())
-    );
+    const filtered = forms.filter((f) => {
+      if (publishedOnly && f.status !== "published") return false;
+      if (query.trim() === "") return true;
+      const q = query.toLowerCase();
+      return f.title.toLowerCase().includes(q) || f.slug.toLowerCase().includes(q);
+    });
     return [...filtered].sort((a, b) => {
       const ap = pinnedIds.indexOf(a.id);
       const bp = pinnedIds.indexOf(b.id);
@@ -273,117 +516,272 @@ export function FormList({ forms: initialForms, userName }: FormListProps) {
       if (bp !== -1) return 1;
       return 0;
     });
-  }, [forms, pinnedIds, query]);
+  }, [forms, pinnedIds, query, publishedOnly]);
+
+  const lastPage = Math.max(1, Math.ceil(sortedForms.length / PAGE_SIZE));
+
+  useEffect(() => {
+    setPage(1);
+  }, [query, publishedOnly]);
+
+  useEffect(() => {
+    if (page > lastPage) setPage(lastPage);
+  }, [page, lastPage]);
+
+  const pageItems = sortedForms.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   return (
-    <div>
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-fg">
-          Hello {firstName}
-          <span className="ml-1" aria-hidden="true">
-            👋
-          </span>
-        </h1>
-      </div>
-
-      <div className="mb-4 flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-2.5">
-        <Search className="h-4 w-4 shrink-0 text-muted-fg" />
-        <input
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search form"
-          className="flex-1 bg-transparent text-sm text-fg outline-none placeholder:text-muted-fg"
-        />
-        <span className="font-mono text-[11px] text-muted-fg">
-          {sortedForms.length}/{forms.length}
-        </span>
-      </div>
-
-      <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-center">
-        <CreateFormButton
-          onError={setError}
-          className="w-full justify-center sm:w-auto sm:flex-1"
-        >
-          <Plus className="h-4 w-4" />
-          New Form
-        </CreateFormButton>
-        <Button
-          variant="outline"
-          onClick={() => void handleDirectLinkCreate()}
-          disabled={creatingDirectLink}
-          className="w-full justify-center sm:w-auto"
-        >
-          {creatingDirectLink ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : (
-            <Link2 className="h-4 w-4" />
-          )}
-          New Direct Link
-        </Button>
-        <Button
-          variant="outline"
-          onClick={() => setTemplateOpen(true)}
-          className="w-full justify-center sm:w-auto"
-        >
-          From template
-        </Button>
-      </div>
-
-      {error && (
-        <div className="mb-4 rounded-md border border-red-500/30 bg-red-500/5 px-4 py-3 text-sm text-red-600 dark:text-red-400">
-          {error}
-        </div>
-      )}
-
-      {forms.length === 0 ? (
-        <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border bg-card px-6 py-20 text-center">
-          <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-md border border-border text-muted-fg">
-            <FileText className="h-5 w-5" />
+    <div className="space-y-4">
+      {/* Hero */}
+      <section className="rounded-lg border border-border bg-card p-6">
+        <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+          <div className="min-w-0">
+            <p className="text-xs text-muted-fg">{greeting}</p>
+            <h1 className="mt-1 text-3xl font-bold tracking-tight text-fg">
+              Hello {firstName}
+              <span className="ml-1" aria-hidden="true">
+                👋
+              </span>
+            </h1>
+            <p className="mt-2 max-w-md text-sm text-muted-fg">
+              Build forms, create direct links, and connect your audience to WhatsApp — all in one
+              place.
+            </p>
           </div>
-          <h2 className="mb-1 text-sm font-semibold text-fg">No forms yet</h2>
-          <p className="mb-5 max-w-sm text-sm text-muted-fg">
-            Create your first WhatsApp form to start collecting leads.
-          </p>
-          <CreateFormButton onError={setError}>
+          <HeroIllustration />
+        </div>
+
+        <div className="mt-6 flex flex-col gap-2 sm:flex-row">
+          <CreateFormButton onError={setError} className="justify-center sm:flex-1">
             <Plus className="h-4 w-4" />
             New Form
           </CreateFormButton>
+          <Button
+            variant="outline"
+            onClick={() => void handleDirectLinkCreate()}
+            disabled={creatingDirectLink}
+            className="justify-center sm:flex-1"
+          >
+            {creatingDirectLink ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Link2 className="h-4 w-4" />
+            )}
+            New Direct Link
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => setTemplateOpen(true)}
+            className="justify-center sm:flex-1"
+          >
+            <LayoutTemplate className="h-4 w-4" />
+            From Template
+          </Button>
         </div>
-      ) : (
-        <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
-          {sortedForms.map((form) => {
-            const responseCount = form.submissions?.[0]?.count ?? 0;
-            const pinned = isPinned(form.id);
-            void seenTick;
-            const unread = getUnreadSubmissionCount(form.id, responseCount);
+      </section>
 
-            return (
-              <FormCard
-                key={form.id}
-                form={form}
-                pinned={pinned}
-                unread={unread}
-                responseCount={responseCount}
-                duplicating={duplicatingId === form.id}
-                onPin={() => togglePin(form.id)}
-                onCopy={() => void copyFormLink(form.slug, form.updated_at)}
-                onShare={() => void shareFormLink(form.title, form.slug, form.updated_at)}
-                onDuplicate={() => void handleDuplicate(form.id)}
-                onDelete={() => openDeleteModal(form)}
-                onMarkSeen={() => markFormSubmissionsSeen(form.id, responseCount)}
-              />
-            );
-          })}
-
-          {sortedForms.length === 0 && (
-            <div className="col-span-full rounded-xl border border-border bg-card px-4 py-12 text-center text-sm text-muted-fg">
-              No forms match &ldquo;{query}&rdquo;
+      {/* Your Forms */}
+      <section className="overflow-hidden rounded-lg border border-border bg-card">
+        <div className="flex flex-col gap-3 border-b border-border p-5 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-start gap-2.5">
+            <FileText className="mt-0.5 h-4 w-4 shrink-0 text-muted-fg" strokeWidth={2} />
+            <div>
+              <h2 className="text-sm font-semibold text-fg">Your Forms</h2>
+              <p className="text-xs text-muted-fg">
+                Manage your forms and view their performance.
+              </p>
             </div>
-          )}
-        </div>
-      )}
+          </div>
 
-      <Modal open={templateOpen} onClose={() => setTemplateOpen(false)} title="Choose a template" size="lg">
+          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 rounded-md border border-border bg-bg px-2.5 py-1.5">
+              <Search className="h-3.5 w-3.5 shrink-0 text-muted-fg" />
+              <input
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Search forms..."
+                className="w-36 bg-transparent text-xs text-fg outline-none placeholder:text-muted-fg sm:w-44"
+              />
+            </div>
+            <button
+              type="button"
+              onClick={() => setPublishedOnly((v) => !v)}
+              title={publishedOnly ? "Showing published only" : "Show published only"}
+              aria-pressed={publishedOnly}
+              className={cn(
+                "inline-flex h-8 w-8 items-center justify-center rounded-md border border-border bg-bg text-muted-fg transition-colors hover:text-fg",
+                publishedOnly && "border-whatsapp/40 bg-whatsapp/5 text-whatsapp-deep dark:text-whatsapp"
+              )}
+            >
+              <Filter className="h-3.5 w-3.5" />
+            </button>
+          </div>
+        </div>
+
+        {error && (
+          <div className="mx-5 mt-4 rounded-md border border-red-500/30 bg-red-500/5 px-4 py-3 text-sm text-red-600 dark:text-red-400">
+            {error}
+          </div>
+        )}
+
+        {forms.length === 0 ? (
+          <div className="flex flex-col items-center justify-center px-6 py-16 text-center">
+            <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-md border border-border text-muted-fg">
+              <FileText className="h-5 w-5" />
+            </div>
+            <h2 className="mb-1 text-sm font-semibold text-fg">No forms yet</h2>
+            <p className="mb-5 max-w-sm text-sm text-muted-fg">
+              Create your first WhatsApp form to start collecting leads.
+            </p>
+            <CreateFormButton onError={setError}>
+              <Plus className="h-4 w-4" />
+              New Form
+            </CreateFormButton>
+          </div>
+        ) : (
+          <>
+            <div className="overflow-x-auto scrollbar-thin">
+              <table className="w-full min-w-[720px] text-left text-sm">
+                <thead>
+                  <tr className="border-b border-border bg-muted/40">
+                    {["Name", "URL", "Status", "Submissions", "Updated", ""].map((col, i) => (
+                      <th
+                        key={`${col}-${i}`}
+                        className={cn(
+                          "whitespace-nowrap px-5 py-2.5 text-[11px] font-semibold uppercase tracking-wider text-muted-fg",
+                          i === 5 && "text-right"
+                        )}
+                      >
+                        {col}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {pageItems.map((form) => {
+                    const responseCount = form.submissions?.[0]?.count ?? 0;
+                    const pinned = isPinned(form.id);
+                    void seenTick;
+                    const unread = getUnreadSubmissionCount(form.id, responseCount);
+                    const isDirect = isDirectLinkForm(form);
+                    const displayUrl = getFormPublicUrl(form.slug).replace(/^https?:\/\//, "");
+
+                    return (
+                      <tr
+                        key={form.id}
+                        className={cn(
+                          "border-b border-border/60 transition-colors last:border-0 hover:bg-muted/30",
+                          pinned && "bg-whatsapp/[0.03]"
+                        )}
+                      >
+                        <td className="px-5 py-3">
+                          <div className="flex items-center gap-2.5">
+                            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-whatsapp/10 text-whatsapp-deep dark:text-whatsapp">
+                              {isDirect ? (
+                                <Link2 className="h-4 w-4" />
+                              ) : (
+                                <FileText className="h-4 w-4" />
+                              )}
+                            </span>
+                            <Link
+                              href={`/dashboard/forms/${form.id}/edit`}
+                              className="max-w-[16rem] truncate text-xs font-semibold uppercase tracking-wide text-fg transition-colors hover:text-whatsapp-deep dark:hover:text-whatsapp"
+                            >
+                              {form.title}
+                            </Link>
+                            {unread > 0 && (
+                              <Link
+                                href="/dashboard/submissions"
+                                onClick={() => markFormSubmissionsSeen(form.id, responseCount)}
+                                title={`${unread} new submission${unread === 1 ? "" : "s"}`}
+                                className="flex h-5 min-w-5 items-center justify-center rounded-full bg-whatsapp px-1.5 text-[10px] font-bold leading-none text-white"
+                              >
+                                {unread > 99 ? "99+" : unread}
+                              </Link>
+                            )}
+                          </div>
+                        </td>
+                        <td className="px-5 py-3 font-mono text-xs text-muted-fg">
+                          <span className="block max-w-[16rem] truncate">{displayUrl}</span>
+                        </td>
+                        <td className="px-5 py-3">
+                          <StatusPill status={form.status} />
+                        </td>
+                        <td className="px-5 py-3 font-mono text-xs tabular-nums text-fg">
+                          {responseCount}
+                        </td>
+                        <td className="whitespace-nowrap px-5 py-3 text-xs text-muted-fg">
+                          <span className="block">{formatDateOnly(form.updated_at)}</span>
+                          <span className="block text-muted-fg/80">
+                            {formatTime(form.updated_at)}
+                          </span>
+                        </td>
+                        <td className="px-5 py-3 text-right">
+                          <RowActions
+                            form={form}
+                            pinned={pinned}
+                            duplicating={duplicatingId === form.id}
+                            onCopy={() => void copyFormLink(form.slug, form.updated_at)}
+                            onShare={() =>
+                              void shareFormLink(form.title, form.slug, form.updated_at)
+                            }
+                            onDuplicate={() => void handleDuplicate(form.id)}
+                            onPin={() => togglePin(form.id)}
+                            onDelete={() => openDeleteModal(form)}
+                          />
+                        </td>
+                      </tr>
+                    );
+                  })}
+
+                  {pageItems.length === 0 && (
+                    <tr>
+                      <td colSpan={6} className="px-5 py-12 text-center text-sm text-muted-fg">
+                        {query
+                          ? `No forms match “${query}”`
+                          : "No published forms yet."}
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="flex items-center justify-between border-t border-border px-5 py-3">
+              <p className="text-xs text-muted-fg">
+                Showing {pageItems.length} of {sortedForms.length} forms
+              </p>
+              <div className="flex items-center gap-1">
+                <button
+                  type="button"
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  disabled={page <= 1}
+                  className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-border text-muted-fg transition-colors hover:bg-muted hover:text-fg disabled:pointer-events-none disabled:opacity-40"
+                  aria-label="Previous page"
+                >
+                  <ChevronLeft className="h-3.5 w-3.5" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPage((p) => Math.min(lastPage, p + 1))}
+                  disabled={page >= lastPage}
+                  className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-border text-muted-fg transition-colors hover:bg-muted hover:text-fg disabled:pointer-events-none disabled:opacity-40"
+                  aria-label="Next page"
+                >
+                  <ChevronRight className="h-3.5 w-3.5" />
+                </button>
+              </div>
+            </div>
+          </>
+        )}
+      </section>
+
+      <Modal
+        open={templateOpen}
+        onClose={() => setTemplateOpen(false)}
+        title="Choose a template"
+        size="lg"
+      >
         <div className="grid gap-3 sm:grid-cols-2">
           {FORM_TEMPLATES.map((template) => (
             <button

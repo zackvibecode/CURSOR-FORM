@@ -1,7 +1,22 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { fetchAllRows } from "@/lib/supabase/paginate";
+import { buildSeries, isRealClick } from "@/lib/overview-stats";
 
 type Params = { params: { id: string } };
+
+interface ClickRow {
+  id: string;
+  assigned_member_id: string | null;
+  assigned_name: string | null;
+  assigned_phone: string | null;
+  redirect_status: string;
+  is_bot: boolean;
+  utm_source: string | null;
+  utm_campaign: string | null;
+  referrer: string | null;
+  clicked_at: string;
+}
 
 /**
  * GET /api/direct-links/[id]/analytics?days=30
@@ -30,22 +45,42 @@ export async function GET(request: Request, { params }: Params) {
   since.setDate(since.getDate() - (days - 1));
   since.setHours(0, 0, 0, 0);
 
-  const { data: clicks, error } = await supabase
-    .from("direct_link_clicks")
-    .select(
-      "id, assigned_member_id, assigned_name, assigned_phone, redirect_status, is_bot, utm_source, utm_campaign, referrer, clicked_at"
-    )
-    .eq("direct_link_id", id)
-    .gte("clicked_at", since.toISOString())
-    .order("clicked_at", { ascending: false })
-    .limit(2000);
+  // Paginated: `.limit(2000)` would be silently capped at PostgREST's 1000-row
+  // max, so the per-member breakdown and period total stayed stuck at the newest
+  // 1000 clicks. Walk pages instead so every click in the range is counted.
+  let rows: ClickRow[];
+  try {
+    rows = await fetchAllRows<ClickRow>((from, to) =>
+      supabase
+        .from("direct_link_clicks")
+        .select(
+          "id, assigned_member_id, assigned_name, assigned_phone, redirect_status, is_bot, utm_source, utm_campaign, referrer, clicked_at"
+        )
+        .eq("direct_link_id", id)
+        .gte("clicked_at", since.toISOString())
+        .order("clicked_at", { ascending: false })
+        .range(from, to)
+    );
+  } catch (err) {
+    return NextResponse.json(
+      { error: err instanceof Error ? err.message : "Failed to load clicks" },
+      { status: 500 }
+    );
+  }
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-
-  const rows = clicks ?? [];
-  const real = rows.filter((c) => !c.is_bot && c.redirect_status === "ok");
+  const real = rows.filter(isRealClick);
   const bots = rows.filter((c) => c.is_bot).length;
   const failed = rows.filter((c) => !c.is_bot && c.redirect_status !== "ok").length;
+
+  // Exact all-time count of real redirects. The denormalised `total_clicks`
+  // counter can drift from the click rows, which made the "All-time clicks"
+  // card disagree with the per-member breakdown below it.
+  const { count: allTimeReal } = await supabase
+    .from("direct_link_clicks")
+    .select("*", { count: "exact", head: true })
+    .eq("direct_link_id", id)
+    .eq("is_bot", false)
+    .eq("redirect_status", "ok");
 
   // Per team sales member — group by phone (stable), not member UUID.
   // Re-saving the team creates new member rows, so old clicks keep old IDs
@@ -89,19 +124,12 @@ export async function GET(request: Request, { params }: Params) {
   const by_member = Array.from(byMemberMap.values()).sort((a, b) => b.clicks - a.clicks);
   const realTotal = real.length;
 
-  // Daily series (oldest → newest)
-  const dayKeys: string[] = [];
-  for (let i = 0; i < days; i++) {
-    const d = new Date(since);
-    d.setDate(since.getDate() + i);
-    dayKeys.push(d.toISOString().slice(0, 10));
-  }
-  const dayCounts = Object.fromEntries(dayKeys.map((k) => [k, 0]));
-  for (const c of real) {
-    const key = c.clicked_at.slice(0, 10);
-    if (key in dayCounts) dayCounts[key] += 1;
-  }
-  const daily = dayKeys.map((date) => ({ date, clicks: dayCounts[date] }));
+  // Daily series (oldest → newest) — shared UTC bucketing so Overview and
+  // Direct Link Reports always agree on per-day counts.
+  const daily = buildSeries(
+    real.map((c) => c.clicked_at),
+    days
+  ).map((point) => ({ date: point.date, clicks: point.value }));
 
   // Recent clicks (last 50 real)
   const recent = real.slice(0, 50).map((c) => ({
@@ -116,7 +144,7 @@ export async function GET(request: Request, { params }: Params) {
 
   return NextResponse.json({
     summary: {
-      total_clicks: dl.total_clicks ?? 0,
+      total_clicks: allTimeReal ?? dl.total_clicks ?? 0,
       total_redirects: dl.total_redirects ?? 0,
       period_clicks: realTotal,
       period_bots: bots,
