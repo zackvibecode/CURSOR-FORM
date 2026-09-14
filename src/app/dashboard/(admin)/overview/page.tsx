@@ -85,10 +85,13 @@ export default async function DashboardOverviewPage({
 
   const formIds = forms.map((f) => f.id);
   const linkIds = links.map((l) => l.id);
-  const allFormIds = formIds.length > 0 ? formIds : ["none"];
-  const allLinkIds = linkIds.length > 0 ? linkIds : ["none"];
+
+  const emptyCount = { count: 0 as number | null };
+  const emptyFields = { data: [] as { id: string; label: string; type: string; form_id: string }[] | null };
 
   // ── Round 2: scoped fields + windowed rows + exact period counts ────────
+  // Never pass a fake UUID like "none" into `.in()` — PostgREST rejects it and
+  // `fetchAllRows` throws, which crashes the whole dashboard error boundary.
   const [
     fieldsResult,
     windowSubs,
@@ -100,63 +103,87 @@ export default async function DashboardOverviewPage({
     prevClicksCountResult,
     monthResult,
   ] = await Promise.all([
-    supabase
-      .from("form_fields")
-      .select("id, label, type, form_id")
-      .in("form_id", allFormIds),
-    fetchAllRows<any>((from, to) =>
-      supabase
-        .from("submissions")
-        .select("id, form_id, data, submitted_at, forms(title)")
-        .in("form_id", allFormIds)
-        .gte("submitted_at", prevSinceIso)
-        .order("submitted_at", { ascending: false })
-        .range(from, to)
-    ),
-    fetchAllRows<RawClick>((from, to) =>
-      supabase
-        .from("direct_link_clicks")
-        .select("direct_link_id, clicked_at, is_bot, redirect_status")
-        .in("direct_link_id", allLinkIds)
-        .gte("clicked_at", prevSinceIso)
-        .order("clicked_at", { ascending: false })
-        .range(from, to)
-    ),
-    supabase
-      .from("submissions")
-      .select("*", { count: "exact", head: true })
-      .in("form_id", allFormIds),
-    supabase
-      .from("submissions")
-      .select("*", { count: "exact", head: true })
-      .in("form_id", allFormIds)
-      .gte("submitted_at", prevSinceIso)
-      .lt("submitted_at", sinceIso),
-    supabase
-      .from("submissions")
-      .select("*", { count: "exact", head: true })
-      .in("form_id", allFormIds)
-      .gte("submitted_at", sinceIso),
-    supabase
-      .from("direct_link_clicks")
-      .select("*", { count: "exact", head: true })
-      .in("direct_link_id", allLinkIds)
-      .gte("clicked_at", sinceIso)
-      .eq("is_bot", false)
-      .eq("redirect_status", "ok"),
-    supabase
-      .from("direct_link_clicks")
-      .select("*", { count: "exact", head: true })
-      .in("direct_link_id", allLinkIds)
-      .gte("clicked_at", prevSinceIso)
-      .lt("clicked_at", sinceIso)
-      .eq("is_bot", false)
-      .eq("redirect_status", "ok"),
-    supabase
-      .from("submissions")
-      .select("*", { count: "exact", head: true })
-      .in("form_id", allFormIds)
-      .gte("submitted_at", firstDayOfMonth),
+    formIds.length
+      ? supabase
+          .from("form_fields")
+          .select("id, label, type, form_id")
+          .in("form_id", formIds)
+      : Promise.resolve(emptyFields),
+    formIds.length
+      ? fetchAllRows<any>((from, to) =>
+          supabase
+            .from("submissions")
+            .select("id, form_id, data, submitted_at, forms(title)")
+            .in("form_id", formIds)
+            .gte("submitted_at", prevSinceIso)
+            .order("submitted_at", { ascending: false })
+            .range(from, to)
+        ).catch((err) => {
+          console.error("[overview] submissions fetch failed:", err);
+          return [] as any[];
+        })
+      : Promise.resolve([] as any[]),
+    linkIds.length
+      ? fetchAllRows<RawClick>((from, to) =>
+          supabase
+            .from("direct_link_clicks")
+            .select("direct_link_id, clicked_at, is_bot, redirect_status")
+            .in("direct_link_id", linkIds)
+            .gte("clicked_at", prevSinceIso)
+            .order("clicked_at", { ascending: false })
+            .range(from, to)
+        ).catch((err) => {
+          console.error("[overview] clicks fetch failed:", err);
+          return [] as RawClick[];
+        })
+      : Promise.resolve([] as RawClick[]),
+    formIds.length
+      ? supabase
+          .from("submissions")
+          .select("*", { count: "exact", head: true })
+          .in("form_id", formIds)
+      : Promise.resolve(emptyCount),
+    formIds.length
+      ? supabase
+          .from("submissions")
+          .select("*", { count: "exact", head: true })
+          .in("form_id", formIds)
+          .gte("submitted_at", prevSinceIso)
+          .lt("submitted_at", sinceIso)
+      : Promise.resolve(emptyCount),
+    formIds.length
+      ? supabase
+          .from("submissions")
+          .select("*", { count: "exact", head: true })
+          .in("form_id", formIds)
+          .gte("submitted_at", sinceIso)
+      : Promise.resolve(emptyCount),
+    linkIds.length
+      ? supabase
+          .from("direct_link_clicks")
+          .select("*", { count: "exact", head: true })
+          .in("direct_link_id", linkIds)
+          .gte("clicked_at", sinceIso)
+          .eq("is_bot", false)
+          .eq("redirect_status", "ok")
+      : Promise.resolve(emptyCount),
+    linkIds.length
+      ? supabase
+          .from("direct_link_clicks")
+          .select("*", { count: "exact", head: true })
+          .in("direct_link_id", linkIds)
+          .gte("clicked_at", prevSinceIso)
+          .lt("clicked_at", sinceIso)
+          .eq("is_bot", false)
+          .eq("redirect_status", "ok")
+      : Promise.resolve(emptyCount),
+    formIds.length
+      ? supabase
+          .from("submissions")
+          .select("*", { count: "exact", head: true })
+          .in("form_id", formIds)
+          .gte("submitted_at", firstDayOfMonth)
+      : Promise.resolve(emptyCount),
   ]);
 
   const fields = (fieldsResult.data ?? []) as {

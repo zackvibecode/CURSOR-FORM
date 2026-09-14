@@ -67,22 +67,29 @@ function DeltaLabel({ change }: { change: number | null }) {
 function MiniMonthlyChart({ data }: { data: MonthPoint[] }) {
   const W = 320;
   const H = 112;
+  if (!data.length) {
+    return (
+      <div className="mt-4 flex h-28 items-center justify-center text-xs text-muted-fg">
+        No submission trend yet.
+      </div>
+    );
+  }
   const max = Math.max(...data.map((d) => d.value), 1);
-  const last = data[data.length - 1];
+  const last = data[data.length - 1]!;
   const step = data.length > 1 ? W / (data.length - 1) : W;
   const x = (i: number) => i * step;
   const y = (value: number) => H - 6 - (value / max) * (H - 20);
   const line = data
     .map((d, i) => `${i === 0 ? "M" : "L"} ${x(i)} ${y(d.value)}`)
     .join(" ");
-  const area = data.length > 0 ? `${line} L ${x(data.length - 1)} ${H} L 0 ${H} Z` : "";
+  const area = `${line} L ${x(data.length - 1)} ${H} L 0 ${H} Z`;
 
   return (
     <div className="mt-4">
       <div className="relative">
         <span className="absolute right-0 -top-1 z-10 rounded-md bg-fg px-2.5 py-1 text-right text-[10px] leading-tight text-bg shadow-sm">
-          <span className="block font-semibold">{last?.value ?? 0} submissions</span>
-          <span className="block opacity-80">{last ? formatMonthKey(last.key) : ""}</span>
+          <span className="block font-semibold">{last.value} submissions</span>
+          <span className="block opacity-80">{formatMonthKey(last.key)}</span>
         </span>
 
         <svg viewBox={`0 0 ${W} ${H}`} className="w-full" preserveAspectRatio="none" aria-hidden>
@@ -101,16 +108,14 @@ function MiniMonthlyChart({ data }: { data: MonthPoint[] }) {
             strokeLinecap="round"
             strokeLinejoin="round"
           />
-          {data.length > 0 && (
-            <circle
-              cx={x(data.length - 1)}
-              cy={y(last.value)}
-              r="4"
-              fill="#10D050"
-              stroke="var(--card)"
-              strokeWidth="2"
-            />
-          )}
+          <circle
+            cx={x(data.length - 1)}
+            cy={y(last.value)}
+            r="4"
+            fill="#10D050"
+            stroke="var(--card)"
+            strokeWidth="2"
+          />
         </svg>
       </div>
 

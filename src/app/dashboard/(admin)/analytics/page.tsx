@@ -74,12 +74,38 @@ export default async function AnalyticsPage({
     .eq("user_id", user.id);
 
   const linkIds = (links ?? []).map((link) => link.id as string);
-  const ids = linkIds.length > 0 ? linkIds : ["none"];
+
+  // Avoid fake UUID "none" — empty `.in()` list crashes PostgREST / fetchAllRows.
+  if (linkIds.length === 0) {
+    return (
+      <div className="space-y-6">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div className="min-w-0">
+            <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-whatsapp-deep dark:text-whatsapp">
+              Team Analytics
+            </p>
+            <h1 className="mt-1.5 text-2xl font-bold tracking-tight text-fg sm:text-3xl">
+              WhatsApp Distribution by Team Member
+            </h1>
+            <p className="mt-1.5 text-sm text-muted-fg">
+              Who received WhatsApp redirects after weighted distribution.
+            </p>
+          </div>
+          <TeamRangeSelect value={range} label={label} />
+        </div>
+        <div className="rounded-xl border border-dashed border-border bg-card px-6 py-16 text-center">
+          <p className="text-sm text-muted-fg">
+            No Direct Links yet. Create one to see team redirect analytics here.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   const membersQuery = supabase
     .from("direct_link_team_members")
     .select("name, country_code, phone_number, active")
-    .in("direct_link_id", ids);
+    .in("direct_link_id", linkIds);
 
   // Paginated: a plain `.limit(5000)` is capped at PostgREST's 1000-row max,
   // which made the leaderboard lose older redirects as click volume grew.
@@ -91,7 +117,7 @@ export default async function AnalyticsPage({
     let query = supabase
       .from("direct_link_clicks")
       .select("assigned_member_id, assigned_name, assigned_phone")
-      .in("direct_link_id", ids)
+      .in("direct_link_id", linkIds)
       .eq("is_bot", false)
       .eq("redirect_status", "ok")
       .lte("clicked_at", until.toISOString())
@@ -102,6 +128,13 @@ export default async function AnalyticsPage({
       query = query.gte("clicked_at", since.toISOString());
     }
     return query;
+  }).catch((err) => {
+    console.error("[analytics] clicks fetch failed:", err);
+    return [] as {
+      assigned_member_id: string | null;
+      assigned_name: string | null;
+      assigned_phone: string | null;
+    }[];
   });
 
   const [{ data: members }, clicks] = await Promise.all([membersQuery, clicksPromise]);

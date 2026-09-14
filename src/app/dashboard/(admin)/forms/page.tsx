@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { fetchAllRows } from "@/lib/supabase/paginate";
 import { FormList } from "@/components/dashboard/FormList";
@@ -18,51 +19,77 @@ export default async function FormsPage({
     data: { user },
   } = await supabase.auth.getUser();
 
+  if (!user) {
+    redirect("/login?redirect=/dashboard/forms");
+  }
+
   if (params.template) {
     return <CreateFormRedirect templateId={params.template} />;
   }
 
-  const [{ data: forms }, { data: profile }] = await Promise.all([
+  const [{ data: forms, error: formsError }, { data: profile }] = await Promise.all([
     supabase
       .from("forms")
       .select("*, submissions(count)")
-      .eq("user_id", user!.id)
+      .eq("user_id", user.id)
       .order("updated_at", { ascending: false }),
-    supabase.from("profiles").select("name").eq("id", user!.id).maybeSingle(),
+    supabase.from("profiles").select("name").eq("id", user.id).maybeSingle(),
   ]);
+
+  if (formsError) {
+    console.error("[forms page] forms query failed:", formsError.message);
+  }
 
   const formList = forms ?? [];
   const formIds = formList.map((f) => f.id);
-  const userFormIds = formIds.length > 0 ? formIds : ["none"];
 
   const now = new Date();
   const trendSince = new Date(
     Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 5, 1)
   ).toISOString();
 
-  const [linksResult, trendResult] = await Promise.all([
-    supabase
-      .from("direct_links")
-      .select("id, name, slug, status, total_clicks, distribution_mode, created_at")
-      .eq("user_id", user!.id)
-      .order("updated_at", { ascending: false })
-      .limit(2),
-    fetchAllRows<{ submitted_at: string }>((from, to) =>
-      supabase
-        .from("submissions")
-        .select("submitted_at")
-        .in("form_id", userFormIds)
-        .gte("submitted_at", trendSince)
-        .order("submitted_at", { ascending: false })
-        .range(from, to)
-    ),
+  // Soft-fail side queries so a missing direct_links table / empty UUID list
+  // never takes down the whole Forms dashboard.
+  const [directLinks, trendDates] = await Promise.all([
+    (async (): Promise<RailDirectLink[]> => {
+      try {
+        const { data, error } = await supabase
+          .from("direct_links")
+          .select("id, name, slug, status, total_clicks, distribution_mode, created_at")
+          .eq("user_id", user.id)
+          .order("updated_at", { ascending: false })
+          .limit(2);
+        if (error) {
+          console.error("[forms page] direct_links query failed:", error.message);
+          return [];
+        }
+        return (data ?? []) as RailDirectLink[];
+      } catch (err) {
+        console.error("[forms page] direct_links threw:", err);
+        return [];
+      }
+    })(),
+    (async (): Promise<string[]> => {
+      if (formIds.length === 0) return [];
+      try {
+        const rows = await fetchAllRows<{ submitted_at: string }>((from, to) =>
+          supabase
+            .from("submissions")
+            .select("submitted_at")
+            .in("form_id", formIds)
+            .gte("submitted_at", trendSince)
+            .order("submitted_at", { ascending: false })
+            .range(from, to)
+        );
+        return rows.map((s) => s.submitted_at);
+      } catch (err) {
+        console.error("[forms page] submissions trend failed:", err);
+        return [];
+      }
+    })(),
   ]);
 
-  const monthly = buildMonthlySeries(
-    trendResult.map((s) => s.submitted_at),
-    4,
-    now
-  );
+  const monthly = buildMonthlySeries(trendDates, 4, now);
 
   const totalSubmissions = formList.reduce(
     (sum, f) => sum + (f.submissions?.[0]?.count ?? 0),
@@ -86,7 +113,7 @@ export default async function FormsPage({
   ).length;
   const formsChange = percentChange(formsThisMonth, formsLastMonth);
 
-  const userName = profile?.name ?? user?.email ?? null;
+  const userName = profile?.name ?? user.email ?? null;
 
   return (
     <div className="grid gap-4 lg:grid-cols-3">
@@ -100,7 +127,7 @@ export default async function FormsPage({
           formsChange={formsChange}
           submissionsChange={submissionsChange}
           monthly={monthly}
-          directLinks={(linksResult.data ?? []) as RailDirectLink[]}
+          directLinks={directLinks}
         />
       </div>
     </div>
