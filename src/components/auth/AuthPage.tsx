@@ -186,17 +186,21 @@ function AuthForm({ mode }: { mode: "login" | "signup" }) {
     <div className="w-full max-w-md">
       <div className="mb-8 text-center">
         <div className="mb-6 flex flex-col items-center gap-4">
+          {/* Apple-style squircle app icon (~180pt visual, 22% continuous corners) */}
           <div
-            className="relative h-[88px] w-[88px] overflow-hidden rounded-[22%] bg-white shadow-[0_8px_24px_rgba(15,23,42,0.12)] ring-1 ring-black/5"
+            className="relative h-24 w-24 shrink-0"
+            style={{
+              filter: "drop-shadow(0 10px 24px rgba(15, 23, 42, 0.18))",
+            }}
             aria-hidden="true"
           >
-            {/* eslint-disable-next-line @next/next/no-img-element -- static public app icon */}
+            {/* eslint-disable-next-line @next/next/no-img-element -- static squircle app icon */}
             <img
-              src="/apple-touch-icon.png"
+              src="/app-icon.png"
               alt=""
-              width={180}
-              height={180}
-              className="h-full w-full object-cover"
+              width={512}
+              height={512}
+              className="h-full w-full object-contain"
               draggable={false}
             />
           </div>
