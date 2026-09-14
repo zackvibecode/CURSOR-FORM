@@ -36,6 +36,13 @@ export const metadata: Metadata = {
     "OneForm",
     "oneform.app",
   ],
+  applicationName: "OneForm",
+  manifest: "/manifest.webmanifest",
+  appleWebApp: {
+    capable: true,
+    title: "OneForm",
+    statusBarStyle: "default",
+  },
   icons: {
     icon: [
       { url: "/favicon.svg", type: "image/svg+xml" },

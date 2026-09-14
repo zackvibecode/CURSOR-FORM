@@ -1,0 +1,31 @@
+{
+  "name": "OneForm",
+  "short_name": "OneForm",
+  "description": "Smart WhatsApp Form Builder — collect leads and get notified instantly.",
+  "start_url": "/dashboard",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#10D050",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/favicon-icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/favicon-icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}

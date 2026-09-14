@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/Label";
 import { Textarea } from "@/components/ui/Textarea";
 import { Toggle } from "@/components/ui/Toggle";
 import { toast } from "@/components/ui/Toast";
+import { PushNotificationSettings } from "@/components/dashboard/PushNotificationSettings";
 import { Check } from "lucide-react";
 
 interface UserSettings {
@@ -363,6 +364,8 @@ export function SettingsForm({ profileEmail }: { profileEmail: string }) {
               </div>
             )}
           </div>
+
+          <PushNotificationSettings />
         </div>
       </SectionCard>
 

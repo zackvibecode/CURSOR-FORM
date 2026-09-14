@@ -4,6 +4,7 @@ import { buildSubmissionNotificationPayload } from "./format-submission";
 import { sendN8nWebhook } from "./n8n";
 import { sendSubmissionEmail } from "./resend";
 import { sendTelegramNotification } from "./telegram";
+import { sendSubmissionWebPush } from "./web-push";
 import type { DispatchNotificationInput, NotificationOwnerSettings } from "./types";
 
 type SubmissionNotificationJob = Omit<DispatchNotificationInput, "owner"> & {
@@ -109,6 +110,16 @@ export async function dispatchSubmissionNotifications(
     logNotificationError(
       "telegram",
       "enabled but bot token or chat id is missing in Settings"
+    );
+  }
+
+  // Web Push: always attempt for owner's active device subscriptions.
+  // Failures must never block WhatsApp / other channels.
+  if (input.form.user_id) {
+    tasks.push(
+      sendSubmissionWebPush(input.form.user_id, payload).catch((error) => {
+        logNotificationError("web-push", error);
+      })
     );
   }
 
