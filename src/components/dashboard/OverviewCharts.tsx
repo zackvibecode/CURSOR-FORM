@@ -66,7 +66,8 @@ function ChartFrame({
       </div>
       <p className="mb-4 text-xs text-muted-fg">{subtitle}</p>
 
-      <div className="relative">
+      <div className="overflow-x-auto scrollbar-thin">
+        <div className="relative min-w-[560px]">
         {tooltip && (
           <div
             className="pointer-events-none absolute top-0 z-10 -translate-x-1/2 whitespace-nowrap rounded-md bg-fg px-2.5 py-1.5 text-[11px] text-bg shadow-md"
@@ -103,7 +104,7 @@ function ChartFrame({
                   x={PAD.left - 8}
                   y={y + 3}
                   textAnchor="end"
-                  className="fill-current text-[10px] text-muted-fg"
+                  className="fill-current text-[13px] text-muted-fg"
                 >
                   {Math.round(yMax * (1 - ratio))}
                 </text>
@@ -112,6 +113,7 @@ function ChartFrame({
           })}
           {children}
         </svg>
+        </div>
       </div>
 
       <p className="mt-1 text-[11px] text-muted-fg">{hoverLabel}</p>
@@ -174,7 +176,7 @@ function SubmissionsBarChart({ data }: { data: SeriesPoint[] }) {
                 x={PAD.left + i * slot + slot / 2}
                 y={H - 8}
                 textAnchor="middle"
-                className="fill-current text-[10px] text-muted-fg"
+                className="fill-current text-[13px] text-muted-fg"
               >
                 {point.label}
               </text>
@@ -237,7 +239,7 @@ function LinkClicksAreaChart({ data }: { data: SeriesPoint[] }) {
             x={px(i)}
             y={H - 8}
             textAnchor="middle"
-            className="fill-current text-[10px] text-muted-fg"
+            className="fill-current text-[13px] text-muted-fg"
           >
             {p.label}
           </text>

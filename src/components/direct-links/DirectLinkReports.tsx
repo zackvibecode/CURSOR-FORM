@@ -270,39 +270,64 @@ export function DirectLinkReports({ directLinkId }: { directLinkId: string }) {
             {data.recent.length === 0 ? (
               <p className="py-6 text-center text-sm text-muted-fg">No clicks yet.</p>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full min-w-[480px] text-left text-xs">
-                  <thead>
-                    <tr className="border-b border-border text-muted-fg">
-                      <th className="pb-2 pr-3 font-medium">When</th>
-                      <th className="pb-2 pr-3 font-medium">Sales</th>
-                      <th className="pb-2 pr-3 font-medium">UTM / Source</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {data.recent.map((c) => (
-                      <tr key={c.id} className="border-b border-border/60 last:border-0">
-                        <td className="py-2.5 pr-3 tabular-nums text-muted-fg">
+              <>
+                {/* Mobile: card list */}
+                <div className="divide-y divide-border sm:hidden">
+                  {data.recent.map((c) => (
+                    <div key={c.id} className="py-3">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="font-medium text-fg">{c.assigned_name || "—"}</span>
+                        <span className="font-mono text-[11px] tabular-nums text-muted-fg">
                           {formatWhen(c.clicked_at)}
-                        </td>
-                        <td className="py-2.5 pr-3">
-                          <span className="font-medium text-fg">
-                            {c.assigned_name || "—"}
-                          </span>
-                          {c.assigned_phone && (
-                            <span className="ml-1.5 font-mono text-muted-fg">
-                              +{c.assigned_phone}
-                            </span>
-                          )}
-                        </td>
-                        <td className="py-2.5 pr-3 text-muted-fg">
-                          {c.utm_source || c.utm_campaign || c.referrer || "—"}
-                        </td>
+                        </span>
+                      </div>
+                      {c.assigned_phone && (
+                        <p className="mt-0.5 font-mono text-[11px] text-muted-fg">
+                          +{c.assigned_phone}
+                        </p>
+                      )}
+                      <p className="mt-1 truncate text-[11px] text-muted-fg">
+                        {c.utm_source || c.utm_campaign || c.referrer || "—"}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Desktop: table */}
+                <div className="hidden overflow-x-auto sm:block">
+                  <table className="w-full min-w-[480px] text-left text-xs">
+                    <thead>
+                      <tr className="border-b border-border text-muted-fg">
+                        <th className="pb-2 pr-3 font-medium">When</th>
+                        <th className="pb-2 pr-3 font-medium">Sales</th>
+                        <th className="pb-2 pr-3 font-medium">UTM / Source</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                    </thead>
+                    <tbody>
+                      {data.recent.map((c) => (
+                        <tr key={c.id} className="border-b border-border/60 last:border-0">
+                          <td className="py-2.5 pr-3 tabular-nums text-muted-fg">
+                            {formatWhen(c.clicked_at)}
+                          </td>
+                          <td className="py-2.5 pr-3">
+                            <span className="font-medium text-fg">
+                              {c.assigned_name || "—"}
+                            </span>
+                            {c.assigned_phone && (
+                              <span className="ml-1.5 font-mono text-muted-fg">
+                                +{c.assigned_phone}
+                              </span>
+                            )}
+                          </td>
+                          <td className="py-2.5 pr-3 text-muted-fg">
+                            {c.utm_source || c.utm_campaign || c.referrer || "—"}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </>
             )}
           </div>
         </>

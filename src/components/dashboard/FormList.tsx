@@ -530,6 +530,22 @@ export function FormList({ forms: initialForms, userName }: FormListProps) {
 
   const pageItems = sortedForms.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
+  // Read the seen-store so unread badges refresh when it changes.
+  void seenTick;
+
+  const renderFormActions = (form: FormCardData, pinned: boolean) => (
+    <RowActions
+      form={form}
+      pinned={pinned}
+      duplicating={duplicatingId === form.id}
+      onCopy={() => void copyFormLink(form.slug, form.updated_at)}
+      onShare={() => void shareFormLink(form.title, form.slug, form.updated_at)}
+      onDuplicate={() => void handleDuplicate(form.id)}
+      onPin={() => togglePin(form.id)}
+      onDelete={() => openDeleteModal(form)}
+    />
+  );
+
   return (
     <div className="space-y-4">
       {/* Hero */}
@@ -638,9 +654,67 @@ export function FormList({ forms: initialForms, userName }: FormListProps) {
               New Form
             </CreateFormButton>
           </div>
+        ) : pageItems.length === 0 ? (
+          <div className="px-5 py-16 text-center text-sm text-muted-fg">
+            {query ? `No forms match “${query}”` : "No published forms yet."}
+          </div>
         ) : (
           <>
-            <div className="overflow-x-auto scrollbar-thin">
+            {/* Mobile: card list */}
+            <div className="divide-y divide-border md:hidden">
+              {pageItems.map((form) => {
+                const responseCount = form.submissions?.[0]?.count ?? 0;
+                const pinned = isPinned(form.id);
+                const unread = getUnreadSubmissionCount(form.id, responseCount);
+                const isDirect = isDirectLinkForm(form);
+                const displayUrl = getFormPublicUrl(form.slug).replace(/^https?:\/\//, "");
+
+                return (
+                  <div key={form.id} className={cn("p-4", pinned && "bg-whatsapp/[0.03]")}>
+                    <div className="flex items-start gap-3">
+                      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-whatsapp/10 text-whatsapp-deep dark:text-whatsapp">
+                        {isDirect ? <Link2 className="h-4 w-4" /> : <FileText className="h-4 w-4" />}
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-start justify-between gap-2">
+                          <Link
+                            href={`/dashboard/forms/${form.id}/edit`}
+                            className="min-w-0 flex-1 truncate text-sm font-semibold uppercase tracking-wide text-fg"
+                          >
+                            {form.title}
+                          </Link>
+                          {renderFormActions(form, pinned)}
+                        </div>
+                        <p className="mt-1 truncate font-mono text-[11px] text-muted-fg">
+                          {displayUrl}
+                        </p>
+                        <div className="mt-2 flex flex-wrap items-center gap-2">
+                          <StatusPill status={form.status} />
+                          {unread > 0 && (
+                            <Link
+                              href="/dashboard/submissions"
+                              onClick={() => markFormSubmissionsSeen(form.id, responseCount)}
+                              className="flex h-5 min-w-5 items-center justify-center rounded-full bg-whatsapp px-1.5 text-[10px] font-bold leading-none text-white"
+                            >
+                              {unread > 99 ? "99+" : unread}
+                            </Link>
+                          )}
+                          <span className="font-mono text-[11px] tabular-nums text-muted-fg">
+                            {responseCount} submission{responseCount === 1 ? "" : "s"}
+                          </span>
+                          <span className="font-mono text-[11px] text-muted-fg/80">
+                            {formatDateOnly(form.updated_at)}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Desktop: table */}
+            <div className="hidden overflow-x-auto scrollbar-thin md:block">
               <table className="w-full min-w-[720px] text-left text-sm">
                 <thead>
                   <tr className="border-b border-border bg-muted/40">
@@ -661,7 +735,6 @@ export function FormList({ forms: initialForms, userName }: FormListProps) {
                   {pageItems.map((form) => {
                     const responseCount = form.submissions?.[0]?.count ?? 0;
                     const pinned = isPinned(form.id);
-                    void seenTick;
                     const unread = getUnreadSubmissionCount(form.id, responseCount);
                     const isDirect = isDirectLinkForm(form);
                     const displayUrl = getFormPublicUrl(form.slug).replace(/^https?:\/\//, "");
@@ -717,32 +790,11 @@ export function FormList({ forms: initialForms, userName }: FormListProps) {
                           </span>
                         </td>
                         <td className="px-5 py-3 text-right">
-                          <RowActions
-                            form={form}
-                            pinned={pinned}
-                            duplicating={duplicatingId === form.id}
-                            onCopy={() => void copyFormLink(form.slug, form.updated_at)}
-                            onShare={() =>
-                              void shareFormLink(form.title, form.slug, form.updated_at)
-                            }
-                            onDuplicate={() => void handleDuplicate(form.id)}
-                            onPin={() => togglePin(form.id)}
-                            onDelete={() => openDeleteModal(form)}
-                          />
+                          {renderFormActions(form, pinned)}
                         </td>
                       </tr>
                     );
                   })}
-
-                  {pageItems.length === 0 && (
-                    <tr>
-                      <td colSpan={6} className="px-5 py-12 text-center text-sm text-muted-fg">
-                        {query
-                          ? `No forms match “${query}”`
-                          : "No published forms yet."}
-                      </td>
-                    </tr>
-                  )}
                 </tbody>
               </table>
             </div>

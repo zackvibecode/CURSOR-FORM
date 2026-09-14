@@ -267,7 +267,7 @@ export default async function DashboardOverviewPage({
             </p>
           )}
         </div>
-        <div className="flex shrink-0 items-center gap-2">
+        <div className="flex shrink-0 flex-wrap items-center gap-2">
           <CreateFormButton />
           <OverviewRangeSelect value={days} />
         </div>

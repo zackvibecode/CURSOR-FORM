@@ -37,6 +37,8 @@ export function TeamLeaderboard({
 }) {
   const [mode, setMode] = useState<Mode>("count");
   const maxClicks = Math.max(...rows.map((row) => row.clicks), 1);
+  const rowWidth = (row: TeamMemberRow) =>
+    mode === "count" ? (row.clicks / maxClicks) * 100 : row.clicks > 0 ? row.percent : 0;
 
   return (
     <section className="rounded-xl border border-border bg-card p-6">
@@ -53,12 +55,12 @@ export function TeamLeaderboard({
           </div>
         </div>
 
-        <div className="flex shrink-0 rounded-lg border border-border bg-muted p-0.5">
+        <div className="flex w-full shrink-0 rounded-lg border border-border bg-muted p-0.5 sm:w-auto">
           <button
             type="button"
             onClick={() => setMode("count")}
             className={cn(
-              "rounded-md px-3 py-1.5 text-xs font-medium transition-colors",
+              "flex-1 rounded-md px-3 py-1.5 text-xs font-medium transition-colors sm:flex-none",
               mode === "count"
                 ? "bg-whatsapp text-white shadow-sm"
                 : "text-muted-fg hover:text-fg"
@@ -70,7 +72,7 @@ export function TeamLeaderboard({
             type="button"
             onClick={() => setMode("percent")}
             className={cn(
-              "rounded-md px-3 py-1.5 text-xs font-medium transition-colors",
+              "flex-1 rounded-md px-3 py-1.5 text-xs font-medium transition-colors sm:flex-none",
               mode === "percent"
                 ? "bg-whatsapp text-white shadow-sm"
                 : "text-muted-fg hover:text-fg"
@@ -86,73 +88,121 @@ export function TeamLeaderboard({
           No team members yet. Add sales members to your direct links to see distribution here.
         </p>
       ) : (
-        <div className="mt-6 overflow-x-auto">
-          <table className="w-full min-w-[560px] text-left text-sm">
-            <thead>
-              <tr className="border-b border-border text-[11px] uppercase tracking-wider text-muted-fg">
-                <th className="w-12 py-2 pr-3 font-semibold">#</th>
-                <th className="py-2 pr-4 font-semibold">Team member</th>
-                <th className="py-2 pr-4 font-semibold">
-                  {mode === "count" ? "WhatsApp redirects" : "Share"}
-                </th>
-                <th className="w-20 py-2 text-right font-semibold">
-                  {mode === "count" ? "Share" : "Redirects"}
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((row, index) => {
-                const width =
-                  mode === "count"
-                    ? (row.clicks / maxClicks) * 100
-                    : row.clicks > 0
-                      ? row.percent
-                      : 0;
-                const initial = (row.name.trim()[0] ?? "?").toUpperCase();
-
-                return (
-                  <tr key={row.key} className="border-b border-border/60 last:border-0">
-                    <td className="py-3 pr-3">
-                      <RankBadge rank={index + 1} />
-                    </td>
-                    <td className="py-3 pr-4">
-                      <div className="flex items-center gap-3">
-                        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-semibold text-fg">
-                          {initial}
-                        </span>
-                        <div className="min-w-0">
-                          <p className="truncate text-xs font-bold uppercase tracking-wide text-fg">
-                            {row.name}
+        <div className="mt-6">
+          {/* Mobile: card list */}
+          <div className="divide-y divide-border md:hidden">
+            {rows.map((row, index) => {
+              const initial = (row.name.trim()[0] ?? "?").toUpperCase();
+              return (
+                <div key={row.key} className="flex items-start gap-3 py-3">
+                  <RankBadge rank={index + 1} />
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-start gap-2">
+                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-semibold text-fg">
+                        {initial}
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-xs font-bold uppercase tracking-wide text-fg">
+                          {row.name}
+                        </p>
+                        {row.phone && (
+                          <p className="truncate font-mono text-[11px] text-muted-fg">
+                            +{row.phone}
                           </p>
-                          {row.phone && (
-                            <p className="truncate font-mono text-[11px] text-muted-fg">
-                              +{row.phone}
+                        )}
+                      </div>
+                      <div className="shrink-0 text-right">
+                        <p className="font-mono text-sm font-semibold tabular-nums text-fg">
+                          {mode === "count"
+                            ? row.clicks.toLocaleString("en-US")
+                            : `${row.percent}%`}
+                        </p>
+                        <p className="font-mono text-[11px] tabular-nums text-muted-fg">
+                          {mode === "count"
+                            ? `${row.percent}%`
+                            : row.clicks.toLocaleString("en-US")}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="mt-2 h-2 overflow-hidden rounded-full bg-muted">
+                      <div
+                        className="h-full rounded-full bg-whatsapp transition-all"
+                        style={{ width: `${Math.max(rowWidth(row), row.clicks > 0 ? 2 : 0)}%` }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Desktop: table */}
+          <div className="hidden overflow-x-auto md:block">
+            <table className="w-full min-w-[560px] text-left text-sm">
+              <thead>
+                <tr className="border-b border-border text-[11px] uppercase tracking-wider text-muted-fg">
+                  <th className="w-12 py-2 pr-3 font-semibold">#</th>
+                  <th className="py-2 pr-4 font-semibold">Team member</th>
+                  <th className="py-2 pr-4 font-semibold">
+                    {mode === "count" ? "WhatsApp redirects" : "Share"}
+                  </th>
+                  <th className="w-20 py-2 text-right font-semibold">
+                    {mode === "count" ? "Share" : "Redirects"}
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map((row, index) => {
+                  const initial = (row.name.trim()[0] ?? "?").toUpperCase();
+
+                  return (
+                    <tr key={row.key} className="border-b border-border/60 last:border-0">
+                      <td className="py-3 pr-3">
+                        <RankBadge rank={index + 1} />
+                      </td>
+                      <td className="py-3 pr-4">
+                        <div className="flex items-center gap-3">
+                          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-semibold text-fg">
+                            {initial}
+                          </span>
+                          <div className="min-w-0">
+                            <p className="truncate text-xs font-bold uppercase tracking-wide text-fg">
+                              {row.name}
                             </p>
-                          )}
+                            {row.phone && (
+                              <p className="truncate font-mono text-[11px] text-muted-fg">
+                                +{row.phone}
+                              </p>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    </td>
-                    <td className="py-3 pr-4">
-                      <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
-                        <div
-                          className="h-full rounded-full bg-whatsapp transition-all"
-                          style={{ width: `${Math.max(width, row.clicks > 0 ? 2 : 0)}%` }}
-                        />
-                      </div>
-                    </td>
-                    <td className="py-3 pl-2 text-right align-middle">
-                      <span className="block font-mono text-sm font-semibold tabular-nums text-fg">
-                        {mode === "count" ? row.clicks.toLocaleString("en-US") : `${row.percent}%`}
-                      </span>
-                      <span className="block font-mono text-[11px] tabular-nums text-muted-fg">
-                        {mode === "count" ? `${row.percent}%` : row.clicks.toLocaleString("en-US")}
-                      </span>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+                      </td>
+                      <td className="py-3 pr-4">
+                        <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
+                          <div
+                            className="h-full rounded-full bg-whatsapp transition-all"
+                            style={{ width: `${Math.max(rowWidth(row), row.clicks > 0 ? 2 : 0)}%` }}
+                          />
+                        </div>
+                      </td>
+                      <td className="py-3 pl-2 text-right align-middle">
+                        <span className="block font-mono text-sm font-semibold tabular-nums text-fg">
+                          {mode === "count"
+                            ? row.clicks.toLocaleString("en-US")
+                            : `${row.percent}%`}
+                        </span>
+                        <span className="block font-mono text-[11px] tabular-nums text-muted-fg">
+                          {mode === "count"
+                            ? `${row.percent}%`
+                            : row.clicks.toLocaleString("en-US")}
+                        </span>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
 
           <p className="mt-3 text-[11px] text-muted-fg">
             {membersCount} member{membersCount === 1 ? "" : "s"} tracked

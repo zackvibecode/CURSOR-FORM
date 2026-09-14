@@ -1,7 +1,7 @@
 "use client";
 
 import { Badge } from "@/components/ui/Badge";
-import { formatDate } from "@/lib/utils";
+import { cn, formatDate } from "@/lib/utils";
 import { useMemo } from "react";
 
 export type SubmissionStatus = "new" | "contacted" | "converted" | "pending";
@@ -54,7 +54,32 @@ export function SubmissionsTable({ submissions, compact = false }: SubmissionsTa
 
   return (
     <div className="overflow-hidden rounded-lg border border-border bg-card">
-      <div className="overflow-x-auto scrollbar-thin">
+      {/* Mobile: card list (compact dashboard view only) */}
+      {compact && (
+        <div className="divide-y divide-border md:hidden">
+          {submissions.slice(0, 5).map((row) => (
+            <div key={row.id} className="p-4">
+              <div className="flex items-start justify-between gap-2">
+                <span className="font-medium text-fg">{row.name}</span>
+                <Badge variant={row.status}>{row.status}</Badge>
+              </div>
+              <p className="mt-0.5 font-mono text-xs text-muted-fg">{row.phone}</p>
+              <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px] text-muted-fg">
+                <span className="truncate">{row.formName}</span>
+                {row.assignedTo && row.assignedTo !== "—" && (
+                  <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-2 py-0.5 text-[10px] font-medium text-fg">
+                    <span className="h-1.5 w-1.5 rounded-full bg-whatsapp" />
+                    {row.assignedTo}
+                  </span>
+                )}
+                <span className="font-mono">{formatDate(row.date)}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <div className={cn("overflow-x-auto scrollbar-thin", compact && "hidden md:block")}>
         <table className="w-full text-left text-sm" style={{ minWidth }}>
           <thead className="sticky top-0">
             <tr className="border-b border-border bg-muted/50">
