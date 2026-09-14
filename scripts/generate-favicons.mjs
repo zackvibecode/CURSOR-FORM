@@ -24,9 +24,12 @@ const ICON_MARK_SVG = `<svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3
 
 function squirclePlateSvg(size, fill = "#ffffff") {
   const r = Math.round(size * APPLE_RADIUS_RATIO);
+  // Soft edge so the rounded-square plate reads clearly on white pages.
+  const stroke = Math.max(1, Math.round(size * 0.012));
   return Buffer.from(
     `<svg width="${size}" height="${size}" xmlns="http://www.w3.org/2000/svg">
       <rect width="${size}" height="${size}" rx="${r}" ry="${r}" fill="${fill}"/>
+      <rect x="${stroke / 2}" y="${stroke / 2}" width="${size - stroke}" height="${size - stroke}" rx="${Math.max(0, r - stroke / 2)}" ry="${Math.max(0, r - stroke / 2)}" fill="none" stroke="#E5E7EB" stroke-width="${stroke}"/>
     </svg>`
   );
 }
@@ -91,17 +94,18 @@ async function makeFullSquareIcon(size, padRatio = 0.16, fill = { r: 255, g: 255
 async function main() {
   const jobs = [
     // Visible squircle (transparent outside) — login + PWA "any"
-    { fn: () => makeSquircleIcon(180, 0.15), path: "public/apple-touch-icon.png" },
-    { fn: () => makeSquircleIcon(192, 0.15), path: "public/pwa-icon-192.png" },
-    { fn: () => makeSquircleIcon(512, 0.15), path: "public/pwa-icon-512.png" },
-    { fn: () => makeSquircleIcon(512, 0.15), path: "public/favicon-icon.png" },
-    { fn: () => makeSquircleIcon(512, 0.15), path: "public/app-icon.png" },
-    { fn: () => makeSquircleIcon(64, 0.14), path: "public/favicon.png" },
-    { fn: () => makeSquircleIcon(180, 0.15), path: "src/app/apple-icon.png" },
-    { fn: () => makeSquircleIcon(512, 0.15), path: "src/app/icon.png" },
+    // Low padding so the mark fills the plate (avoids “floating circle” look).
+    { fn: () => makeSquircleIcon(180, 0.08), path: "public/apple-touch-icon.png" },
+    { fn: () => makeSquircleIcon(192, 0.08), path: "public/pwa-icon-192.png" },
+    { fn: () => makeSquircleIcon(512, 0.08), path: "public/pwa-icon-512.png" },
+    { fn: () => makeSquircleIcon(512, 0.08), path: "public/favicon-icon.png" },
+    { fn: () => makeSquircleIcon(512, 0.08), path: "public/app-icon.png" },
+    { fn: () => makeSquircleIcon(64, 0.08), path: "public/favicon.png" },
+    { fn: () => makeSquircleIcon(180, 0.08), path: "src/app/apple-icon.png" },
+    { fn: () => makeSquircleIcon(512, 0.08), path: "src/app/icon.png" },
 
-    // Maskable: full square + larger safe padding
-    { fn: () => makeFullSquareIcon(512, 0.2), path: "public/pwa-maskable-512.png" },
+    // Maskable: full square + safe padding for adaptive launchers
+    { fn: () => makeFullSquareIcon(512, 0.12), path: "public/pwa-maskable-512.png" },
   ];
 
   for (const { fn, path: out } of jobs) {
