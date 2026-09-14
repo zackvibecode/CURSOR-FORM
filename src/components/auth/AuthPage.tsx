@@ -185,7 +185,21 @@ function AuthForm({ mode }: { mode: "login" | "signup" }) {
   return (
     <div className="w-full max-w-md">
       <div className="mb-8 text-center">
-        <div className="mb-6 flex justify-center">
+        <div className="mb-6 flex flex-col items-center gap-4">
+          <div
+            className="relative h-[88px] w-[88px] overflow-hidden rounded-[22%] bg-white shadow-[0_8px_24px_rgba(15,23,42,0.12)] ring-1 ring-black/5"
+            aria-hidden="true"
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element -- static public app icon */}
+            <img
+              src="/apple-touch-icon.png"
+              alt=""
+              width={180}
+              height={180}
+              className="h-full w-full object-cover"
+              draggable={false}
+            />
+          </div>
           <BrandLogo />
         </div>
         <h1 className="mb-2 text-2xl font-bold text-fg">
