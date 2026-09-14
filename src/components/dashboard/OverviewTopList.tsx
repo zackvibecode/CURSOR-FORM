@@ -25,15 +25,15 @@ export function OverviewTopList({
   emptyLabel,
 }: OverviewTopListProps) {
   return (
-    <div className="rounded-lg border border-border bg-card p-5">
-      <div className="mb-4 flex items-center justify-between gap-3">
-        <div className="flex items-center gap-2">
-          <Icon className="h-4 w-4 text-muted-fg" strokeWidth={2} />
-          <h3 className="text-sm font-semibold text-fg">{title}</h3>
+    <div className="rounded-lg border border-border bg-card p-4 sm:p-5">
+      <div className="mb-3 flex items-center justify-between gap-2 sm:mb-4 sm:gap-3">
+        <div className="flex min-w-0 items-center gap-2">
+          <Icon className="h-4 w-4 shrink-0 text-muted-fg" strokeWidth={2} />
+          <h3 className="truncate text-sm font-semibold text-fg">{title}</h3>
         </div>
         <Link
           href={viewAllHref}
-          className="text-xs font-medium text-whatsapp-deep transition-colors hover:text-whatsapp dark:text-whatsapp"
+          className="shrink-0 text-xs font-medium text-whatsapp-deep transition-colors hover:text-whatsapp dark:text-whatsapp"
         >
           View all →
         </Link>

@@ -241,16 +241,18 @@ export default async function DashboardOverviewPage({
   const isFree = plan === "free";
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+    <div className="space-y-4 sm:space-y-6">
+      <div className="flex flex-col gap-3">
         <div className="min-w-0">
           <p className="text-xs text-muted-fg">Welcome back,</p>
-          <h2 className="text-xl font-semibold text-fg">Here&apos;s what&apos;s happening</h2>
+          <h2 className="text-lg font-semibold text-fg sm:text-xl">
+            Here&apos;s what&apos;s happening
+          </h2>
           <p className="mt-1 text-sm text-muted-fg">
             Real-time insights from your forms and direct links
           </p>
           {isFree && (
-            <p className="mt-1 font-mono text-[11px] text-muted-fg">
+            <p className="mt-1.5 break-words font-mono text-[11px] leading-relaxed text-muted-fg">
               Free plan · {forms.length}/
               {limits.maxForms === Infinity ? "∞" : limits.maxForms} forms ·{" "}
               {submissionsThisMonth}/
@@ -267,13 +269,13 @@ export default async function DashboardOverviewPage({
             </p>
           )}
         </div>
-        <div className="flex shrink-0 flex-wrap items-center gap-2">
-          <CreateFormButton />
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end">
           <OverviewRangeSelect value={days} />
+          <CreateFormButton className="w-full sm:w-auto" />
         </div>
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-2 gap-2.5 sm:gap-3 xl:grid-cols-4">
         <OverviewKpiCard
           label="Total Forms"
           value={forms.length}
@@ -303,12 +305,12 @@ export default async function DashboardOverviewPage({
       <OverviewCharts submissions={submissionsSeries} clicks={clicksSeries} />
 
       <div className="grid gap-4 lg:grid-cols-3">
-        <div className="lg:col-span-2">
-          <div className="mb-3 flex items-center justify-between">
+        <div className="min-w-0 lg:col-span-2">
+          <div className="mb-3 flex items-center justify-between gap-2">
             <h3 className="text-sm font-semibold text-fg">Latest Submissions</h3>
             <Link
               href="/dashboard/submissions"
-              className="text-xs font-medium text-whatsapp-deep transition-colors hover:text-whatsapp dark:text-whatsapp"
+              className="shrink-0 text-xs font-medium text-whatsapp-deep transition-colors hover:text-whatsapp dark:text-whatsapp"
             >
               View all →
             </Link>

@@ -4,8 +4,8 @@ import { useState } from "react";
 import { formatDayFull, type SeriesPoint } from "@/lib/overview-stats";
 
 const W = 720;
-const H = 240;
-const PAD = { top: 16, right: 10, bottom: 28, left: 38 };
+const H = 220;
+const PAD = { top: 12, right: 8, bottom: 26, left: 32 };
 const PLOT_W = W - PAD.left - PAD.right;
 const PLOT_H = H - PAD.top - PAD.bottom;
 
@@ -16,7 +16,8 @@ function niceMax(value: number): number {
 
 function xTicks(count: number): number[] {
   if (count <= 1) return [0];
-  const step = Math.max(1, Math.ceil(count / 6));
+  // Fewer labels on narrow screens — SVG scales, so keep tick count modest
+  const step = Math.max(1, Math.ceil(count / 5));
   const ticks: number[] = [];
   for (let i = 0; i < count; i += step) ticks.push(i);
   if (ticks[ticks.length - 1] !== count - 1) ticks.push(count - 1);
@@ -36,7 +37,7 @@ function ChartFrame({
   yMax,
   count,
   tooltip,
-  hoverLabel,
+  hint,
   onHover,
   children,
 }: {
@@ -47,7 +48,7 @@ function ChartFrame({
   yMax: number;
   count: number;
   tooltip: TooltipState | null;
-  hoverLabel: string;
+  hint: string;
   onHover: (index: number) => void;
   children: React.ReactNode;
 }) {
@@ -57,21 +58,23 @@ function ChartFrame({
       : 0;
 
   return (
-    <div className="rounded-lg border border-border bg-card p-5">
-      <div className="mb-1 flex items-center justify-between gap-3">
+    <div className="rounded-lg border border-border bg-card p-4 sm:p-5">
+      <div className="mb-1 flex items-start justify-between gap-2">
         <h3 className="text-sm font-semibold text-fg">{title}</h3>
-        <span className="font-mono text-[11px] text-muted-fg">
+        <span className="shrink-0 font-mono text-[11px] tabular-nums text-muted-fg">
           {total.toLocaleString("en-US")} total
         </span>
       </div>
-      <p className="mb-4 text-xs text-muted-fg">{subtitle}</p>
+      <p className="mb-3 text-xs text-muted-fg sm:mb-4">{subtitle}</p>
 
-      <div className="overflow-x-auto scrollbar-thin">
-        <div className="relative min-w-[560px]">
+      {/* Fluid SVG — no min-width so mobile never horizontal-scrolls */}
+      <div className="relative w-full">
         {tooltip && (
           <div
-            className="pointer-events-none absolute top-0 z-10 -translate-x-1/2 whitespace-nowrap rounded-md bg-fg px-2.5 py-1.5 text-[11px] text-bg shadow-md"
-            style={{ left: `${leftPercent}%` }}
+            className="pointer-events-none absolute top-0 z-10 max-w-[70%] -translate-x-1/2 rounded-md bg-fg px-2.5 py-1.5 text-[11px] text-bg shadow-md"
+            style={{
+              left: `${Math.min(Math.max(leftPercent, 18), 82)}%`,
+            }}
           >
             <p className="font-medium">{formatDayFull(tooltip.point.date)}</p>
             <p className="text-[10px] opacity-80">
@@ -82,7 +85,7 @@ function ChartFrame({
 
         <svg
           viewBox={`0 0 ${W} ${H}`}
-          className="w-full"
+          className="h-auto w-full"
           role="img"
           aria-label={title}
           onMouseLeave={() => onHover(-1)}
@@ -101,10 +104,10 @@ function ChartFrame({
                   className="text-border"
                 />
                 <text
-                  x={PAD.left - 8}
+                  x={PAD.left - 6}
                   y={y + 3}
                   textAnchor="end"
-                  className="fill-current text-[13px] text-muted-fg"
+                  className="fill-current text-[11px] text-muted-fg sm:text-[13px]"
                 >
                   {Math.round(yMax * (1 - ratio))}
                 </text>
@@ -113,10 +116,13 @@ function ChartFrame({
           })}
           {children}
         </svg>
-        </div>
       </div>
 
-      <p className="mt-1 text-[11px] text-muted-fg">{hoverLabel}</p>
+      <p className="mt-1 text-[11px] text-muted-fg">
+        {tooltip
+          ? `${tooltip.point.label}: ${tooltip.point.value} ${unit}`
+          : hint}
+      </p>
     </div>
   );
 }
@@ -125,8 +131,8 @@ function SubmissionsBarChart({ data }: { data: SeriesPoint[] }) {
   const [hover, setHover] = useState(-1);
   const total = data.reduce((sum, p) => sum + p.value, 0);
 
-  const yMax = niceMax(Math.max(...data.map((d) => d.value)));
-  const slot = PLOT_W / data.length;
+  const yMax = niceMax(Math.max(...data.map((d) => d.value), 0));
+  const slot = PLOT_W / Math.max(data.length, 1);
   const barW = Math.max(2, Math.min(slot * 0.6, 22));
   const tickSet = new Set(xTicks(data.length));
   const tooltip = hover >= 0 ? { index: hover, point: data[hover] } : null;
@@ -140,11 +146,7 @@ function SubmissionsBarChart({ data }: { data: SeriesPoint[] }) {
       yMax={yMax}
       count={data.length}
       tooltip={tooltip}
-      hoverLabel={
-        hover >= 0
-          ? `${data[hover].label}: ${data[hover].value} submissions`
-          : "Hover a bar to see the daily count"
-      }
+      hint="Tap or hover a bar to see the daily count"
       onHover={setHover}
     >
       {data.map((point, i) => {
@@ -169,14 +171,17 @@ function SubmissionsBarChart({ data }: { data: SeriesPoint[] }) {
               width={slot}
               height={PLOT_H}
               fill="transparent"
+              className="cursor-pointer"
               onMouseEnter={() => setHover(i)}
+              onClick={() => setHover(i)}
+              onTouchStart={() => setHover(i)}
             />
             {tickSet.has(i) && (
               <text
                 x={PAD.left + i * slot + slot / 2}
                 y={H - 8}
                 textAnchor="middle"
-                className="fill-current text-[13px] text-muted-fg"
+                className="fill-current text-[11px] text-muted-fg"
               >
                 {point.label}
               </text>
@@ -192,12 +197,19 @@ function LinkClicksAreaChart({ data }: { data: SeriesPoint[] }) {
   const [hover, setHover] = useState(-1);
   const total = data.reduce((sum, p) => sum + p.value, 0);
 
-  const yMax = niceMax(Math.max(...data.map((d) => d.value)));
-  const step = PLOT_W / (data.length - 1);
+  const yMax = niceMax(Math.max(...data.map((d) => d.value), 0));
+  const n = Math.max(data.length - 1, 1);
+  const step = PLOT_W / n;
   const px = (i: number) => PAD.left + i * step;
   const py = (i: number) => PAD.top + PLOT_H - (data[i].value / yMax) * PLOT_H;
-  const line = data.map((_, i) => `${i === 0 ? "M" : "L"} ${px(i)} ${py(i)}`).join(" ");
-  const area = `${line} L ${PAD.left + PLOT_W} ${PAD.top + PLOT_H} L ${PAD.left} ${PAD.top + PLOT_H} Z`;
+  const line =
+    data.length === 0
+      ? ""
+      : data.map((_, i) => `${i === 0 ? "M" : "L"} ${px(i)} ${py(i)}`).join(" ");
+  const area =
+    data.length === 0
+      ? ""
+      : `${line} L ${PAD.left + PLOT_W} ${PAD.top + PLOT_H} L ${PAD.left} ${PAD.top + PLOT_H} Z`;
   const tickSet = new Set(xTicks(data.length));
   const tooltip = hover >= 0 ? { index: hover, point: data[hover] } : null;
 
@@ -210,11 +222,7 @@ function LinkClicksAreaChart({ data }: { data: SeriesPoint[] }) {
       yMax={yMax}
       count={data.length}
       tooltip={tooltip}
-      hoverLabel={
-        hover >= 0
-          ? `${data[hover].label}: ${data[hover].value} clicks`
-          : "Hover the line to see daily clicks"
-      }
+      hint="Tap or hover the line to see daily clicks"
       onHover={setHover}
     >
       <defs>
@@ -223,15 +231,17 @@ function LinkClicksAreaChart({ data }: { data: SeriesPoint[] }) {
           <stop offset="100%" stopColor="#10D050" stopOpacity="0" />
         </linearGradient>
       </defs>
-      <path d={area} fill="url(#overview-clicks-grad)" />
-      <path
-        d={line}
-        fill="none"
-        stroke="#10D050"
-        strokeWidth="2"
-        strokeLinejoin="round"
-        strokeLinecap="round"
-      />
+      {area && <path d={area} fill="url(#overview-clicks-grad)" />}
+      {line && (
+        <path
+          d={line}
+          fill="none"
+          stroke="#10D050"
+          strokeWidth="2"
+          strokeLinejoin="round"
+          strokeLinecap="round"
+        />
+      )}
       {data.map((p, i) =>
         tickSet.has(i) ? (
           <text
@@ -239,13 +249,13 @@ function LinkClicksAreaChart({ data }: { data: SeriesPoint[] }) {
             x={px(i)}
             y={H - 8}
             textAnchor="middle"
-            className="fill-current text-[13px] text-muted-fg"
+            className="fill-current text-[11px] text-muted-fg"
           >
             {p.label}
           </text>
         ) : null
       )}
-      {hover >= 0 && (
+      {hover >= 0 && data[hover] && (
         <>
           <line
             x1={px(hover)}
@@ -267,7 +277,10 @@ function LinkClicksAreaChart({ data }: { data: SeriesPoint[] }) {
           width={step}
           height={PLOT_H}
           fill="transparent"
+          className="cursor-pointer"
           onMouseEnter={() => setHover(i)}
+          onClick={() => setHover(i)}
+          onTouchStart={() => setHover(i)}
         />
       ))}
     </ChartFrame>
@@ -282,7 +295,7 @@ export function OverviewCharts({
   clicks: SeriesPoint[];
 }) {
   return (
-    <div className="grid gap-4 lg:grid-cols-2">
+    <div className="grid gap-3 sm:gap-4 lg:grid-cols-2">
       <SubmissionsBarChart data={submissions} />
       <LinkClicksAreaChart data={clicks} />
     </div>
