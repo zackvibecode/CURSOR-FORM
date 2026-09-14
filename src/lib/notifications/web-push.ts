@@ -32,8 +32,7 @@ export function getVapidConfig(): {
     process.env.VAPID_PUBLIC_KEY?.trim() ||
     "";
   const privateKey = process.env.VAPID_PRIVATE_KEY?.trim() || "";
-  const subject =
-    process.env.VAPID_SUBJECT?.trim() || "mailto:notifications@form.zaqone.com";
+  const subject = normalizeVapidSubject(process.env.VAPID_SUBJECT);
 
   if (!publicKey || !privateKey) {
     return null;
@@ -42,10 +41,39 @@ export function getVapidConfig(): {
   return { publicKey, privateKey, subject };
 }
 
+/** web-push requires a mailto: or https:// URL subject. */
+function normalizeVapidSubject(raw: string | undefined): string {
+  const fallback = "mailto:notifications@form.zaqone.com";
+  const value = (raw ?? "").trim().replace(/^["']|["']$/g, "");
+  if (!value) return fallback;
+
+  if (/^mailto:/i.test(value) || /^https?:\/\//i.test(value)) {
+    try {
+      // eslint-disable-next-line no-new
+      new URL(value);
+      return value;
+    } catch {
+      return fallback;
+    }
+  }
+
+  // Bare email → mailto:
+  if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+    return `mailto:${value}`;
+  }
+
+  return fallback;
+}
+
 function configureWebPush() {
   const vapid = getVapidConfig();
   if (!vapid) return null;
-  webpush.setVapidDetails(vapid.subject, vapid.publicKey, vapid.privateKey);
+  try {
+    webpush.setVapidDetails(vapid.subject, vapid.publicKey, vapid.privateKey);
+  } catch (error) {
+    logPushError("invalid VAPID configuration", error);
+    return null;
+  }
   return vapid;
 }
 

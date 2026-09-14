@@ -17,6 +17,21 @@ import {
 
 type UiStatus = "loading" | "unsupported" | "ios_install" | "denied" | "disabled" | "enabled";
 
+async function saveSubscriptionToServer(subscription: PushSubscription) {
+  const payload = subscriptionToJSON(subscription);
+  const saveRes = await fetch("/api/push/subscribe", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      ...payload,
+      device_name: guessDeviceName(),
+      user_agent: typeof navigator !== "undefined" ? navigator.userAgent : null,
+    }),
+  });
+  const saveData = await saveRes.json().catch(() => ({}));
+  return { ok: saveRes.ok, data: saveData };
+}
+
 export function PushNotificationSettings() {
   const [status, setStatus] = useState<UiStatus>("loading");
   const [busy, setBusy] = useState(false);
@@ -36,10 +51,6 @@ export function PushNotificationSettings() {
         return;
       }
 
-      if (isIosDevice() && !isStandalonePwa()) {
-        setStatus("ios_install");
-      }
-
       const [statusRes, localSub] = await Promise.all([
         fetch("/api/push/status").then((r) => (r.ok ? r.json() : null)),
         getExistingPushSubscription(),
@@ -51,7 +62,11 @@ export function PushNotificationSettings() {
         null;
       setVapidPublicKey(key);
       setConfigured(Boolean(statusRes?.configured && key));
-      setDeviceCount(Array.isArray(statusRes?.subscriptions) ? statusRes.subscriptions.length : 0);
+
+      const serverSubs: Array<{ endpoint: string }> = Array.isArray(statusRes?.subscriptions)
+        ? statusRes.subscriptions
+        : [];
+      setDeviceCount(serverSubs.length);
 
       if (isIosDevice() && !isStandalonePwa()) {
         setStatus("ios_install");
@@ -63,7 +78,20 @@ export function PushNotificationSettings() {
         return;
       }
 
-      if (localSub) {
+      // Local browser subscription exists but missing in DB → re-sync.
+      if (localSub && !serverSubs.some((s) => s.endpoint === localSub.endpoint)) {
+        const synced = await saveSubscriptionToServer(localSub);
+        if (synced.ok) {
+          setDeviceCount((n) => Math.max(n, 1));
+          setStatus("enabled");
+          return;
+        }
+      }
+
+      // Enabled only when this device is registered on the server.
+      if (localSub && serverSubs.some((s) => s.endpoint === localSub.endpoint)) {
+        setStatus("enabled");
+      } else if (serverSubs.length > 0 && localSub) {
         setStatus("enabled");
       } else {
         setStatus("disabled");
@@ -117,19 +145,9 @@ export function PushNotificationSettings() {
         return;
       }
 
-      const payload = subscriptionToJSON(subscription);
-      const saveRes = await fetch("/api/push/subscribe", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...payload,
-          device_name: guessDeviceName(),
-          user_agent: typeof navigator !== "undefined" ? navigator.userAgent : null,
-        }),
-      });
-      const saveData = await saveRes.json().catch(() => ({}));
-      if (!saveRes.ok) {
-        toast(saveData.error ?? "Failed to save subscription", "error");
+      const saved = await saveSubscriptionToServer(subscription);
+      if (!saved.ok) {
+        toast(saved.data.error ?? "Failed to save subscription", "error");
         return;
       }
 
@@ -164,13 +182,20 @@ export function PushNotificationSettings() {
   const handleTest = async () => {
     setBusy(true);
     try {
+      // Ensure this device is in DB before testing.
+      const localSub = await getExistingPushSubscription();
+      if (localSub) {
+        await saveSubscriptionToServer(localSub);
+      }
+
       const res = await fetch("/api/push/test", { method: "POST" });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
         toast(data.error ?? "Test failed", "error");
         return;
       }
-      toast("Test notification sent", "success");
+      toast("Test notification sent — check your phone", "success");
+      await refresh();
     } catch {
       toast("Network error", "error");
     } finally {
@@ -240,11 +265,15 @@ export function PushNotificationSettings() {
             </p>
           )}
 
-          {deviceCount > 0 && (
+          {deviceCount > 0 ? (
             <p className="mt-2 text-[11px] text-muted-fg">
               Active devices on this account: {deviceCount}
             </p>
-          )}
+          ) : status === "disabled" ? (
+            <p className="mt-2 text-[11px] text-amber-700 dark:text-amber-400">
+              Belum ada device registered. Tekan Enable Notifications pada phone ni.
+            </p>
+          ) : null}
 
           <div className="mt-3 flex flex-wrap gap-2">
             {status !== "enabled" && status !== "loading" && status !== "unsupported" && (
@@ -258,7 +287,7 @@ export function PushNotificationSettings() {
               </Button>
             )}
 
-            {status === "enabled" && (
+            {(status === "enabled" || deviceCount > 0) && (
               <>
                 <Button
                   type="button"
@@ -269,16 +298,18 @@ export function PushNotificationSettings() {
                 >
                   Send test
                 </Button>
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="outline"
-                  disabled={busy}
-                  onClick={() => void handleDisable()}
-                >
-                  <BellOff className="mr-1.5 h-3.5 w-3.5" />
-                  Disable Notifications
-                </Button>
+                {status === "enabled" && (
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    disabled={busy}
+                    onClick={() => void handleDisable()}
+                  >
+                    <BellOff className="mr-1.5 h-3.5 w-3.5" />
+                    Disable Notifications
+                  </Button>
+                )}
               </>
             )}
           </div>
