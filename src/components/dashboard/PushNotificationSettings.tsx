@@ -41,32 +41,22 @@ export function PushNotificationSettings() {
 
   const refresh = useCallback(async () => {
     try {
+      // Public config check (no auth) — never block Enable on status-only failures.
+      const vapidRes = await fetch("/api/push/subscribe")
+        .then((r) => (r.ok ? r.json() : null))
+        .catch(() => null);
+      const key = vapidRes?.publicKey || process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || null;
+      setVapidPublicKey(key);
+      setConfigured(Boolean(vapidRes?.configured && key));
+
       if (!isPushApiSupported()) {
         if (isIosDevice() && !isStandalonePwa()) {
           setStatus("ios_install");
         } else {
           setStatus("unsupported");
         }
-        setConfigured(true);
         return;
       }
-
-      const [statusRes, localSub] = await Promise.all([
-        fetch("/api/push/status").then((r) => (r.ok ? r.json() : null)),
-        getExistingPushSubscription(),
-      ]);
-
-      const key =
-        statusRes?.publicKey ||
-        process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ||
-        null;
-      setVapidPublicKey(key);
-      setConfigured(Boolean(statusRes?.configured && key));
-
-      const serverSubs: Array<{ endpoint: string }> = Array.isArray(statusRes?.subscriptions)
-        ? statusRes.subscriptions
-        : [];
-      setDeviceCount(serverSubs.length);
 
       if (isIosDevice() && !isStandalonePwa()) {
         setStatus("ios_install");
@@ -78,6 +68,22 @@ export function PushNotificationSettings() {
         return;
       }
 
+      const [statusRes, localSub] = await Promise.all([
+        fetch("/api/push/status")
+          .then((r) => (r.ok ? r.json() : null))
+          .catch(() => null),
+        getExistingPushSubscription(),
+      ]);
+
+      if (statusRes?.publicKey) {
+        setVapidPublicKey(statusRes.publicKey);
+      }
+
+      const serverSubs: Array<{ endpoint: string }> = Array.isArray(statusRes?.subscriptions)
+        ? statusRes.subscriptions
+        : [];
+      setDeviceCount(serverSubs.length);
+
       // Local browser subscription exists but missing in DB → re-sync.
       if (localSub && !serverSubs.some((s) => s.endpoint === localSub.endpoint)) {
         const synced = await saveSubscriptionToServer(localSub);
@@ -88,7 +94,6 @@ export function PushNotificationSettings() {
         }
       }
 
-      // Enabled only when this device is registered on the server.
       if (localSub && serverSubs.some((s) => s.endpoint === localSub.endpoint)) {
         setStatus("enabled");
       } else if (serverSubs.length > 0 && localSub) {
@@ -276,18 +281,33 @@ export function PushNotificationSettings() {
           ) : null}
 
           <div className="mt-3 flex flex-wrap gap-2">
-            {status !== "enabled" && status !== "loading" && status !== "unsupported" && (
+            {(status === "disabled" ||
+              status === "loading" ||
+              status === "denied" ||
+              status === "ios_install") && (
               <Button
                 type="button"
                 size="sm"
-                disabled={busy || status === "denied" || status === "ios_install" || !configured}
+                disabled={
+                  busy ||
+                  status === "loading" ||
+                  status === "denied" ||
+                  status === "ios_install" ||
+                  !configured
+                }
                 onClick={() => void handleEnable()}
               >
-                {busy ? "Enabling…" : "Enable Notifications"}
+                {busy || status === "loading" ? "Checking…" : "Enable Notifications"}
               </Button>
             )}
 
-            {(status === "enabled" || deviceCount > 0) && (
+            {status === "unsupported" && (
+              <p className="text-xs text-muted-fg">
+                Browser ni tak support Web Push. Guna Chrome (Android) atau Safari PWA (iPhone).
+              </p>
+            )}
+
+            {(status === "enabled" || deviceCount > 0) && status !== "disabled" && (
               <>
                 <Button
                   type="button"

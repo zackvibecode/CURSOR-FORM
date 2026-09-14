@@ -61,7 +61,10 @@ export async function registerPushServiceWorker(): Promise<ServiceWorkerRegistra
 export async function getExistingPushSubscription(): Promise<PushSubscription | null> {
   if (!isPushApiSupported()) return null;
   try {
-    const registration = await navigator.serviceWorker.ready;
+    // Do NOT use navigator.serviceWorker.ready here — it hangs forever
+    // when no service worker is registered yet (blocks Enable button).
+    const registration = await navigator.serviceWorker.getRegistration("/");
+    if (!registration) return null;
     return (await registration.pushManager.getSubscription()) ?? null;
   } catch {
     return null;
