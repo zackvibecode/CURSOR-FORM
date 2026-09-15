@@ -10,15 +10,7 @@ import {
   Check,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-
-const presetColors = [
-  { label: "Black", value: "000000" },
-  { label: "WhatsApp Green", value: "10D050" },
-  { label: "Blue", value: "2563EB" },
-  { label: "Purple", value: "7C3AED" },
-  { label: "Red", value: "DC2626" },
-  { label: "Orange", value: "EA580C" },
-];
+import { QR_PRESET_COLORS, buildQrImageUrl, downloadQrImage } from "@/lib/qr";
 
 type Mode = "url" | "whatsapp";
 
@@ -45,27 +37,18 @@ export function QrGeneratorClient({ inDashboard = false }: QrGeneratorClientProp
 
   const qrUrl = useMemo(() => {
     if (!qrValue || qrValue === "https://") return "";
-    return `https://api.qrserver.com/v1/create-qr-code/?size=${displaySize}x${displaySize}&data=${encodeURIComponent(qrValue)}&color=${fgColor}&bgcolor=${bgColor}`;
+    return buildQrImageUrl({ data: qrValue, size: displaySize, fgColor, bgColor });
   }, [qrValue, fgColor, bgColor, displaySize]);
 
   async function handleDownload() {
     if (!qrUrl) return;
     try {
-      const response = await fetch(qrUrl);
-      const blob = await response.blob();
-      const pngUrl = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.download = "oneform-qr-code.png";
-      link.href = pngUrl;
-      link.click();
-      URL.revokeObjectURL(pngUrl);
-      setDownloaded(true);
-      setTimeout(() => setDownloaded(false), 2000);
+      await downloadQrImage(qrUrl, "oneform-qr-code");
     } catch {
-      window.open(qrUrl, "_blank");
-      setDownloaded(true);
-      setTimeout(() => setDownloaded(false), 2000);
+      window.open(qrUrl, "_blank", "noopener,noreferrer");
     }
+    setDownloaded(true);
+    setTimeout(() => setDownloaded(false), 2000);
   }
 
   const containerClass = inDashboard ? "" : "py-12 sm:py-20";
@@ -179,7 +162,7 @@ export function QrGeneratorClient({ inDashboard = false }: QrGeneratorClientProp
                 <div>
                   <label className="mb-2 block text-[11px] text-muted-fg">QR color</label>
                   <div className="flex flex-wrap gap-2">
-                    {presetColors.map((color) => (
+                    {QR_PRESET_COLORS.map((color) => (
                       <button
                         key={color.value}
                         onClick={() => setFgColor(color.value)}

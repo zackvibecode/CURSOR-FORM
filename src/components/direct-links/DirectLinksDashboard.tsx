@@ -5,17 +5,20 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   Link2, Plus, Copy, Check, ExternalLink, Trash2, Edit2,
-  Loader2, Search, BarChart3, Users, Globe, FileText,
+  Loader2, Search, BarChart3, Users, Globe, FileText, QrCode,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
+import { QrCodeModal } from "@/components/ui/QrCodeModal";
 import { toast } from "@/components/ui/Toast";
 import { cn } from "@/lib/utils";
+import { toPublicQrUrl } from "@/lib/qr";
 import type { DirectLink } from "@/lib/database.types";
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "";
 
 function getPublicUrl(slug: string) {
-  return `${APP_URL}/d/${slug}`;
+  const base = APP_URL || (typeof window !== "undefined" ? window.location.origin : "");
+  return `${base}/d/${slug}`;
 }
 
 const MODE_LABELS: Record<string, string> = {
@@ -37,6 +40,7 @@ export function DirectLinksDashboard({ directLinks: initialLinks }: DirectLinksD
   const [deleteTarget, setDeleteTarget] = useState<DirectLink | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState("");
+  const [qrTarget, setQrTarget] = useState<DirectLink | null>(null);
 
   const filtered = links.filter(
     (l) =>
@@ -251,6 +255,16 @@ export function DirectLinksDashboard({ directLinks: initialLinks }: DirectLinksD
 
                   <button
                     type="button"
+                    onClick={() => setQrTarget(link)}
+                    className="flex items-center justify-center rounded-md border border-border bg-card p-1.5 text-muted-fg transition-colors hover:border-fg/30 hover:text-fg"
+                    title="QR code"
+                    aria-label="Show QR code"
+                  >
+                    <QrCode className="h-3.5 w-3.5" />
+                  </button>
+
+                  <button
+                    type="button"
                     onClick={() => { setDeleteTarget(link); setDeleteConfirm(""); }}
                     className="flex items-center justify-center rounded-md border border-border bg-card p-1.5 text-muted-fg/50 transition-colors hover:border-red-500/30 hover:bg-red-500/5 hover:text-red-500"
                     title="Delete"
@@ -274,6 +288,15 @@ export function DirectLinksDashboard({ directLinks: initialLinks }: DirectLinksD
           )}
         </div>
       )}
+
+      {/* ── QR code modal ─────────────────────────────────────────────────── */}
+      <QrCodeModal
+        open={qrTarget !== null}
+        onClose={() => setQrTarget(null)}
+        url={qrTarget ? toPublicQrUrl(getPublicUrl(qrTarget.slug)) : ""}
+        title="Direct Link QR"
+        subtitle={qrTarget?.name}
+      />
 
       {/* ── Delete confirmation modal ──────────────────────────────────────── */}
       {deleteTarget && (

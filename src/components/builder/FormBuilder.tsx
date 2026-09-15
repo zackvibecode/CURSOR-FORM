@@ -20,6 +20,8 @@ import { Label } from "@/components/ui/Label";
 import { Textarea } from "@/components/ui/Textarea";
 import { Toggle } from "@/components/ui/Toggle";
 import { getFormPublicUrl } from "@/lib/forms";
+import { toPublicQrUrl } from "@/lib/qr";
+import { QrCodeModal } from "@/components/ui/QrCodeModal";
 import { slugify } from "@/lib/utils";
 import { toast } from "@/components/ui/Toast";
 import { TeamSettings } from "./TeamSettings";
@@ -32,6 +34,7 @@ import {
   Globe,
   Settings,
   Layout,
+  QrCode,
   AlertTriangle,
   Bell,
   Search,
@@ -86,6 +89,8 @@ export function FormBuilder({ formId, initialData }: FormBuilderProps) {
     initialData.fields[0]?.id ?? null
   );
   const [previewOpen, setPreviewOpen] = useState(false);
+  const [qrOpen, setQrOpen] = useState(false);
+  const [savedSlug, setSavedSlug] = useState(initialData.slug);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
   const [copied, setCopied] = useState(false);
@@ -111,6 +116,15 @@ export function FormBuilder({ formId, initialData }: FormBuilderProps) {
 
   const selectedField = fields.find((f) => f.id === selectedId) ?? null;
   const shareUrl = `${getFormPublicUrl(slug)}?og=${shareVersion}`;
+  const qrUrl = toPublicQrUrl(getFormPublicUrl(savedSlug));
+  const slugDirty = slug !== savedSlug;
+  const qrEnabled = status === "published" && !slugDirty;
+  const qrDisabledReason =
+    status !== "published"
+      ? "Publish your form to get a QR code"
+      : slugDirty
+        ? "Save your slug change first"
+        : "";
 
   // Sync template only when fields are added, removed, or renamed — not on first load.
   useEffect(() => {
@@ -176,6 +190,10 @@ export function FormBuilder({ formId, initialData }: FormBuilderProps) {
 
         if (publish) setStatus("published");
         setShareVersion(Date.now());
+
+        if (typeof data.form?.slug === "string" && data.form.slug) {
+          setSavedSlug(data.form.slug);
+        }
 
         const savedTemplate = getWhatsappTemplateFromForm(data.form ?? {});
         if (savedTemplate) {
@@ -308,6 +326,17 @@ export function FormBuilder({ formId, initialData }: FormBuilderProps) {
             <Eye className="h-3.5 w-3.5" />
             <span className="hidden sm:inline">Preview</span>
           </Button>
+          <span className="inline-flex" title={qrDisabledReason || "Show QR code"}>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setQrOpen(true)}
+              disabled={!qrEnabled}
+            >
+              <QrCode className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">QR</span>
+            </Button>
+          </span>
           <Button
             variant="outline"
             size="sm"
@@ -695,6 +724,14 @@ export function FormBuilder({ formId, initialData }: FormBuilderProps) {
         formId={formId}
         formMode={isDirect ? "direct" : "form"}
         directMessage={directMessage}
+      />
+
+      <QrCodeModal
+        open={qrOpen}
+        onClose={() => setQrOpen(false)}
+        url={qrUrl}
+        title="Form QR"
+        subtitle={title}
       />
 
       {/* Publish Confirmation Modal */}

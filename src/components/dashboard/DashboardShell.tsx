@@ -26,6 +26,7 @@ export function DashboardShell({
   isAdmin = false,
 }: DashboardShellProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   return (
     <SubmissionNotificationProvider>
@@ -33,7 +34,9 @@ export function DashboardShell({
       <div className="flex min-h-screen bg-bg">
       <DashboardSidebar
         open={sidebarOpen}
+        collapsed={sidebarCollapsed}
         onClose={() => setSidebarOpen(false)}
+        onToggleCollapse={() => setSidebarCollapsed((v) => !v)}
         plan={plan}
         status={status}
         formsCount={formsCount}

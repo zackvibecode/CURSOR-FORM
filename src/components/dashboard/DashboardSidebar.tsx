@@ -20,6 +20,8 @@ import {
   ShieldCheck,
   Wallet,
   Link2,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 
 const mainNavItems = [
@@ -34,7 +36,9 @@ const mainNavItems = [
 
 interface DashboardSidebarProps {
   open: boolean;
+  collapsed?: boolean;
   onClose: () => void;
+  onToggleCollapse?: () => void;
   plan?: string;
   status?: string;
   formsCount?: number;
@@ -80,7 +84,9 @@ function PlanBadge({ plan, status }: { plan: string; status: string }) {
 
 export function DashboardSidebar({
   open,
+  collapsed = false,
   onClose,
+  onToggleCollapse,
   plan = "free",
   status = "active",
   formsCount = 0,
@@ -123,16 +129,23 @@ export function DashboardSidebar({
           "group relative flex items-center gap-2.5 rounded-md px-2.5 py-1.5 text-[13px] font-medium transition-colors",
           active
             ? "bg-muted text-fg"
-            : "text-muted-fg hover:bg-muted/60 hover:text-fg"
+            : "text-muted-fg hover:bg-muted/60 hover:text-fg",
+          collapsed && "lg:justify-center lg:px-2"
         )}
+        title={collapsed ? item.label : undefined}
       >
         {active && (
           <span className="absolute left-0 top-1/2 h-4 w-0.5 -translate-y-1/2 rounded-full bg-whatsapp" />
         )}
         <item.icon className="h-4 w-4 shrink-0" strokeWidth={2} />
-        <span className="flex-1">{item.label}</span>
+        <span className={cn("flex-1", collapsed && "lg:hidden")}>{item.label}</span>
         {item.href === "/dashboard/submissions" && unreadCount > 0 && (
-          <span className="rounded-full bg-whatsapp px-1.5 py-0.5 text-[10px] font-semibold text-white">
+          <span
+            className={cn(
+              "rounded-full bg-whatsapp px-1.5 py-0.5 text-[10px] font-semibold text-white",
+              collapsed && "lg:hidden"
+            )}
+          >
             {unreadCount > 99 ? "99+" : unreadCount}
           </span>
         )}
@@ -152,13 +165,43 @@ export function DashboardSidebar({
 
       <aside
         className={cn(
-          "fixed inset-y-0 left-0 z-50 flex w-60 flex-col border-r border-border bg-card transition-transform duration-200 print:hidden lg:static lg:translate-x-0",
-          open ? "translate-x-0" : "-translate-x-full"
+          "fixed inset-y-0 left-0 z-50 flex w-60 flex-col border-r border-border bg-card transition-all duration-200 print:hidden lg:static lg:translate-x-0",
+          open ? "translate-x-0" : "-translate-x-full",
+          collapsed ? "lg:w-16" : "lg:w-60"
         )}
       >
+
         {/* Header / Logo */}
-        <div className="flex h-14 items-center justify-between gap-2 border-b border-border px-4">
-          <BrandLogo size="sm" className="max-w-[148px]" />
+        <div className={cn(
+          "flex h-14 items-center justify-between gap-2 border-b border-border px-4",
+          collapsed && "lg:justify-center lg:gap-0"
+        )}>
+          <BrandLogo
+            size="sm"
+            className={cn("max-w-[132px]", collapsed && "lg:hidden")}
+          />
+          {collapsed && (
+            <span className="hidden h-8 w-8 items-center justify-center rounded-md bg-muted text-xs font-semibold text-fg lg:flex">
+              OF
+            </span>
+          )}
+
+          {/* Toggle Button - Desktop Only */}
+          {onToggleCollapse && (
+            <button
+              onClick={onToggleCollapse}
+              className="hidden rounded-md p-1.5 text-muted-fg transition-colors hover:bg-muted hover:text-fg lg:block"
+              aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+            >
+              {collapsed ? (
+                <ChevronRight className="h-4 w-4" />
+              ) : (
+                <ChevronLeft className="h-4 w-4" />
+              )}
+            </button>
+          )}
+
+          {/* Close Button - Mobile Only */}
           <button
             onClick={onClose}
             className="rounded-md p-1.5 text-muted-fg transition-colors hover:bg-muted hover:text-fg lg:hidden"
@@ -170,12 +213,22 @@ export function DashboardSidebar({
 
         {/* Nav */}
         <nav className="flex-1 overflow-y-auto px-3 py-4 scrollbar-thin">
-          <p className="mb-1.5 px-2.5 text-[10px] font-semibold uppercase tracking-wider text-muted-fg">
+          <p
+            className={cn(
+              "mb-1.5 px-2.5 text-[10px] font-semibold uppercase tracking-wider text-muted-fg",
+              collapsed && "lg:hidden"
+            )}
+          >
             Workspace
           </p>
           <div className="space-y-0.5">{mainNavItems.map(renderNavLink)}</div>
 
-          <p className="mb-1.5 mt-5 px-2.5 text-[10px] font-semibold uppercase tracking-wider text-muted-fg">
+          <p
+            className={cn(
+              "mb-1.5 mt-5 px-2.5 text-[10px] font-semibold uppercase tracking-wider text-muted-fg",
+              collapsed && "lg:hidden"
+            )}
+          >
             Tools
           </p>
           <div className="space-y-0.5">
@@ -184,7 +237,12 @@ export function DashboardSidebar({
 
           {isAdmin && (
             <>
-              <p className="mb-1.5 mt-5 px-2.5 text-[10px] font-semibold uppercase tracking-wider text-muted-fg">
+              <p
+                className={cn(
+                  "mb-1.5 mt-5 px-2.5 text-[10px] font-semibold uppercase tracking-wider text-muted-fg",
+                  collapsed && "lg:hidden"
+                )}
+              >
                 Admin
               </p>
               <div className="space-y-0.5">
@@ -205,35 +263,54 @@ export function DashboardSidebar({
 
         {/* Footer: Plan + Theme */}
         <div className="border-t border-border p-3">
-          <div className="mb-2 flex items-center justify-between">
-            <PlanBadge plan={plan} status={status} />
-            <ThemeToggle />
-          </div>
-          {plan === "free" && (
-            <div>
-              <div className="mb-1 flex items-center justify-between text-[11px] text-muted-fg">
-                <span>
-                  {formsCount}/{freeFormLimit} forms
-                </span>
-                <Link
-                  href="/pricing"
-                  className="font-medium text-whatsapp-deep transition-colors hover:text-whatsapp dark:text-whatsapp"
-                >
-                  Upgrade
-                </Link>
-              </div>
-              <div className="h-1 w-full overflow-hidden rounded-full bg-muted">
-                <div
-                  className="h-full rounded-full bg-whatsapp transition-all"
-                  style={{ width: `${usagePct}%` }}
-                />
-              </div>
+          <div className={cn(collapsed && "lg:hidden")}>
+            <div className="mb-2 flex items-center justify-between">
+              <PlanBadge plan={plan} status={status} />
+              <ThemeToggle />
             </div>
-          )}
-          {status === "pending" && (
-            <p className="mt-1 text-[11px] text-amber-600 dark:text-amber-400">
-              Awaiting approval
-            </p>
+            {plan === "free" && (
+              <div>
+                <div className="mb-1 flex items-center justify-between text-[11px] text-muted-fg">
+                  <span>
+                    {formsCount}/{freeFormLimit} forms
+                  </span>
+                  <Link
+                    href="/pricing"
+                    className="font-medium text-whatsapp-deep transition-colors hover:text-whatsapp dark:text-whatsapp"
+                  >
+                    Upgrade
+                  </Link>
+                </div>
+                <div className="h-1 w-full overflow-hidden rounded-full bg-muted">
+                  <div
+                    className="h-full rounded-full bg-whatsapp transition-all"
+                    style={{ width: `${usagePct}%` }}
+                  />
+                </div>
+              </div>
+            )}
+            {status === "pending" && (
+              <p className="mt-1 text-[11px] text-amber-600 dark:text-amber-400">
+                Awaiting approval
+              </p>
+            )}
+          </div>
+
+          {collapsed && (
+            <div className="hidden flex-col items-center gap-2 lg:flex">
+              <ThemeToggle />
+              <span
+                className={cn(
+                  "h-2 w-2 rounded-full",
+                  plan === "pro"
+                    ? "bg-whatsapp"
+                    : plan === "business"
+                    ? "bg-purple-500"
+                    : "bg-gray-400"
+                )}
+                title={`${plan} plan`}
+              />
+            </div>
           )}
         </div>
       </aside>

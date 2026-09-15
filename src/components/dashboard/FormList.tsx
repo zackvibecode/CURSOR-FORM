@@ -5,6 +5,8 @@ import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
+import { QrCodeModal } from "@/components/ui/QrCodeModal";
+import { toPublicQrUrl } from "@/lib/qr";
 import { Input } from "@/components/ui/Input";
 import { Label } from "@/components/ui/Label";
 import { WhatsAppIcon } from "@/components/ui/WhatsAppIcon";
@@ -27,6 +29,7 @@ import {
   MoreHorizontal,
   Pin,
   Plus,
+  QrCode,
   Search,
   Share2,
   Trash2,
@@ -150,6 +153,7 @@ function RowActions({
   duplicating,
   onCopy,
   onShare,
+  onQr,
   onDuplicate,
   onPin,
   onDelete,
@@ -159,6 +163,7 @@ function RowActions({
   duplicating: boolean;
   onCopy: () => void;
   onShare: () => void;
+  onQr: () => void;
   onDuplicate: () => void;
   onPin: () => void;
   onDelete: () => void;
@@ -202,6 +207,21 @@ function RowActions({
 
   return (
     <>
+      <span
+        className="inline-flex"
+        title={isPublished ? "QR code" : "Publish this form to get a QR code"}
+      >
+        <button
+          type="button"
+          disabled={!isPublished}
+          onClick={onQr}
+          className="inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-fg transition-colors hover:bg-muted hover:text-fg disabled:pointer-events-none disabled:opacity-40"
+          aria-label={isPublished ? "Show QR code" : "Publish this form to get a QR code"}
+        >
+          <QrCode className="h-4 w-4" />
+        </button>
+      </span>
+
       <button
         ref={btnRef}
         type="button"
@@ -306,6 +326,7 @@ export function FormList({ forms: initialForms, userName }: FormListProps) {
   const [templateOpen, setTemplateOpen] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; title: string } | null>(null);
+  const [qrTarget, setQrTarget] = useState<FormCardData | null>(null);
   const [deleteConfirmFirst, setDeleteConfirmFirst] = useState("");
   const [deleteConfirmSecond, setDeleteConfirmSecond] = useState("");
   const [duplicatingId, setDuplicatingId] = useState<string | null>(null);
@@ -540,6 +561,7 @@ export function FormList({ forms: initialForms, userName }: FormListProps) {
       duplicating={duplicatingId === form.id}
       onCopy={() => void copyFormLink(form.slug, form.updated_at)}
       onShare={() => void shareFormLink(form.title, form.slug, form.updated_at)}
+      onQr={() => setQrTarget(form)}
       onDuplicate={() => void handleDuplicate(form.id)}
       onPin={() => togglePin(form.id)}
       onDelete={() => openDeleteModal(form)}
@@ -923,6 +945,14 @@ export function FormList({ forms: initialForms, userName }: FormListProps) {
           </div>
         </div>
       </Modal>
+
+      <QrCodeModal
+        open={qrTarget !== null}
+        onClose={() => setQrTarget(null)}
+        url={qrTarget ? toPublicQrUrl(getFormPublicUrl(qrTarget.slug)) : ""}
+        title="Form QR"
+        subtitle={qrTarget?.title}
+      />
     </div>
   );
 }
