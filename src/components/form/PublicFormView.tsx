@@ -289,7 +289,7 @@ export function PublicFormView({
           form_id: formId,
           source: "oneform_public_form",
         },
-        { eventID: eventId }
+        { eventID: eventId, pixelId }
       );
 
       sendCapiEvent({
@@ -363,7 +363,7 @@ export function PublicFormView({
               contact_method: "whatsapp",
               page_path: window.location.pathname,
               content_name: title,
-            })
+            }, { pixelId })
           }
           className="inline-flex w-full items-center justify-center gap-2 rounded-md bg-whatsapp px-5 py-3 text-sm font-medium text-white hover:bg-whatsapp-deep"
         >

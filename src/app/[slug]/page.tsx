@@ -109,6 +109,7 @@ export default async function PublicFormPage({
             contentName={data.form.title}
             contentCategory={isDirectLinkForm(data.form) ? "whatsapp_direct_link" : "lead_form"}
             contentIds={[data.form.id]}
+            pixelId={data.pixelId}
           />
         </>
       ) : null}

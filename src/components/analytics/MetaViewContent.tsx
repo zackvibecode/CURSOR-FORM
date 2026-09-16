@@ -14,12 +14,14 @@ export function MetaViewContent({
   contentCategory,
   contentIds,
   contentType = "form",
+  pixelId,
 }: {
   contentKey: string;
   contentName: string;
   contentCategory?: string;
   contentIds?: string[];
   contentType?: string;
+  pixelId?: string;
 }) {
   const firedRef = useRef(false);
 
@@ -47,8 +49,8 @@ export function MetaViewContent({
       ...(contentIds?.length ? { content_ids: contentIds } : {}),
     };
 
-    trackViewContent(params);
-  }, [contentKey, contentName, contentCategory, contentIds, contentType]);
+    trackViewContent(params, undefined, pixelId);
+  }, [contentKey, contentName, contentCategory, contentIds, contentType, pixelId]);
 
   return null;
 }

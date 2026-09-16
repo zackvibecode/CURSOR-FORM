@@ -33,6 +33,13 @@ export interface MetaEventParams {
 export interface MetaTrackOptions {
   /** Shared browser + CAPI event ID for deduplication. */
   eventID?: string;
+  /**
+   * When provided, the event is sent only to this pixel via
+   * `fbq('trackSingle', ...)`. Required when more than one pixel is
+   * initialised on the page (site pixel + form owner pixel), otherwise a
+   * plain `fbq('track')` reaches BOTH data sources.
+   */
+  pixelId?: string;
 }
 
 export interface MetaAttributionCookies {

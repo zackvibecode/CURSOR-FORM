@@ -61,7 +61,7 @@ export function DirectWhatsAppView({
       contact_method: "whatsapp",
       page_path: window.location.pathname,
       content_name: title,
-    });
+    }, { pixelId });
   };
 
   useEffect(() => {

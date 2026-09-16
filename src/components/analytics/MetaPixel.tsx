@@ -1,7 +1,7 @@
 "use client";
 
 import Script from "next/script";
-import { Suspense, useEffect, useRef } from "react";
+import { Suspense, useEffect } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 import { ensureMetaFbcFromFbclid } from "@/lib/meta/attribution";
 import { trackPageView } from "@/lib/meta/track";
@@ -10,16 +10,25 @@ interface MetaPixelProps {
   pixelId: string;
 }
 
+const SITE_PIXEL_ID = process.env.NEXT_PUBLIC_META_PIXEL_ID?.trim();
+
 declare global {
   interface Window {
-    __META_PIXEL_INITIALIZED__?: string;
-    __META_PIXEL_LAST_PATH__?: string;
+    /** Pixel IDs already initialised on this page load. */
+    __META_PIXELS_INITIALIZED__?: string[];
+    /** Last tracked path per pixel ID (guards duplicate SPA PageView). */
+    __META_PIXEL_LAST_PATHS__?: Record<string, string>;
   }
 }
 
 /**
- * Meta Pixel loader — loads ONCE per pixel ID.
- * Initial PageView fires from the base snippet; SPA navigations fire via route watcher.
+ * Meta Pixel loader — initialises each pixel ID exactly once and fires the
+ * initial PageView to THAT pixel only (`fbq('trackSingle', ...)`).
+ *
+ * A site-wide pixel (NEXT_PUBLIC_META_PIXEL_ID) and a form owner's pixel can
+ * both be initialised on the same page. A plain `fbq('track', 'PageView')`
+ * would then hit both data sources, duplicating PageView for one of them.
+ * SPA navigations fire via the route watcher below.
  */
 export function MetaPixel({ pixelId }: MetaPixelProps) {
   if (!pixelId) return null;
@@ -27,6 +36,12 @@ export function MetaPixel({ pixelId }: MetaPixelProps) {
   // Escape for safe embedding inside the inline script string.
   const safeId = pixelId.replace(/[^0-9]/g, "");
   if (!safeId) return null;
+
+  // The site-level pixel (SiteMetaPixel in the root layout) already loads this
+  // exact ID with its own route watcher. Rendering a second loader would add a
+  // duplicate script tag / noscript hit for the same data source.
+  const siteId = SITE_PIXEL_ID?.replace(/[^0-9]/g, "");
+  if (siteId && siteId === safeId) return null;
 
   return (
     <>
@@ -36,7 +51,10 @@ export function MetaPixel({ pixelId }: MetaPixelProps) {
         dangerouslySetInnerHTML={{
           __html: `
             (function() {
-              if (window.__META_PIXEL_INITIALIZED__ === '${safeId}') return;
+              var id = '${safeId}';
+              var initialized = window.__META_PIXELS_INITIALIZED__ || (window.__META_PIXELS_INITIALIZED__ = []);
+              if (initialized.indexOf(id) !== -1) return;
+              initialized.push(id);
               !function(f,b,e,v,n,t,s)
               {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
               n.callMethod.apply(n,arguments):n.queue.push(arguments)};
@@ -45,10 +63,10 @@ export function MetaPixel({ pixelId }: MetaPixelProps) {
               t.src=v;s=b.getElementsByTagName(e)[0];
               s.parentNode.insertBefore(t,s)}(window, document,'script',
               'https://connect.facebook.net/en_US/fbevents.js');
-              fbq('init', '${safeId}');
-              window.__META_PIXEL_INITIALIZED__ = '${safeId}';
-              fbq('track', 'PageView');
-              window.__META_PIXEL_LAST_PATH__ = location.pathname + location.search;
+              fbq('init', id);
+              var paths = window.__META_PIXEL_LAST_PATHS__ || (window.__META_PIXEL_LAST_PATHS__ = {});
+              paths[id] = location.pathname + location.search;
+              fbq('trackSingle', id, 'PageView');
             })();
           `,
         }}
@@ -64,46 +82,41 @@ export function MetaPixel({ pixelId }: MetaPixelProps) {
         />
       </noscript>
       <Suspense fallback={null}>
-        <MetaPixelRouteTracker />
+        <MetaPixelRouteTracker pixelId={safeId} />
       </Suspense>
     </>
   );
 }
 
 /**
- * Fires PageView on client-side route changes only (not the initial load).
- * Dedupes against the path recorded by the base snippet.
+ * Fires PageView on client-side route changes for THIS pixel only.
+ * The initial PageView comes from the base snippet; both write the same
+ * per-pixel last-path registry so neither can double-fire.
  */
-function MetaPixelRouteTracker() {
+function MetaPixelRouteTracker({ pixelId }: { pixelId: string }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const isFirst = useRef(true);
 
   useEffect(() => {
     ensureMetaFbcFromFbclid();
   }, []);
 
   useEffect(() => {
+    if (typeof window === "undefined") return;
+
     const path = `${pathname}${searchParams?.toString() ? `?${searchParams.toString()}` : ""}`;
+    const paths =
+      window.__META_PIXEL_LAST_PATHS__ || (window.__META_PIXEL_LAST_PATHS__ = {});
 
-    if (isFirst.current) {
-      isFirst.current = false;
-      if (typeof window !== "undefined" && !window.__META_PIXEL_LAST_PATH__) {
-        window.__META_PIXEL_LAST_PATH__ = path;
-      }
-      return;
-    }
+    const isFirstForPixel = paths[pixelId] === undefined;
+    if (paths[pixelId] === path) return;
+    paths[pixelId] = path;
 
-    if (typeof window !== "undefined" && window.__META_PIXEL_LAST_PATH__ === path) {
-      return;
-    }
+    // Initial PageView is fired by the base snippet for this pixel.
+    if (isFirstForPixel) return;
 
-    if (typeof window !== "undefined") {
-      window.__META_PIXEL_LAST_PATH__ = path;
-    }
-
-    trackPageView();
-  }, [pathname, searchParams]);
+    trackPageView(undefined, pixelId);
+  }, [pathname, searchParams, pixelId]);
 
   return null;
 }

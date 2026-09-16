@@ -32,7 +32,66 @@ function getFbq(): ((...args: unknown[]) => void) | null {
 }
 
 /**
+ * Send one command to fbq.
+ *
+ * When `pixelId` is set we use `trackSingle` / `trackSingleCustom`, which
+ * scopes the event to a single pixel ID. Without it a plain `track` reaches
+ * every initialised pixel on the page (site pixel + form owner pixel), which
+ * duplicates PageView and leaks one tenant's Lead into another data source.
+ */
+function fireFbq(
+  custom: boolean,
+  eventName: MetaEventName,
+  params: MetaEventParams | undefined,
+  eventID: string,
+  pixelId: string | undefined
+): boolean {
+  const fn = getFbq();
+  if (!fn) return false;
+
+  const safeParams = params && Object.keys(params).length > 0 ? params : {};
+  const args: unknown[] = pixelId
+    ? [pixelId, eventName, safeParams, { eventID }]
+    : [eventName, safeParams, { eventID }];
+
+  let command: string;
+  if (custom) {
+    command = pixelId ? "trackSingleCustom" : "trackCustom";
+  } else {
+    command = pixelId ? "trackSingle" : "track";
+  }
+
+  try {
+    fn(command, ...args);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function fireWhenReady(
+  custom: boolean,
+  eventName: MetaEventName,
+  params: MetaEventParams | undefined,
+  eventID: string,
+  pixelId: string | undefined
+): void {
+  if (fireFbq(custom, eventName, params, eventID, pixelId)) return;
+  if (typeof window === "undefined") return;
+
+  // Pixel may still be loading — retry briefly without blocking UX.
+  let attempts = 0;
+  const retry = window.setInterval(() => {
+    attempts += 1;
+    if (fireFbq(custom, eventName, params, eventID, pixelId) || attempts >= 10) {
+      window.clearInterval(retry);
+    }
+  }, 150);
+}
+
+/**
  * Fire a standard Meta Pixel event (`fbq('track', ...)`).
+ * Pass `options.pixelId` to scope the event to ONE pixel.
  * Returns the eventID used (generated when not provided).
  */
 export function trackMetaEvent(
@@ -41,39 +100,8 @@ export function trackMetaEvent(
   options?: MetaTrackOptions
 ): string {
   const eventID = options?.eventID || generateEventId(eventName.toLowerCase());
-  const fbq = getFbq();
-
-  const fire = (): boolean => {
-    const fn = getFbq();
-    if (!fn) return false;
-    try {
-      if (params && Object.keys(params).length > 0) {
-        fn("track", eventName, params, { eventID });
-      } else {
-        fn("track", eventName, {}, { eventID });
-      }
-      logDev(`${eventName}`, { eventID, ...params });
-      return true;
-    } catch {
-      return false;
-    }
-  };
-
-  if (!fire()) {
-    // Pixel may still be loading — retry briefly without blocking UX.
-    if (typeof window !== "undefined") {
-      let attempts = 0;
-      const retry = window.setInterval(() => {
-        attempts += 1;
-        if (fire() || attempts >= 10) {
-          window.clearInterval(retry);
-        }
-      }, 150);
-    }
-  }
-
-  // Silence unused when fbq missing on first try — eventID still returned for CAPI.
-  void fbq;
+  fireWhenReady(false, eventName, params, eventID, options?.pixelId);
+  logDev(`${eventName}`, { eventID, pixelId: options?.pixelId, ...params });
   return eventID;
 }
 
@@ -84,55 +112,42 @@ export function trackMetaCustomEvent(
   options?: MetaTrackOptions
 ): string {
   const eventID = options?.eventID || generateEventId("custom");
-
-  const fire = (): boolean => {
-    const fn = getFbq();
-    if (!fn) return false;
-    try {
-      if (params && Object.keys(params).length > 0) {
-        fn("trackCustom", eventName, params, { eventID });
-      } else {
-        fn("trackCustom", eventName, {}, { eventID });
-      }
-      logDev(`Custom:${eventName}`, { eventID, ...params });
-      return true;
-    } catch {
-      return false;
-    }
-  };
-
-  if (!fire() && typeof window !== "undefined") {
-    let attempts = 0;
-    const retry = window.setInterval(() => {
-      attempts += 1;
-      if (fire() || attempts >= 10) {
-        window.clearInterval(retry);
-      }
-    }, 150);
-  }
-
+  fireWhenReady(true, eventName, params, eventID, options?.pixelId);
+  logDev(`Custom:${eventName}`, { eventID, pixelId: options?.pixelId, ...params });
   return eventID;
 }
 
-/** Convenience: PageView with optional shared eventID. */
-export function trackPageView(eventID?: string): string {
-  return trackMetaEvent("PageView", undefined, { eventID });
+/** Convenience: PageView with optional shared eventID and target pixel. */
+export function trackPageView(eventID?: string, pixelId?: string): string {
+  return trackMetaEvent("PageView", undefined, { eventID, pixelId });
 }
 
 /** Convenience: ViewContent — call once per content view (guard in caller). */
-export function trackViewContent(params: MetaEventParams, eventID?: string): string {
-  return trackMetaEvent("ViewContent", params, { eventID });
+export function trackViewContent(
+  params: MetaEventParams,
+  eventID?: string,
+  pixelId?: string
+): string {
+  return trackMetaEvent("ViewContent", params, { eventID, pixelId });
 }
 
 /** Convenience: Contact (WhatsApp / phone / contact CTA). */
-export function trackContact(params: MetaEventParams, eventID?: string): string {
-  return trackMetaEvent("Contact", params, { eventID });
+export function trackContact(
+  params: MetaEventParams,
+  eventID?: string,
+  pixelId?: string
+): string {
+  return trackMetaEvent("Contact", params, { eventID, pixelId });
 }
 
 /**
  * Convenience: Lead — ONLY after confirmed successful form submission.
  * Returns eventID for CAPI deduplication.
  */
-export function trackLead(params: MetaEventParams, eventID?: string): string {
-  return trackMetaEvent("Lead", params, { eventID });
+export function trackLead(
+  params: MetaEventParams,
+  eventID?: string,
+  pixelId?: string
+): string {
+  return trackMetaEvent("Lead", params, { eventID, pixelId });
 }
