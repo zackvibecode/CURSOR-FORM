@@ -17,7 +17,7 @@ export default async function AdminPaymentsPage() {
       <div>
         <h2 className="text-lg font-semibold text-fg">Payments & Billing</h2>
         <p className="text-sm text-muted-fg">
-          Rekod bayaran DuitNow, generate invoice, dan pantau custahan.
+          Rekod bayaran DuitNow, generate invoice, dan pantau tunggakan.
         </p>
       </div>
       <PaymentsClient />
