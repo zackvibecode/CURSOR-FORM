@@ -7,6 +7,7 @@ import { OverviewKpiCard } from "@/components/dashboard/OverviewKpiCard";
 import { OverviewCharts } from "@/components/dashboard/OverviewCharts";
 import { OverviewRangeSelect } from "@/components/dashboard/OverviewRange";
 import { OverviewTopList, type OverviewTopItem } from "@/components/dashboard/OverviewTopList";
+import { OverviewRenewalReminder } from "@/components/dashboard/OverviewRenewalReminder";
 import { extractCustomers, mapSubmissionsToRows } from "@/lib/dashboard-stats";
 import type { SubmissionRow } from "@/components/dashboard/SubmissionsTable";
 import { getPlanLimits } from "@/lib/plan-limits";
@@ -81,7 +82,11 @@ export default async function DashboardOverviewPage({
     total_clicks: number;
     created_at: string;
   }[];
-  const subscription = subResult.data as { plan?: string; status?: string } | null;
+  const subscription = subResult.data as {
+    plan?: string;
+    status?: string;
+    expires_at?: string | null;
+  } | null;
 
   const formIds = forms.map((f) => f.id);
   const linkIds = links.map((l) => l.id);
@@ -301,6 +306,11 @@ export default async function DashboardOverviewPage({
           <CreateFormButton className="w-full sm:w-auto" />
         </div>
       </div>
+
+      <OverviewRenewalReminder
+        plan={plan}
+        expiresAt={subscription?.expires_at ?? null}
+      />
 
       <div className="grid grid-cols-2 gap-2.5 sm:gap-3 xl:grid-cols-4">
         <OverviewKpiCard
