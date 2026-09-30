@@ -13,7 +13,22 @@ loadEnv();
 
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-const userId = "10758f71-bbc5-4c41-b9ba-8a8cc9814d88";
+const TARGET_EMAIL = "zarulzaqwan5678@gmail.com";
+
+// Resolve exact user by email (case-insensitive) — avoid matching wrong account.
+const usersRes = await fetch(`${url}/auth/v1/admin/users?per_page=100`, {
+  headers: { apikey: key, Authorization: `Bearer ${key}` },
+});
+const { users } = await usersRes.json();
+const target = users.find(
+  (u) => (u.email ?? "").toLowerCase() === TARGET_EMAIL.toLowerCase()
+);
+if (!target) {
+  console.error("User not found:", TARGET_EMAIL);
+  process.exit(1);
+}
+const userId = target.id;
+console.log("Targeting:", TARGET_EMAIL, userId);
 
 const mode = process.argv[2] ?? "set";
 
