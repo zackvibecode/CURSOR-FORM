@@ -23,7 +23,11 @@ export default async function AdminLayout({
     { count: formsCount },
   ] = await Promise.all([
     supabase.from("profiles").select("name").eq("id", user.id).single(),
-    supabase.from("subscriptions").select("plan, status").eq("user_id", user.id).single(),
+    supabase
+      .from("subscriptions")
+      .select("plan, status, expires_at")
+      .eq("user_id", user.id)
+      .single(),
     supabase
       .from("forms")
       .select("*", { count: "exact", head: true })
@@ -43,6 +47,7 @@ export default async function AdminLayout({
       <PlanStatusBanner
         plan={subscription?.plan ?? "free"}
         status={subscription?.status ?? "active"}
+        expiresAt={subscription?.expires_at ?? null}
       />
       {children}
     </DashboardShell>

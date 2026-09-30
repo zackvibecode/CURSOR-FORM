@@ -119,12 +119,16 @@ export async function POST(request: Request) {
   }
 
   if (action === "approve") {
+    const days = current.billing_cycle === "yearly" ? 365 : 30;
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() + days);
+
     const { data: updated, error: updateError } = await admin
       .from("subscriptions")
       .update({
         status: "active",
         started_at: new Date().toISOString(),
-        expires_at: null,
+        expires_at: expiresAt.toISOString(),
       })
       .eq("user_id", targetUserId)
       .select()

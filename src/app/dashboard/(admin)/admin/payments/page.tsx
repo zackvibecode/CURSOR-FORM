@@ -14,8 +14,11 @@ export default async function AdminPaymentsPage() {
 
   return (
     <div className="space-y-8">
-      <div className="text-center">
-        <h2 className="text-lg font-semibold text-fg">Payments</h2>
+      <div>
+        <h2 className="text-lg font-semibold text-fg">Payments & Billing</h2>
+        <p className="text-sm text-muted-fg">
+          Rekod bayaran DuitNow, generate invoice, dan pantau custahan.
+        </p>
       </div>
       <PaymentsClient />
     </div>
