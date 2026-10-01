@@ -28,7 +28,7 @@ export function OverviewRenewalReminder({ plan, expiresAt }: OverviewRenewalRemi
 
   return (
     <Link
-      href="/pricing"
+      href="/dashboard/admin/payments"
       className={cn(
         "group flex items-center gap-3 rounded-lg border p-4 transition-colors sm:p-5",
         expired

@@ -102,7 +102,7 @@ export function PlanStatusBanner({ plan, status, expiresAt }: PlanStatusBannerPr
         </div>
         <div className="flex shrink-0 items-center gap-1">
           <Link
-            href="/pricing"
+            href="/dashboard/admin/payments"
             className={`rounded-md px-2.5 py-1 text-xs font-semibold transition-colors ${
               urgent
                 ? "bg-red-600 text-white hover:bg-red-700"
@@ -133,7 +133,7 @@ export function PlanStatusBanner({ plan, status, expiresAt }: PlanStatusBannerPr
           <p className="text-sm text-muted-fg">
             You&apos;re on the Free plan.{" "}
             <Link
-              href="/pricing"
+              href="/dashboard/admin/payments"
               className="font-medium text-whatsapp-deep transition-colors hover:text-whatsapp dark:text-whatsapp"
             >
               Upgrade to Pro
